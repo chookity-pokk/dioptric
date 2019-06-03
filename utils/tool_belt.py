@@ -36,6 +36,8 @@ import csv
 from scipy import asarray as ar, exp
 from tkinter import Tk
 from tkinter import filedialog
+from git import Repo
+
 
 # %% xyz sets
 
@@ -301,6 +303,14 @@ def ask_open_file(file_path):
     return file_name
     
 # %%  Save utils
+    
+
+def get_branch_name():
+    """Return the name of the active branch of kolkowitz-nv-experiment-v1.0"""
+    repo_path = 'C:\\Users\\kolkowitz\\Documents\\' \
+        'GitHub\\kolkowitz-nv-experiment-v1.0'
+    repo = Repo(repo_path)
+    return repo.active_branch.name
 
 
 def get_time_stamp():
@@ -320,7 +330,7 @@ def get_time_stamp():
 
 def get_file_path(caller_file, timeStamp, name=''):
     """
-    Get the file path to save to. This will be in a subdirectory of Data.
+    Get the file path to save to. This will be in a subdirectory of nvdata.
 
     Params:
         caller_file: file object
@@ -338,10 +348,21 @@ def get_file_path(caller_file, timeStamp, name=''):
 
     # Set up a timestamp
     fileName = timeStamp + '_' + name
-
-    # Find the data directory relative to tool_belt's directory
-    joined_path = os.path.join('E:/Team Drives/Kolkowitz Lab Group/nvdata',
-                               sub_dir_name)
+    
+    branch_name = get_branch_name()
+    
+    # Check where we should save to
+    if branch_name == 'master':
+        # master should save without a branch sub-folder
+        joined_path = os.path.join('E:/Team Drives/Kolkowitz Lab Group/nvdata',
+                                   sub_dir_name)
+    else:
+        # Otherwise we want a branch sub-folder so that we know this data was
+        # produced by code that's under development
+        joined_path = os.path.join('E:/Team Drives/Kolkowitz Lab Group/nvdata',
+                                   sub_dir_name,
+                                   'branch_{}'.format(branch_name))
+        
     folderDir = os.path.abspath(joined_path)
 
     # Make the required directory if it doesn't exist already
