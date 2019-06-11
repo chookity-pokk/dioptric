@@ -34,32 +34,32 @@ def process_raw_buffer(timestamps, apd_indices, buffer_size,
     # Throw out probable afterpulses
     for click_index in range(buffer_size):
 
-        click_time = timestamps[click_index]
+        click_time = timestamps[click_index] #time when one click occurs
 
         # Determine the afterpulse channel
-        click_channel = timestamps[click_index]
+        click_channel = add_indices[click_index]
 
         # Calculate relevant differences
-        next_index = click_index + 1
-        while next_index < buffer_size:
-            diff = timestamps[next_index] - click_time
-            if diff > afterpulse_window:
+        next_index = click_index + 1 #mark the next click
+        while next_index < buffer_size: 
+            diff = timestamps[next_index] - click_time #the time difference between two clicks
+            if diff > afterpulse_window: #jump out because the next click is a real photon 
                 break
-            if timestamps[next_index] == click_channel:
+            if add_indices[next_index] == click_channel: #check if the click is on the same channel, if so, delete it
                 indices_to_delete_append(next_index)
             next_index += 1
 
-    timestamps = numpy.delete(timestamps, indices_to_delete)
+    timestamps = numpy.delete(timestamps, indices_to_delete) #keep unrepeated count
 
     # Calculate differences
-    num_vals = timestamps.size
+    num_vals = timestamps.size #timestamps is an array/list 
     for click_index in range(num_vals):
 
-        click_time = timestamps[click_index]
+        click_time = timestamps[click_index] #each index corresponding to the time when that click occurs
 
         # Determine the channel to take the difference with
-        click_channel = apd_indices[click_index]
-        if click_channel == apd_a_index:
+        click_channel = apd_indices[click_index] 
+        if click_channel == apd_a_index:#connect the click channel with the APD 
             diff_channel = apd_b_index
         else:
             diff_channel = apd_a_index
@@ -75,7 +75,7 @@ def process_raw_buffer(timestamps, apd_indices, buffer_size,
             if apd_indices[next_index] == diff_channel:
                 # Flip the sign for diffs relative to channel 2
                 if click_channel == apd_b_index:
-                    diff = -diff
+                    diff = -diff #used for calculation
                 differences_append(int(diff))
             next_index += 1
 

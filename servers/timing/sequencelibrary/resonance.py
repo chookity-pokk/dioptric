@@ -49,6 +49,10 @@ def get_seq(pulser_wiring, args):
              (readout, HIGH), (clock_pulse, LOW)]
     seq.setDigital(pulser_do_uwave, train)
 
+
+    #Analog genetrator 
+    seq.setAnalog(0,train)
+    
     # The AOM should always be on
     train = [(period, HIGH)]
     seq.setDigital(pulser_do_aom, train)
@@ -60,7 +64,7 @@ if __name__ == '__main__':
     wiring = {'do_daq_clock': 0,
               'do_apd_gate_0': 1,
               'do_aom': 2,
-              'do_uwave_gate': 3}
-    args = [10 * 10**6, 10 * 10**6, 1 * 10**6, 0]
-    seq = get_seq(wiring, args)
+              'do_uwave_gate_0': 3}
+    args = [10 * 10**6, 1 * 10**6, 0]
+    seq,ret_val = get_seq(wiring, args)
     seq.plot()

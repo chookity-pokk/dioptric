@@ -55,8 +55,8 @@ def main(cxn, coords, nd_filter, sig_apd_index, ref_apd_index, expected_counts,
     min_uwave_time = uwave_time_range[0]
     max_uwave_time = uwave_time_range[1]
     taus = numpy.linspace(min_uwave_time, max_uwave_time,
-                          num=num_steps, dtype=numpy.int32)
-
+                          num=num_steps, dtype=numpy.int32) #creat an array that evenly divided time 
+                                                            # which is the time interval used in each run
     # Analyze the sequence
     file_name = os.path.basename(__file__)
     sequence_args = [taus[0], polarization_time, reference_time,
