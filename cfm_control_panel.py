@@ -279,7 +279,7 @@ if __name__ == '__main__':
     minus_to_plus = [-1,1]
     
     # Array for the t1 measuremnt, formatted:
-    # [init_read_list, relaxation_time_range, num_steps, num_reps]
+    # [[init_state, read_state], relaxation_time_range, num_steps, num_reps]
     
 #    t1_exp_array = numpy.array([
 #                                [plus_to_minus, [0, 800*10**3], 51, 2 * 10**4],
@@ -297,7 +297,7 @@ if __name__ == '__main__':
 #                                [plus_to_zero,   [0, 800*10**3], 51, 2 * 10**4],
 #                                [minus_to_zero,  [0, 800*10**3], 51, 2 * 10**4], 
 #
-#                                [zero_to_zero,   [0, 1000*10**3], 26, 2 * 10**4]])
+#                                [[0, 0],   [0, 1000*10**3], 26, 2 * 10**4]])
 
 
     # For splittings < 75 MHz
@@ -309,7 +309,7 @@ if __name__ == '__main__':
 #                                [plus_to_plus,   [0, 500*10**3], 41,  1 * 10**4],
 #                                [plus_to_zero,   [0, 500*10**3], 41, 1 * 10**4],
 #                                [zero_to_plus,   [0, 1500*10**3], 41, 1 * 10**4],
-#                                [zero_to_zero,   [0, 1500*10**3], 41, 1 * 10**4]])
+#                                [0, 0, [0, 1500*10**3], 41, 1 * 10**4]])
     
     t1_exp_array = numpy.array([[plus_to_minus,  [0, 100*10**3], 3, 2 * 10**3],
                                 [plus_to_minus,  [0, 500*10**3], 3,  1 * 10**3],
@@ -317,7 +317,7 @@ if __name__ == '__main__':
                                 [plus_to_plus,   [0, 500*10**3], 3,  1 * 10**3],
                                 [plus_to_zero,   [0, 500*10**3], 3, 1 * 10**3],
                                 [zero_to_plus,   [0, 100*10**3], 3, 1 * 10**3],
-                                [zero_to_zero,   [0, 100*10**3], 3, 1 * 10**3]])
+                                [0, 0,   [0, 100*10**3], 3, 1 * 10**3]])
 
     # For splittings > 75 MHz
     
@@ -326,14 +326,14 @@ if __name__ == '__main__':
 #                                [plus_to_plus,   [0, 1500*10**3], 41, 1 * 10**4],
 #                                [plus_to_zero,   [0, 1500*10**3], 41, 1 * 10**4],
 #                                [zero_to_plus,   [0, 1500*10**3], 41, 1 * 10**4],
-#                                [zero_to_zero,   [0, 1500*10**3], 41, 1 * 10**4]])
+#                                [[0,0],   [0, 1500*10**3], 41, 1 * 10**4]])
     
     # ~18 hours
 #    t1_exp_array = numpy.array([[plus_to_minus,  [0, 1500*10**3], 41, 1 * 10**4],
 #                                [plus_to_plus,   [0, 1500*10**3], 41, 1 * 10**4],
 #                                [plus_to_zero,   [0, 2000*10**3], 31, 1 * 10**4],
 #                                [zero_to_plus,   [0, 2000*10**3], 31, 1 * 10**4],
-#                                [zero_to_zero,   [0, 2000*10**3], 31, 1 * 10**4]])
+#                                [[0,0],   [0, 2000*10**3], 31, 1 * 10**4]])
     
     # Array for the parameters of a given NV, formatted:
     # [nv coordinates, uwave_freq_plus, uwave_pi_pulse_plus, uwave_freq_minus,
@@ -349,7 +349,7 @@ if __name__ == '__main__':
         # Routines that don't need an NV
 #        set_xyz_zero()
 #        set_xyz()
-        tool_belt.set_drift([-0.004, -0.001, -0.3])
+#        tool_belt.set_drift([-0.004, -0.001, -0.3])
 #        print(tool_belt.get_drift())
         
         # Routines that expect lists
@@ -357,10 +357,10 @@ if __name__ == '__main__':
 #        do_sample_nvs(name, nv_sig_list, nd_filter, apd_indices)
             
         # Routines that expect single NVs
-#        for nv_sig in nv_sig_list:
+        for nv_sig in nv_sig_list:
 #            coords = nv_sig[0:3]
 #            do_image_sample(name, coords, nd_filter, scan_range, num_scan_steps, apd_indices)
-#            do_optimize(name, nv_sig, nd_filter, apd_indices)
+            do_optimize(name, nv_sig, nd_filter, apd_indices)
 #            do_stationary_count(name, nv_sig, nd_filter, apd_indices)
 #            do_g2_measurement(name, nv_sig, nd_filter, apd_indices[0], apd_indices[1])
 #            do_resonance(name, nv_sig, nd_filter, apd_indices)
