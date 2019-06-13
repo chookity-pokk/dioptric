@@ -31,7 +31,8 @@ def main(cxn, coords, nd_filter, apd_index, expected_counts, freq_center, freq_r
     readout = 100 * 10**6  # 0.1 s
     readout_sec = readout / (10**9)
     uwave_switch_delay = 100 * 10**6  # 0.1 s to open the gate
-    sequence_args = [readout, uwave_switch_delay, apd_index]
+    num_steps = 50
+    sequence_args = [readout, uwave_switch_delay, apd_index, num_steps]
 
     file_name = os.path.basename(__file__)
 
@@ -40,6 +41,7 @@ def main(cxn, coords, nd_filter, apd_index, expected_counts, freq_center, freq_r
     freq_low = freq_center - half_freq_range
     freq_high = freq_center + half_freq_range
     freqs = numpy.linspace(freq_low, freq_high, num_steps)
+    
 
     # Set up our data structure, an array of NaNs that we'll fill
     # incrementally. NaNs are ignored by matplotlib, which is why they're
@@ -93,30 +95,32 @@ def main(cxn, coords, nd_filter, apd_index, expected_counts, freq_center, freq_r
         ret_vals = cxn.pulse_streamer.stream_load(file_name, sequence_args)
         period = ret_vals[0]
         cxn.apd_counter.load_stream_reader(apd_index, period, 2 * num_steps)
-
-        # Take a sample and increment the frequency
-        for step_ind in range(num_steps):
-
-            # Break out of the while if the user says stop
-            if tool_belt.safe_stop():
-                break
-
-            cxn.microwave_signal_generator.set_freq(freqs[step_ind])
-
-            # If this is the first sample then we have to enable the signal
-            if (run_ind == 0) and (step_ind == 0):
-                cxn.microwave_signal_generator.set_amp(uwave_power)
-                cxn.microwave_signal_generator.uwave_on()
-
-            # Start the timing stream
-            cxn.pulse_streamer.stream_start()
-
-            new_counts = cxn.apd_counter.read_stream(apd_index, 2)
-            if len(new_counts) != 2:
-                raise RuntimeError('There should be exactly 2 samples per freq.')
-
-            ref_counts[run_ind, step_ind] = new_counts[0]
-            sig_counts[run_ind, step_ind] = new_counts[1]
+        
+        
+#        # Take a sample and increment the frequency
+#        for step_ind in range(num_steps):
+#
+#            # Break out of the while if the user says stop
+#            if tool_belt.safe_stop():
+#                break
+#
+#            cxn.microwave_signal_generator.set_freq(freqs[step_ind])
+#
+#            # If this is the first sample then we have to enable the signal
+#            if (run_ind == 0) and (step_ind == 0):
+#                cxn.microwave_signal_generator.set_amp(uwave_power)
+#                cxn.microwave_signal_generator.uwave_on()
+#
+#            # Start the timing stream
+#            cxn.pulse_streamer.stream_start()
+#
+#            new_counts = cxn.apd_counter.read_stream(apd_index, 2)
+#            if len(new_counts) != 2:
+#                raise RuntimeError('There should be exactly 2 samples per freq.')
+#
+#            ref_counts[run_ind, step_ind] = new_counts[0]
+#            sig_counts[run_ind, step_ind] = new_counts[1]
+        
 
     # %% Process and plot the data
 

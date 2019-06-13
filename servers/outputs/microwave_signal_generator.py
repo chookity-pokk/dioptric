@@ -145,7 +145,7 @@ class MicrowaveSignalGenerator(LabradServer):
         precision = len(str(fm_range).split('.')[1])
         self.sig_gen.write('FDEV {0:.{1}f}GHZ'.format(fm_range, precision))
         # Set to an external source
-        self.sig_gen.write('MFNC 5')
+        self.sig_gen.write('MFNC 5') 
         # Turn on FM
         self.sig_gen.write('MODL 1')
 
