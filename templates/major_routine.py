@@ -124,7 +124,7 @@ if __name__ == '__main__':
     # run a file so we'll do that as an example here
 
     # Get the data
-    file_name = ''  # eg '2019-06-07_14-20-27_ayrton12.txt'
+    file_name = ''  # eg '2019-06-07_14-20-27_ayrton12'
     data = tool_belt.get_raw_data(__file__, file_name)
 
     # Replot
