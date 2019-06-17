@@ -15,6 +15,7 @@ import utils.constants as constants
 import time
 import numpy
 import os
+from random import shuffle
 
 
 # %% Constants
@@ -82,6 +83,8 @@ def main(cxn, nv_sig, nd_filter, apd_indices,
                                       precession_time_range[1],
                                       num_steps)
 
+    precession_time_inds = list(range(0, num_steps))
+
     opti_coords_list = []
 
     file_name = os.path.basename(__file__)
@@ -104,11 +107,14 @@ def main(cxn, nv_sig, nd_filter, apd_indices,
     # 'Press enter to stop...'
     tool_belt.init_safe_stop()
 
-    for run in range(num_runs):
+    for run_ind in range(num_runs):
 
         # Break out of the loop if the user says stop
         if tool_belt.safe_stop():
             break
+
+        # Shuffle the independent variable
+        shuffle(precession_time_inds)
 
         # Optimize
         opti_coords = optimize.main(cxn, nv_sig, nd_filter, apd_indices)
@@ -116,6 +122,12 @@ def main(cxn, nv_sig, nd_filter, apd_indices,
 
         # Load the APD
         cxn.apd_tagger.start_tag_stream(apd_indices)
+
+        for precession_time_ind in precession_time_inds:
+
+            precession_time = precession_times[precession_time_ind]
+
+
 
 
     # %% Wrap up
