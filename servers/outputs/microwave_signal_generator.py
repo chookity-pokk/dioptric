@@ -158,6 +158,13 @@ class MicrowaveSignalGenerator(LabradServer):
         if task is not None:
             task.close()
 
+    @setting(6)
+    def load_iq_mod(self, c):
+        # Load IQ modulation with an external source
+        self.sig_gen.write('QFNC 5')
+        # Turn on m,odulation
+        self.sig_gen.write('MODL 1')
+
 
 __server__ = MicrowaveSignalGenerator()
 

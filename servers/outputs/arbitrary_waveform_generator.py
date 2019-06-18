@@ -46,7 +46,43 @@ class ArbitraryWaveformGenerator(LabradServer):
     def on_get_config(self, config):
         resource_manager = visa.ResourceManager()
         self.wave_gen = resource_manager.open_resource(config)
-        
+
+    @setting(0, i_voltages='*v[]', q_voltages='*v[]')
+    def load_iq_waveform(self, c, i_voltages, q_voltages):
+        """Loads the passed I and Q voltages for the IQ modulation of an
+        external source. Triggered off the rising edge of an external
+        trigger input.
+        """
+
+        # Load the set of voltages to trigger through as arbitrary waveforms
+        # if i_voltages = [1.1, 2.2, 3.3] then i_voltages_str = '1.1, 2.2, 3.3'
+        i_voltages_str = ', '.join([str(float(el)) for el in i_voltages])
+        self.wave_gen.write('DATA:ARB i_voltages, {}'.format(i_voltages_str)))
+        q_voltages_str = ', '.join([str(float(el)) for el in q_voltages])
+        self.wave_gen.write('DATA:ARB q_voltages, {}'.format(q_voltages_str))
+
+        # Set both channels to zero
+        self.wave_gen.write('SOUR1:FUNC DC')
+        self.wave_gen.write('SOUR1:VOLT:OFFS 0)
+        self.wave_gen.write('OUTP1 ON')
+        self.wave_gen.write('SOUR2:FUNC DC')
+        self.wave_gen.write('SOUR2:VOLT:OFFS 0)
+        self.wave_gen.write('OUTP2 ON')
+
+        # Load the waveforms we just set up
+        self.wave_gen.write('SOUR1:FUNC:ARB i_voltages')
+        self.wave_gen.write('SOUR2:FUNC:ARB q_voltages')
+
+        # Set the trigger to the rising edge of an external source
+        self.wave_gen.write('TRIG:SOUR EXT')
+        self.wave_gen.write('TRIG:SLOP POS')
+
+        # Advance through waveform points based on the trigger
+        self.wave_gen.write('FUNC:ARB:ADV TRIG')
+
+        # Be sure the waveforms are set to the beginning
+        self.wave_gen.write('FUNC:ARB:SYNC')
+
     @setting(4)
     def test_sin(self, c):
         for chan in [1, 2]:
@@ -58,7 +94,7 @@ class ArbitraryWaveformGenerator(LabradServer):
         self.wave_gen.write('OUTP1 ON')
         self.wave_gen.write('SOUR2:PHAS 90')
         self.wave_gen.write('OUTP2 ON')
-        
+
     @setting(5)
     def wave_off(self, c):
         self.wave_gen.write('OUTP1 OFF')

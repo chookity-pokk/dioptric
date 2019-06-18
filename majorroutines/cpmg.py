@@ -131,8 +131,10 @@ def main(cxn, nv_sig, nd_filter, apd_indices,
 
     cxn.microwave_signal_generator.set_freq(uwave_freq)
     cxn.microwave_signal_generator.set_amp(uwave_power)
-    cxn.microwave_signal_generator.load_iq()
+    cxn.microwave_signal_generator.load_iq_mod()
     cxn.microwave_signal_generator.uwave_on()
+    cxn.arbitrary_waveform_generator.load_iq_waveform([1.0, 0.0, 1.0],
+                                                      [0.0, 1.0, 0.0])
 
     # %% Collect the data
 

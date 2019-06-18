@@ -83,12 +83,22 @@ def get_seq(pulser_wiring, args):
                  (polarization_dur, LOW)])
     seq.setDigital(chan, train)
 
-    # Trigger the IQ modulation sequence on the arbitrary waveform generator
+    # Trigger the IQ waveform on the arbitrary waveform generator
+    # The first HIGH sets the phase for the first pi_on_two_pulse.
+    # The second HIGH sets the phase for the pi_pulses.
+    # The third HIGH sets the phase for the second pi_on_two_pulse.
+    # This means the IQ sequence should look like this:
+    # i = [1.0, 0.0, 1.0]
+    # q = [0.0, 1.0, 0.0]
+    # so that we stay in sync with the pulse sequence.
     chan = pulser_wiring['do_arb_wave_trigger']
-    train = [(polarization_dur - 250, LOW),
-             (250, HIGH),
-             (pi_on_two_pulse_dur + precession_dur + pi_on_two_pulse_dur + \
-              polarization_dur + ref_wait_dur + polarization_dur, LOW)]
+    train = [(100, HIGH),
+             (- 100 + polarization_dur + pi_on_two_pulse_dur, LOW),
+             (100, HIGH),
+             (- 100 + precession_dur, LOW)
+             (100, HIGH)
+             (- 100 + pi_on_two_pulse_dur + polarization_dur + \
+              ref_wait_dur + polarization_dur, LOW)]
     seq.setDigital(chan, train)
 
     return seq, []
