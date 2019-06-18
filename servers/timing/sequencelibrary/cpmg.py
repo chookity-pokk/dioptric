@@ -14,6 +14,7 @@ Created on Sun Jun 16 11:22:40 2019
 from pulsestreamer import Sequence
 from pulsestreamer import OutputState
 from constants import DigitalLevel
+from constants import UwaveSource
 
 
 # %% Functions
@@ -30,7 +31,15 @@ def get_seq(pulser_wiring, args):
     polarization_dur, precession_dur, pi_pulse_dur, readout_dur, \
         ref_wait_dur, aom_delay_dur, uwave_delay_dur = durations
 
-    pi_on_two_pulse_dur = pi_pulse_dur // 2
+    pi_on_two_pulse_dur = pi_pulse_dur //
+
+    # Calculate tau for an ideal pulse of zero duration, then account for its
+    # actual nonzero duration
+    tau = precession_dur // (2 * cpmg_n)  # T = 2 N tau
+    tau_nonzero_pulse_dur = tau - (pi_on_two_pulse_dur)
+
+    # Use tau to redefine precession_dur so we avoid any rounding errors
+    precession_dur = 2 * cpmg_n * tau
 
     # The final args specify the number of pi pulses and the APD to use
     cpmg_n, apd_index = args[10:]
@@ -58,9 +67,18 @@ def get_seq(pulser_wiring, args):
     seq.setDigital(chan, train)
 
     # Apply microwaves
-    chan = pulser_wiring['do_uwave_gate_0']
-    train = [(),
-             ]
+    chan = pulser_wiring['do_uwave_gate_{}'.format(UwaveSource.TEKTRONIX)]
+    train = [(polarization_dur, DigitalLevel.LOW),
+             (pi_on_two_pulse_dur, DigitalLevel.HIGH)]
+    cpmg_chunk = [(tau_nonzero_pulse_dur, DigitalLevel.LOW),
+                  (pi_pulse_dur, DigitalLevel.HIGH),
+                  (tau_nonzero_pulse_dur, DigitalLevel.LOW)]
+    train.append(cpmg_n * cpmg_chunk)
+    tain.append([(pi_on_two_pulse_dur, DigitalLevel.HIGH),
+                 (polarization_dur, DigitalLevel.LOW),
+                 (ref_wait_dur, DigitalLevel.LOW),
+                 (polarization_dur, DigitalLevel.LOW)])
+    seq.setDigital(chan, train)
 
     return seq, []
 
