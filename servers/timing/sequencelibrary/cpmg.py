@@ -44,40 +44,51 @@ def get_seq(pulser_wiring, args):
     # The final args specify the number of pi pulses and the APD to use
     cpmg_n, apd_index = args[10:]
 
+    LOW = DigitalLevel.LOW
+    HIGH = DigitalLevel.HIGH
+
     seq = Sequence()
 
     # Shine the laser for polarization/readout
     chan = pulser_wiring['do_aom']
-    train = [(polarization_dur, DigitalLevel.HIGH),
-             (pi_on_two_pulse_dur + precession_dur + pi_on_two_pulse_dur, DigitalLevel.LOW),
-             (polarization_dur, DigitalLevel.HIGH),
-             (ref_wait_dur, DigitalLevel.LOW),
-             (polarization_dur, DigitalLevel.HIGH)]
+    train = [(polarization_dur, HIGH),
+             (pi_on_two_pulse_dur + precession_dur + pi_on_two_pulse_dur, LOW),
+             (polarization_dur, HIGH),
+             (ref_wait_dur, LOW),
+             (polarization_dur, HIGH)]
     seq.setDigital(chan, train)
 
     # Read out our signal and reference
     chan = pulser_wiring['do_apd_gate_{}'.format(apd_index)]
-    train = [(polarization_dur, DigitalLevel.LOW),
-             (pi_on_two_pulse_dur + precession_dur + pi_on_two_pulse_dur, DigitalLevel.LOW),
-             (readout_dur, DigitalLevel.HIGH),
-             (polarization_dur - readout_dur, DigitalLevel.LOW),
-             (ref_wait_dur, DigitalLevel.LOW),
-             (readout_dur, DigitalLevel.HIGH),
-             (polarization_dur - readout_dur, DigitalLevel.LOW)]
+    train = [(polarization_dur, LOW),
+             (pi_on_two_pulse_dur + precession_dur + pi_on_two_pulse_dur, LOW),
+             (readout_dur, HIGH),
+             (polarization_dur - readout_dur, LOW),
+             (ref_wait_dur, LOW),
+             (readout_dur, HIGH),
+             (polarization_dur - readout_dur, LOW)]
     seq.setDigital(chan, train)
 
     # Apply microwaves
     chan = pulser_wiring['do_uwave_gate_{}'.format(UwaveSource.TEKTRONIX)]
-    train = [(polarization_dur, DigitalLevel.LOW),
-             (pi_on_two_pulse_dur, DigitalLevel.HIGH)]
-    cpmg_chunk = [(tau_nonzero_pulse_dur, DigitalLevel.LOW),
-                  (pi_pulse_dur, DigitalLevel.HIGH),
-                  (tau_nonzero_pulse_dur, DigitalLevel.LOW)]
+    train = [(polarization_dur, LOW),
+             (pi_on_two_pulse_dur, HIGH)]
+    cpmg_chunk = [(tau_nonzero_pulse_dur, LOW),
+                  (pi_pulse_dur, HIGH),
+                  (tau_nonzero_pulse_dur, LOW)]
     train.append(cpmg_n * cpmg_chunk)
-    tain.append([(pi_on_two_pulse_dur, DigitalLevel.HIGH),
-                 (polarization_dur, DigitalLevel.LOW),
-                 (ref_wait_dur, DigitalLevel.LOW),
-                 (polarization_dur, DigitalLevel.LOW)])
+    tain.append([(pi_on_two_pulse_dur, HIGH),
+                 (polarization_dur, LOW),
+                 (ref_wait_dur, LOW),
+                 (polarization_dur, LOW)])
+    seq.setDigital(chan, train)
+
+    # Trigger the IQ modulation sequence on the arbitrary waveform generator
+    chan = pulser_wiring['do_arb_wave_trigger']
+    train = [(polarization_dur - 250, LOW),
+             (250, HIGH),
+             (pi_on_two_pulse_dur + precession_dur + pi_on_two_pulse_dur + \
+              polarization_dur + ref_wait_dur + polarization_dur, LOW)]
     seq.setDigital(chan, train)
 
     return seq, []
