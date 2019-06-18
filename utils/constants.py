@@ -19,3 +19,8 @@ from enum import Enum
 class UwaveSource(Enum):
     TEKTRONIX = 0
     HP = 1
+
+
+class DigitalLevel(Enum):
+    LOW = 0
+    HIGH = 1

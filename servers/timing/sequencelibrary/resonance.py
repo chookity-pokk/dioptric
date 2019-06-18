@@ -16,7 +16,7 @@ def get_seq(pulser_wiring, args):
 
     # Unpack the args
     readout, uwave_switch_delay, apd_index = args
-    
+
     readout = numpy.int64(readout)
     readout = numpy.int64(readout)
     uwave_switch_delay = numpy.int64(uwave_switch_delay)
@@ -40,7 +40,7 @@ def get_seq(pulser_wiring, args):
              (clock_pulse, HIGH),
              (clock_pulse, LOW)]
     seq.setDigital(pulser_do_daq_clock, train)
-    
+
     # Ungate the APD channel for the readouts
     train = [(readout, HIGH), (clock_buffer, LOW),
              (uwave_switch_delay, LOW),
@@ -56,20 +56,6 @@ def get_seq(pulser_wiring, args):
     # The AOM should always be on
     train = [(period, HIGH)]
     seq.setDigital(pulser_do_aom, train)
-    
-    step_time = 1 * 10**6
-    train = [(step_time, -1.0),
-             (step_time, -0.75),
-             (step_time, -0.5),
-             (step_time, -0.25),
-             (step_time, 0.0),
-             (step_time, 0.25),
-             (step_time, 0.5),
-             (step_time, 0.75),
-             (step_time, 1.0),
-             (step_time, 0.0)]
-    
-    seq.setAnalog(0, train)
 
     return seq, [period]
 

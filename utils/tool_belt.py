@@ -334,16 +334,16 @@ def get_file_list(source_name, file_ends_with, sub_folder_name = None,
     '''
     # Parse the source_name if __file__ was passed
     source_name = os.path.splitext(os.path.basename(source_name))[0]
-    
+
     data_dir = Path(data_dir)
-    
+
     if sub_folder_name is None:
-        file_path = data_dir / source_name 
+        file_path = data_dir / source_name
     else:
         file_path = data_dir / source_name / sub_folder_name
-    
+
     file_list = []
-    
+
     for file in os.listdir(file_path):
         if file.endswith(file_ends_with):
             file_list.append(file)
@@ -369,7 +369,7 @@ def get_raw_data(source_name, file_name, sub_folder_name=None,
 
     with open(file_path) as file:
         return json.load(file)
-    
+
 
 # %%  Save utils
 
@@ -480,6 +480,25 @@ def save_raw_data(rawData, filePath):
 
     with open(filePath + '.txt', 'w') as file:
         json.dump(rawData, file, indent=2)
+
+
+def save_data(name, raw_data=None, raw_fig=None, fit_fig=None):
+    """Save the raw data to a txt file as a json object. Save the figures as
+    svgs.
+    """
+
+    time_stamp = tool_belt.get_time_stamp()
+
+    file_path = tool_belt.get_file_path(__file__, time_stamp, name)
+
+    if raw_data is not None:
+        tool_belt.save_raw_data(rawData, file_path)
+
+    if raw_fig is not None:
+        tool_belt.save_figure(raw_fig, file_path)
+
+    if fit_fig is not None:
+        tool_belt.save_figure(raw_fig, file_path + '_fit')
 
 
 def get_nv_sig_units():
