@@ -63,11 +63,11 @@ def get_freq_subgroups(freq_list,fm_range):
                     freq_interval.append(freq_list[ind2])
                 else:                    
                     break                    
-        #once the fm_deviation is passed, an interval is found and append this interval to the master list    
+        #once the fm_deviation is passed, an interval is completed and append this interval to the master list    
             freq_subgroups.append(freq_interval)
             ind += len(freq_interval) #the loop will continue with next frequency after this interval            
         
-        #end adding frequencies into the interval if the next freq is out of the fm_deviation 
+        #jf the next frequency is not within fm_deviation, add to the master list as an one-element list
         elif freq_list[ind+1] - freq_list[ind] > fm_range:
             freq_subgroups.append(freq_interval)
             ind+=1 #go look at the next frequency if there is any        
@@ -75,6 +75,7 @@ def get_freq_subgroups(freq_list,fm_range):
     #if the last frequency has not been included, add it to the master list as an one-element list 
     if ind == len(freq_list)-1:
         freq_subgroups.append([freq_list[-1]])     
+    
     return freq_subgroups
 
 #%%
@@ -154,10 +155,12 @@ for ind_sublist in range(len(freq_sublist)):
     pulser.constant(state)
     if input('Enter nothing to continue or "q" to quit: ') == 'q':
         break    
-    cxn.microwave_signal_generator.mod_off()
-    cxn.microwave_signal_generator.uwave_off()
-    state = OutputState([], 0.0, 0.0)
-    pulser.constant(state)
+    
+#turn off the microwave signal generator
+cxn.microwave_signal_generator.mod_off()
+cxn.microwave_signal_generator.uwave_off()
+state = OutputState([], 0.0, 0.0)
+pulser.constant(state)
     
     
     
