@@ -132,7 +132,6 @@ def get_freq_subgroups(freq_list,fm_range):
 #turn the microwave on and  set up the pulse streamer
 with labrad.connect() as cxn:
     cxn.microwave_signal_generator.set_amp(uwave_power)
-    cxn.microwave_signal_generator.load_fm(fm_dev)
     cxn.microwave_signal_generator.uwave_on()
 pulser = Pulser('128.104.160.11')
 
@@ -151,10 +150,20 @@ for ind_sublist in range(len(freq_sublist)):
     
     #load the voltages into the microwave signal generater
     cxn.microwave_signal_generator.set_freq(freq_subcenter)
-    state = OutputState([4], ao_voltages[ind_sublist], 0.0)
-    pulser.constant(state)
-    if input('Enter nothing to continue or "q" to quit: ') == 'q':
-        break    
+            
+    #load the analog voltage into the DAQ
+    cxn.microwave_signal_generator.load_fm(fm_dev,ao_voltages)
+    
+    #send out the clock pulse and change the frequency
+    for ind_interval in range(len(ao_voltages)-1):        
+        #set the clock state to be low at first
+        clock_state = OutputState([], 0.0, 0.0)
+        pulser.constant(clock_state)
+        if input('Enter nothing to continue or "q" to quit: ') == 'q':
+            break    
+        #send out the clock pulse so that the frequency is moved to tthe next 
+        clock_state = OutputState([0], 0.0, 0.0)
+        pulser.constant(clock_state)
     
 #turn off the microwave signal generator
 cxn.microwave_signal_generator.mod_off()

@@ -127,41 +127,45 @@ def main(cxn, coords, nd_filter, apd_index, expected_counts, freq_center, freq_r
 #3.003333333333333, 3.07]
 #output: [[2.67, 2.7366666666666664], [2.8033333333333332, 2.87], [2.9366666666666665, 
 #3.003333333333333], [3.07]]
-def get_freq_subgroups(freq_list,fm_range):
+    def get_freq_subgroups(freq_list,fm_range):
 
     #the master list of intervals we want to get 
-    freq_subgroups = []
+        freq_subgroups = []
     
     #loop over the freq_list except the last element
-    ind = 0
-    while ind < len(freq_list)-1:
+        ind = 0
+        while ind < len(freq_list)-1:
         
     #set the freq_interval to be a list containing the first frequency in an interval
-        freq_interval = [freq_list[ind]]
+            freq_interval = [freq_list[ind]]
         
         #if the next frequency is within fm_deviation, go look at the rest frequencies
-        if freq_list[ind+1] - freq_list[ind] <= fm_range:                     
+            if freq_list[ind+1] - freq_list[ind] <= fm_range:                     
         #add all the frequencies that are within the fm_deviation into the interval list    
-            for ind2 in range(ind+1,len(freq_list)):
-                if freq_list[ind2]-freq_list[ind] <= fm_range:
-                    freq_interval.append(freq_list[ind2])
-                else:                    
-                    break                    
+                for ind2 in range(ind+1,len(freq_list)):
+                    if freq_list[ind2]-freq_list[ind] <= fm_range:
+                        freq_interval.append(freq_list[ind2])
+                    else:                    
+                        break                    
         #once the fm_deviation is passed, an interval is completed and append this interval to the master list    
-            freq_subgroups.append(freq_interval)
-            ind += len(freq_interval) #the loop will continue with next frequency after this interval            
+                freq_subgroups.append(freq_interval)
+                ind += len(freq_interval) #the loop will continue with next frequency after this interval            
         
         #jf the next frequency is not within fm_deviation, add this frequency as an one-element list
-        elif freq_list[ind+1] - freq_list[ind] > fm_range:
-            freq_subgroups.append(freq_interval)
-            ind+=1 #go look at the next frequency if there is any        
+            elif freq_list[ind+1] - freq_list[ind] > fm_range:
+                freq_subgroups.append(freq_interval)
+                ind+=1 #go look at the next frequency if there is any        
     
     #if the last frequency has not been included, add it to the master list as an one-element list 
-    if ind == len(freq_list)-1:
-        freq_subgroups.append([freq_list[-1]])     
-    return freq_subgroups
-
-
+        if ind == len(freq_list)-1:
+            freq_subgroups.append([freq_list[-1]])     
+            return freq_subgroups
+    
+    #loop through each interval we have gotten from get_freq_subgroups
+    freq_sublist = get_freq_subgroups(freq_list,fm_dev*2)
+    for ind_sublist in range(len(freq_sublist)):
+        
+    
     # %% Process and plot the data
 
     # Find the averages across runs

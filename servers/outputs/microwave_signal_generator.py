@@ -133,13 +133,13 @@ class MicrowaveSignalGenerator(LabradServer):
 #    @setting(4, fm_range='v[]', voltages='*v[]', period='i')
 #    def load_fm(self, c, fm_range, voltages, period):
     @setting(4, fm_range='v[]')
-    def load_fm(self, c, fm_range):
+    def load_fm(self, c, fm_dev, voltages):
         """Set up frequency modulation via an external voltage. This has never
         been used or tested and needs work.
         """
 
         # Set up the DAQ AO that will control the modulation
-#        self.load_stream_writer('UwaveSigGen-load_fm', voltages, period)
+        self.load_stream_writer('UwaveSigGen-load_fm', voltages, period)
         
         # Turn on FM
         self.sig_gen.write('MODL 1')
