@@ -36,7 +36,7 @@ def stretch_exp(x, offset, amp, delay, beta):
 # %% Figure functions
 
 
-def create_raw_figure(precession_times, avg_sig_counts, ref_sig_counts
+def create_raw_figure(precession_times, avg_sig_counts, ref_sig_counts,
                       norm_avg_sig):
 
     # Get the figure and axes

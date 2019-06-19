@@ -119,7 +119,8 @@ class PulseStreamer(LabradServer):
             seq_file: str
                 A sequence file from the sequence library
             num_repeat: int
-                Number of times to repeat the sequence. Default is 1
+                Number of times to repeat the sequence. Default is 1.
+                -1 for infinite.
             args: list(any)
                 Arbitrary list used to modulate a sequence from the sequence
                 library - see simple_readout.py for an example. Default is
@@ -178,7 +179,8 @@ class PulseStreamer(LabradServer):
 
         Params
             num_repeat: int
-                Number of times to repeat the sequence. Default is 1
+                Number of times to repeat the sequence. Default is 1.
+                -1 for infinite.
         """
 
         if self.seq == None:
