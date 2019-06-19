@@ -18,27 +18,25 @@ def get_seq(pulser_wiring, args):
 
     # The first 9 args are ns durations and we need them as int64s
     durations = []
-    for ind in range(9):
+    for ind in range(10):
         durations.append(numpy.int64(args[ind]))
 
     # Unpack the durations
     tau, polarization_time, reference_time, signal_wait_time, \
         reference_wait_time, background_wait_time, aom_delay_time, \
-        gate_time, max_tau = durations
+        uwave_delay, gate_time, max_tau = durations
 
     # Get the APD indices
-    apd_index = args[9]
+    apd_index = args[10]
 
     # Signify which signal generator to use
-    do_uwave_gate = args[10]
+    do_uwave_gate = args[11]
 
     # Get what we need out of the wiring dictionary
     key = 'do_apd_gate_{}'.format(apd_index)
     pulser_do_apd_gate = pulser_wiring[key]
-    if do_uwave_gate == 0:
-        pulser_do_uwave = pulser_wiring['do_uwave_gate_0']
-    if do_uwave_gate == 1:
-        pulser_do_uwave = pulser_wiring['do_uwave_gate_1']
+    key = 'do_uwave_gate_{}'.format(do_uwave_gate)
+    pulser_do_uwave = pulser_wiring[key]
     pulser_do_aom = pulser_wiring['do_aom']
 
     # %% Couple calculated values
@@ -85,10 +83,11 @@ def get_seq(pulser_wiring, args):
     seq.setDigital(pulser_do_aom, train)
 
     # Pulse the microwave for tau
-    pre_duration = aom_delay_time + polarization_time + signal_wait_time
+    pre_duration = aom_delay_time + polarization_time + \
+        signal_wait_time - uwave_delay
     post_duration = signal_wait_time + polarization_time + \
         reference_wait_time + reference_time + \
-        background_wait_time + end_rest_time
+        background_wait_time + end_rest_time + uwave_delay
     train = [(pre_duration, LOW), (tau, HIGH), (post_duration, LOW)]
     seq.setDigital(pulser_do_uwave, train)
 
@@ -97,11 +96,11 @@ def get_seq(pulser_wiring, args):
 
 if __name__ == '__main__':
     wiring = {'do_daq_clock': 0,
-              'do_apd_gate_0': 5,
-              'do_apd_gate_1': 5,
-              'do_aom': 3,
-              'do_uwave_gate_0': 4,
-              'do_uwave_gate_1': 1}
-    args = [120, 3000, 1000, 1000, 2000, 1000, 750, 450, 400, 0, 0]
+              'do_apd_gate_0': 1,
+              'do_aom': 2,
+              'do_uwave_gate_0': 3}
+#    args = [100, 3000, 1000, 1000, 2000, 1000, 750, 40, 450, 100, 0, 0]
+#    args = [100, 3000, 1000, 1000, 2000, 1000, 0, 0, 450, 100, 0, 0]
+    args = [100, 3000, 1000, 1000, 2000, 1000, 750, 0, 450, 100, 0, 0]
     seq = get_seq(wiring, args)[0]
     seq.plot()

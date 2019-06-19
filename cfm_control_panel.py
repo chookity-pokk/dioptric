@@ -125,13 +125,16 @@ def do_pulsed_resonance(name, nv_sig, nd_filter, apd_indices,
                         freq_center=2.87, freq_range=0.2):
 
     num_steps = 101
+    num_reps = 10**5
     num_runs = 1
     uwave_power = 9.0  # 9.0 is the highest reasonable value, accounting for saturation
+    pi_pulse = 130
 
     with labrad.connect() as cxn:
         pulsed_resonance.main(cxn, nv_sig, nd_filter, apd_indices,
-                              freq_center, freq_range, num_steps, num_runs,
-                              uwave_power, name=name)
+                              freq_center, freq_range,
+                              num_steps, num_reps, num_runs,
+                              uwave_power, pi_pulse, name=name)
 
 def do_rabi(name, nv_sig, nd_filter, apd_indices,
             uwave_freq, do_uwave_gate_number):
@@ -425,7 +428,7 @@ if __name__ == '__main__':
 #            do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.76, freq_range=0.10)
 #            do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.78, freq_range=0.05)
 #            do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.95, freq_range=0.05)
-#            do_pulsed_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.78, freq_range=0.05)
+            do_pulsed_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.78, freq_range=0.05)
 #            do_pulsed_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.95, freq_range=0.05)
 #            do_rabi(name, nv_sig, nd_filter, apd_indices, 2.7857, 0)
 #            do_rabi(name, nv_sig, nd_filter, apd_indices, 2.9498, 1)
@@ -435,29 +438,29 @@ if __name__ == '__main__':
 
 #         %% FULL CONTROL T1
 
-        for nv_ind in range(len(params_array)):
-
-            nv_sig = params_array[nv_ind, 0]
-
-            uwave_freq_plus = params_array[nv_ind, 1]
-            uwave_pi_pulse_plus = params_array[nv_ind, 2]
-            uwave_freq_minus = params_array[nv_ind, 3]
-            uwave_pi_pulse_minus = params_array[nv_ind, 4]
-
-            for exp_ind in range(len(t1_exp_array)):
-#            for exp_ind in [2,3,4,5,6,7]:
-
-                init_read_list = t1_exp_array[exp_ind, 0]
-                relaxation_time_range = t1_exp_array[exp_ind, 1]
-                num_steps = t1_exp_array[exp_ind, 2]
-                num_reps = t1_exp_array[exp_ind, 3]
-
-                do_t1_double_quantum(name, nv_sig, nd_filter,
-                              apd_indices,
-                              uwave_freq_plus, uwave_freq_minus,
-                              uwave_pi_pulse_plus, uwave_pi_pulse_minus,
-                              relaxation_time_range, num_steps, num_reps,
-                              init_read_list)
+#        for nv_ind in range(len(params_array)):
+#
+#            nv_sig = params_array[nv_ind, 0]
+#
+#            uwave_freq_plus = params_array[nv_ind, 1]
+#            uwave_pi_pulse_plus = params_array[nv_ind, 2]
+#            uwave_freq_minus = params_array[nv_ind, 3]
+#            uwave_pi_pulse_minus = params_array[nv_ind, 4]
+#
+#            for exp_ind in range(len(t1_exp_array)):
+##            for exp_ind in [2,3,4,5,6,7]:
+#
+#                init_read_list = t1_exp_array[exp_ind, 0]
+#                relaxation_time_range = t1_exp_array[exp_ind, 1]
+#                num_steps = t1_exp_array[exp_ind, 2]
+#                num_reps = t1_exp_array[exp_ind, 3]
+#
+#                do_t1_double_quantum(name, nv_sig, nd_filter,
+#                              apd_indices,
+#                              uwave_freq_plus, uwave_freq_minus,
+#                              uwave_pi_pulse_plus, uwave_pi_pulse_minus,
+#                              relaxation_time_range, num_steps, num_reps,
+#                              init_read_list)
 
 
     finally:

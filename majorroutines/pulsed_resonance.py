@@ -21,16 +21,10 @@ import matplotlib.pyplot as plt
 
 
 def main(cxn, nv_sig, nd_filter, apd_indices, freq_center, freq_range,
-         num_steps, num_runs, uwave_power, name='untitled'):
+         num_steps, num_reps, num_runs, uwave_power, pi_pulse,
+         name='untitled'):
 
     # %% Initial calculations and setup
-
-    # Set up for the pulser - we can't load the sequence yet until after 
-    # optimize runs since optimize loads its own sequence
-    readout = 100 * 10**6  # 0.1 s
-    readout_sec = readout / (10**9)
-    uwave_switch_delay = 100 * 10**6  # 0.1 s to open the gate
-    sequence_args = [readout, uwave_switch_delay, apd_indices[0]]
 
     # Calculate the frequencies we need to set
     half_freq_range = freq_range / 2
@@ -48,18 +42,19 @@ def main(cxn, nv_sig, nd_filter, apd_indices, freq_center, freq_range,
     sig_counts = numpy.copy(ref_counts)
     
     # Define some times for the sequence (in ns)
-    pi_pulse = 100
     polarization_time = 3 * 10**3
     reference_time = 1 * 10**3
     signal_wait_time = 1 * 10**3
     reference_wait_time = 2 * 10**3
     background_wait_time = 1 * 10**3
     aom_delay_time = 750
-    gate_time = 450
+    readout = 450
+    readout_sec = readout // (10**9)
+    uwave_delay = 40  # Delay between pulse and microwave gate open
     sequence_args = [pi_pulse, polarization_time, reference_time,
                     signal_wait_time, reference_wait_time,
-                    background_wait_time, aom_delay_time,
-                    gate_time, pi_pulse,
+                    background_wait_time, aom_delay_time, uwave_delay,
+                    readout, pi_pulse,
                     apd_indices[0], 0]
     
     opti_coords_list = []
@@ -102,10 +97,11 @@ def main(cxn, nv_sig, nd_filter, apd_indices, freq_center, freq_range,
                 cxn.microwave_signal_generator.uwave_on()
 
             # Start the timing stream
-            cxn.pulse_streamer.stream_start(10**5)
+            cxn.pulse_streamer.stream_start(num_reps)
 
             # Get the counts
             new_counts = cxn.apd_tagger.read_counter_separate_gates(1)
+            print(new_counts)
             
             sample_counts = new_counts[0]
             
@@ -178,8 +174,8 @@ def main(cxn, nv_sig, nd_filter, apd_indices, freq_center, freq_range,
                'uwave_power-units': 'dBm',
                'readout': readout,
                'readout-units': 'ns',
-               'uwave_switch_delay': uwave_switch_delay,
-               'uwave_switch_delay-units': 'ns',
+               'uwave_delay': uwave_delay,
+               'uwave_delay-units': 'ns',
                'sig_counts': sig_counts.astype(int).tolist(),
                'sig_counts-units': 'counts',
                'ref_counts': ref_counts.astype(int).tolist(),

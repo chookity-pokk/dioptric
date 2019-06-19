@@ -41,7 +41,7 @@ def main(cxn, nv_sig, nd_filter, apd_indices,
     elif do_uwave_gate == 1:
         do_uwave_gen = 'HP'
     
-    # Define some times (in ns)
+    # Sequence prep (times are in ns)
     polarization_time = 3 * 10**3
     reference_time = 1 * 10**3
     signal_wait_time = 1 * 10**3
@@ -49,6 +49,8 @@ def main(cxn, nv_sig, nd_filter, apd_indices,
     background_wait_time = 1 * 10**3
     aom_delay_time = 750
     gate_time = 450
+    uwave_delay= 40  # Delay between pulse and microwave gate open
+    file_name = os.path.basename(__file__)
 
     # Array of times to sweep through
     # Must be ints since the pulse streamer only works with int64s
@@ -56,15 +58,6 @@ def main(cxn, nv_sig, nd_filter, apd_indices,
     max_uwave_time = uwave_time_range[1]
     taus = numpy.linspace(min_uwave_time, max_uwave_time,
                           num=num_steps, dtype=numpy.int32)
-
-    # Analyze the sequence
-    file_name = os.path.basename(__file__)
-    sequence_args = [taus[0], polarization_time, reference_time,
-                    signal_wait_time, reference_wait_time,
-                    background_wait_time, aom_delay_time,
-                    gate_time, max_uwave_time,
-                    apd_indices[0], do_uwave_gate]
-    cxn.pulse_streamer.stream_load(file_name, sequence_args, 1)
 
     # Set up our data structure, an array of NaNs that we'll fill
     # incrementally. NaNs are ignored by matplotlib, which is why they're
@@ -122,7 +115,7 @@ def main(cxn, nv_sig, nd_filter, apd_indices,
             # Stream the sequence
             args = [taus[tau_ind], polarization_time, reference_time,
                     signal_wait_time, reference_wait_time,
-                    background_wait_time, aom_delay_time,
+                    background_wait_time, aom_delay_time, uwave_delay,
                     gate_time, max_uwave_time,
                     apd_indices[0], do_uwave_gate]
             cxn.pulse_streamer.stream_immediate(file_name, num_reps, args, 1)
