@@ -78,17 +78,30 @@ class ArbitraryWaveformGenerator(LabradServer):
         self.wave_gen.write('SOUR2:FUNC DC')
         self.wave_gen.write('SOUR2:VOLT:OFFS 0.0')
         self.wave_gen.write('OUTP2 ON')
+        
+        # Set to arbitrary mode
+        self.wave_gen.write('SOUR1:FUNC ARB')
+        self.wave_gen.write('SOUR2:FUNC ARB')
 
         # Load the waveforms we just set up
         self.wave_gen.write('SOUR1:FUNC:ARB i_voltages')
         self.wave_gen.write('SOUR2:FUNC:ARB q_voltages')
+        
+        # Set the amplitude
+        self.wave_gen.write('SOUR1:FUNC:ARB:PTP 1.0')
+        self.wave_gen.write('SOUR2:FUNC:ARB:PTP 1.0')
+        
+        # Turn off the filter so we can use an external trigger
+        self.wave_gen.write('SOUR1:FUNC:ARB:FILT OFF')
+        self.wave_gen.write('SOUR2:FUNC:ARB:FILT OFF')
 
         # Set the trigger to the rising edge of an external source
         self.wave_gen.write('TRIG:SOUR EXT')
         self.wave_gen.write('TRIG:SLOP POS')
 
         # Advance through waveform points based on the trigger
-        self.wave_gen.write('FUNC:ARB:ADV TRIG')
+        self.wave_gen.write('SOUR1:FUNC:ARB:ADV TRIG')
+        self.wave_gen.write('SOUR2:FUNC:ARB:ADV TRIG')
 
         # Be sure the waveforms are set to the beginning
         self.wave_gen.write('FUNC:ARB:SYNC')
