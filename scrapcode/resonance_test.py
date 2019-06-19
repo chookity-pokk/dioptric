@@ -10,22 +10,28 @@ Created on Wed Jun 12 11:26:41 2019
 import numpy
 from pulsestreamer import OutputState
 from pulsestreamer import PulseStreamer as Pulser 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import labrad
-#import nidaqmx
-#import nidaqmx.stream_writers as stream_writers
 
-    
-actural_freqs = [2.85, 2.852, 2.854, 2.856, 2.858, 
+# PulseStreamer FM
+actual_freqs = [2.85, 2.852, 2.854, 2.856, 2.858, 
                   2.86, 2.862, 2.864, 2.866, 2.868, 2.87, 2.872, 2.874, 
                   2.876, 2.878, 2.88, 2.882, 2.884, 2.886, 2.888, 2.89]
 
+# DAQ FM
+actual_freqs = [2.67, 2.689125, 2.709375, 2.729625, 2.749875, 2.770125,
+                2.78925, 2.8095, 2.82975, 2.85, 2.869125, 2.889375,
+                2.909625, 2.929875, 2.950125, 2.96925, 2.9895, 3.00975, 3.03,
+                3.049125, 3.040125]
 
-num_steps = 21 
+# Direct frequency setting
+actual_freqs = []
+
+num_steps = 21
 freq_center = 2.87  # GHz
-fm_dev = 0.034  # GHz
+max_fm_dev = 0.032  # GHz
 uwave_power = 5.0  # dBm
-freq_range = 0.4
+freq_range = 0.4  # 2.67 - 3.07
 freq_deviation = freq_range/2
 
 freq_low = freq_center - freq_deviation
@@ -34,7 +40,7 @@ freq_high = freq_center + freq_deviation
 #divide the frequencies range into intervals so that each interval can be covered 
 #by the fm deviation
 #in order to make sure that the whole frequency range has been included 
-freq_list = numpy.linspace(freq_low, freq_high, int(freq_deviation//fm_dev)+2).tolist()   
+freq_list = numpy.linspace(freq_low, freq_high, num_steps).tolist()   
 
 #%%
 #this function returns a list of lists which each represents the interval that fm can cover
@@ -84,13 +90,15 @@ def get_freq_subgroups(freq_list,fm_range):
 #print(ao_voltages)
 
 # make a plot of the expected frequencies vs. the actural frequences we get 
-#plt.plot(ao_voltages,actural_freqs,color = 'red')
-#plt.plot(ao_voltages,expected_freqs,color = 'blue')
+plt.plot(actual_freqs, freq_list, 'bo')
+line = numpy.linspace(freq_list[0], freq_list[-1], 1000)
+plt.plot(line, line, 'r-')
 #plt.axis([-1,1,2.68,3.08])
 #plt.text(-0.75,3.00,'red = actural freqs, blue = expected freqs')
 #plt.xlabel('voltages/V')
 #plt.ylabel('actural frequencies/MHZ')
-#plt.show()
+plt.show()
+    
 #pulser = Pulser('128.104.160.11')
 
 #with labrad.connect() as cxn:
@@ -133,50 +141,47 @@ def get_freq_subgroups(freq_list,fm_range):
 with labrad.connect() as cxn:
     cxn.microwave_signal_generator.set_amp(uwave_power)
     cxn.microwave_signal_generator.uwave_on()
-pulser = Pulser('128.104.160.11')
-
-#Loop over each interval in the freq_subgroups
-#set +1,-1 corresponding to the max and min frequencies in each interval
-freq_sublist = get_freq_subgroups(freq_list,fm_dev*2)
-print(freq_sublist)
-
-for ind_sublist in range(len(freq_sublist)):
+    pulser = Pulser('128.104.160.11')
     
-    #set the center frequency to be the mean value of frequencies in an interval
-    freq_subcenter = (freq_sublist[ind_sublist][-1]-freq_sublist[ind_sublist][0])/2
     
-    #match the voltages to the frequencies
-    ao_voltages = numpy.linspace(-1.0, +1.0, len(freq_sublist[ind_sublist])).tolist()
+    #Loop over each interval in the freq_subgroups
+    #set +1,-1 corresponding to the max and min frequencies in each interval
+    freq_sublist = get_freq_subgroups(freq_list, max_fm_dev*2)
     
-    #load the voltages into the microwave signal generater
-    cxn.microwave_signal_generator.set_freq(freq_subcenter)
+    for ind_sublist in range(len(freq_sublist)):
+        
+        #set the center frequency to be the mean value of frequencies in an interval
+        freq_subcenter = (freq_sublist[ind_sublist][-1]+freq_sublist[ind_sublist][0])/2
+        
+        #match the voltages to the frequencies
+        ao_voltages = numpy.linspace(-1.0, +1.0, len(freq_sublist[ind_sublist])).tolist() 
+        
+        #load the voltages into the microwave signal generater
+        cxn.microwave_signal_generator.set_freq(freq_subcenter)
+               
+        #load the analog voltage into the DAQ
+        fm_dev = freq_subcenter - freq_sublist[ind_sublist][0]
+        cxn.microwave_signal_generator.load_fm(fm_dev, ao_voltages)        
+                        
+        #send out the clock pulse and change the frequency
+        for ind_interval in range(len(ao_voltages)):        
+            #set the clock state to be low at first
+            clock_state = OutputState([4], 0.0, 0.0)
+            pulser.constant(clock_state)
+            input_val = input('Enter nothing to continue or "q" to quit: ')
+            if input_val == 'q':
+                break    
+            #send out the clock pulse so that the frequency is moved to tthe next 
+            clock_state = OutputState([0, 4], 0.0, 0.0)
+            pulser.constant(clock_state)
             
-    #load the analog voltage into the DAQ
-    cxn.microwave_signal_generator.load_fm(fm_dev,ao_voltages)
-    
-    #send out the clock pulse and change the frequency
-    for ind_interval in range(len(ao_voltages)-1):        
-        #set the clock state to be low at first
-        clock_state = OutputState([], 0.0, 0.0)
-        pulser.constant(clock_state)
-        if input('Enter nothing to continue or "q" to quit: ') == 'q':
-            break    
-        #send out the clock pulse so that the frequency is moved to tthe next 
-        clock_state = OutputState([0], 0.0, 0.0)
-        pulser.constant(clock_state)
-    
-#turn off the microwave signal generator
-cxn.microwave_signal_generator.mod_off()
-cxn.microwave_signal_generator.uwave_off()
-state = OutputState([], 0.0, 0.0)
-pulser.constant(state)
-    
-    
-    
-    
-    
-    
-    
-    
+        if input_val == 'q':
+            break   
+        
+    #turn off the microwave signal generator
+    cxn.microwave_signal_generator.mod_off()
+    cxn.microwave_signal_generator.uwave_off()
+    state = OutputState([], 0.0, 0.0)
+    pulser.constant(state)
     
     

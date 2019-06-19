@@ -29,6 +29,7 @@ import visa  # Docs here: https://pyvisa.readthedocs.io/en/master/
 import nidaqmx
 import nidaqmx.stream_writers as stream_writers
 from nidaqmx.constants import AcquisitionType
+import numpy
 
 
 class MicrowaveSignalGenerator(LabradServer):
@@ -100,13 +101,42 @@ class MicrowaveSignalGenerator(LabradServer):
         # Determine how many decimal places we need
         precision = len(str(amp).split('.')[1])
         self.sig_gen.write('AMPR {0:.{1}f}DBM'.format(amp, precision))
-
-    def load_stream_writer(self, task_name, voltages, period):
-        # Close the existing task and create a new one
+        
+    def close_task_internal(self):
         if self.task is not None:
             self.task.close()
+            self.task = None
+
+    def daq_write_to_mod(self, voltage):
+        """Write the specified voltage."""
+
+        # Close the stream task if it exists
+        # This can happen if we quit out early
+        if self.task is not None:
+            self.close_task_internal()
+
+        with nidaqmx.Task() as task:
+            # Set up the output channels
+            task.ao_channels.add_ao_voltage_chan(self.daq_ao_sig_gen_mod,
+                                                 min_val=-1.0, max_val=1.0)
+            task.write(voltage)
+
+    def load_stream_writer(self, task_name, voltages, period=0.001*10**9):
+        
+        # Close the existing task
+        if self.task is not None:
+            self.close_task_internal()
         task = nidaqmx.Task(task_name)
-        self.stream_task = task
+
+        # Write the initial voltages and stream the rest
+        num_voltages = len(voltages)
+        self.daq_write_to_mod(voltages[0])
+        stream_voltages = voltages[1:]
+        stream_voltages = numpy.ascontiguousarray(stream_voltages)
+        num_stream_voltages = num_voltages - 1
+        
+        # Create a new task
+        self.task = task
 
         # Set up the output channels
         task.ao_channels.add_ao_voltage_chan(self.daq_ao_sig_gen_mod,
@@ -114,35 +144,33 @@ class MicrowaveSignalGenerator(LabradServer):
 
         # Set up the output stream
         output_stream = nidaqmx.task.OutStream(task)
-        writer = stream_writers.AnalogMultiChannelWriter(output_stream)
+        writer = stream_writers.AnalogSingleChannelWriter(output_stream)
 
         # Configure the sample to advance on the rising edge of the PFI input.
         # The frequency specified is just the max expected rate in this case.
         # We'll stop once we've run all the samples.
         freq = float(1/(period*(10**-9)))  # freq in seconds as a float
         task.timing.cfg_samp_clk_timing(freq, source=self.daq_di_pulser_clock,
-                                        sample_mode=AcquisitionType.CONTINUOUS)
+                                        samps_per_chan=num_stream_voltages)
 
-        # Start the task before writing so that the channel will sit on
-        # the last value when the task stops. The first sample won't actually
-        # be written until the first clock signal.
+        writer.write_many_sample(stream_voltages)
+
+        # Close the task once we've written all the samples
+        task.register_done_event(self.close_task_internal)
+
         task.start()
-
-        writer.write_many_sample(voltages)
 
 #    @setting(4, fm_range='v[]', voltages='*v[]', period='i')
 #    def load_fm(self, c, fm_range, voltages, period):
-    @setting(4, fm_range='v[]')
+    @setting(4, fm_dev='v[]')
     def load_fm(self, c, fm_dev, voltages):
         """Set up frequency modulation via an external voltage. This has never
         been used or tested and needs work.
         """
 
         # Set up the DAQ AO that will control the modulation
-        self.load_stream_writer('UwaveSigGen-load_fm', voltages, period)
+        self.load_stream_writer('UwaveSigGen-load_fm', voltages)
         
-        # Turn on FM
-        self.sig_gen.write('MODL 1')
         # Set external modulation coupling to DC
         self.sig_gen.write('COUP 1')
         # Simple FM is type 1, subtype 0
@@ -151,8 +179,10 @@ class MicrowaveSignalGenerator(LabradServer):
         # Set to an external source
         self.sig_gen.write('MFNC 5')
         # Set the range of the modulation
-        precision = len(str(fm_range).split('.')[1])
-        self.sig_gen.write('FDEV {0:.{1}f}GHZ'.format(fm_range, precision))
+        precision = len(str(fm_dev).split('.')[1])
+        self.sig_gen.write('FDEV {0:.{1}f}GHZ'.format(fm_dev, precision))
+        # Turn on FM
+        self.sig_gen.write('MODL 1')
         
     @setting(5)
     def mod_off(self, c):
