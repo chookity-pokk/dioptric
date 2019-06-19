@@ -43,6 +43,10 @@ def get_seq(pulser_wiring, args):
     train = [(half_period, HIGH),
              (half_period, LOW)]
     seq.setDigital(chan, train)
+    
+    chan = pulser_wiring['do_uwave_gate_0']
+    train = [(period, HIGH)]
+    seq.setDigital(chan, train)
 
     return seq, []
 

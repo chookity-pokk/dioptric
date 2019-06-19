@@ -162,7 +162,7 @@ class MicrowaveSignalGenerator(LabradServer):
     def load_iq_mod(self, c):
         # Load IQ modulation with an external source
         self.sig_gen.write('QFNC 5')
-        # Turn on m,odulation
+        # Turn on modulation
         self.sig_gen.write('MODL 1')
 
 

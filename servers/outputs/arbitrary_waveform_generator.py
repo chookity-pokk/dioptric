@@ -87,9 +87,9 @@ class ArbitraryWaveformGenerator(LabradServer):
         self.wave_gen.write('SOUR1:FUNC:ARB i_voltages')
         self.wave_gen.write('SOUR2:FUNC:ARB q_voltages')
         
-        # Set the amplitude
-        self.wave_gen.write('SOUR1:FUNC:ARB:PTP 1.0')
-        self.wave_gen.write('SOUR2:FUNC:ARB:PTP 1.0')
+        # Set the amplitude to the full 2.0 V range
+        self.wave_gen.write('SOUR1:FUNC:ARB:PTP 2.0')
+        self.wave_gen.write('SOUR2:FUNC:ARB:PTP 2.0')
         
         # Turn off the filter so we can use an external trigger
         self.wave_gen.write('SOUR1:FUNC:ARB:FILT OFF')
