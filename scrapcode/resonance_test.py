@@ -42,6 +42,7 @@ freq_high = freq_center + freq_deviation
 #in order to make sure that the whole frequency range has been included 
 freq_list = numpy.linspace(freq_low, freq_high, num_steps).tolist()   
 
+
 #%%
 #this function returns a list of lists which each represents the interval that fm can cover
 #example: divide a frequency range over 2.67 to 3.07 and fm_range is 0.034*2
@@ -147,37 +148,42 @@ with labrad.connect() as cxn:
     #Loop over each interval in the freq_subgroups
     #set +1,-1 corresponding to the max and min frequencies in each interval
     freq_sublist = get_freq_subgroups(freq_list, max_fm_dev*2)
+    print(freq_sublist)
     
     for ind_sublist in range(len(freq_sublist)):
         
-        #set the center frequency to be the mean value of frequencies in an interval
-        freq_subcenter = (freq_sublist[ind_sublist][-1]+freq_sublist[ind_sublist][0])/2
-        
-        #match the voltages to the frequencies
-        ao_voltages = numpy.linspace(-1.0, +1.0, len(freq_sublist[ind_sublist])).tolist() 
-        
-        #load the voltages into the microwave signal generater
-        cxn.microwave_signal_generator.set_freq(freq_subcenter)
-               
-        #load the analog voltage into the DAQ
-        fm_dev = freq_subcenter - freq_sublist[ind_sublist][0]
-        cxn.microwave_signal_generator.load_fm(fm_dev, ao_voltages)        
-                        
-        #send out the clock pulse and change the frequency
-        for ind_interval in range(len(ao_voltages)):        
-            #set the clock state to be low at first
-            clock_state = OutputState([4], 0.0, 0.0)
-            pulser.constant(clock_state)
-            input_val = input('Enter nothing to continue or "q" to quit: ')
-            if input_val == 'q':
-                break    
-            #send out the clock pulse so that the frequency is moved to tthe next 
-            clock_state = OutputState([0, 4], 0.0, 0.0)
-            pulser.constant(clock_state)
+        #if the interval contains one element,simply set the frequency equal to this frequency
+        if len(freq_sublist[ind_sublist])==1:
+            cxn.microwave_signal_generator.set_freq(freq_sublist[ind_sublist][0])
+        else:      
+            #set the center frequency to be the mean value of frequencies in an interval
+            freq_subcenter = (freq_sublist[ind_sublist][-1]+freq_sublist[ind_sublist][0])/2
             
-        if input_val == 'q':
-            break   
-        
+            #match the voltages to the frequencies
+            ao_voltages = numpy.linspace(-1.0, +1.0, len(freq_sublist[ind_sublist])).tolist() 
+            
+            #load the voltages into the microwave signal generater
+            cxn.microwave_signal_generator.set_freq(freq_subcenter)
+                   
+            #load the analog voltage into the DAQ
+            fm_dev = freq_subcenter - freq_sublist[ind_sublist][0]
+            cxn.microwave_signal_generator.load_fm(fm_dev, ao_voltages)        
+                            
+            #send out the clock pulse and change the frequency
+            for ind_interval in range(len(ao_voltages)):        
+                #set the clock state to be low at first
+                clock_state = OutputState([4], 0.0, 0.0)
+                pulser.constant(clock_state)
+                input_val = input('Enter nothing to continue or "q" to quit: ')
+                if input_val == 'q':
+                    break    
+                #send out the clock pulse so that the frequency is moved to tthe next 
+                clock_state = OutputState([0, 4], 0.0, 0.0)
+                pulser.constant(clock_state)
+                
+            if input_val == 'q':
+                break   
+            
     #turn off the microwave signal generator
     cxn.microwave_signal_generator.mod_off()
     cxn.microwave_signal_generator.uwave_off()

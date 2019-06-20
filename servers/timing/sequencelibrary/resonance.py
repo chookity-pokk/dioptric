@@ -15,8 +15,9 @@ HIGH = 1
 def get_seq(pulser_wiring, args):
 
     # Unpack the args
-    readout, uwave_switch_delay, apd_index, num_steps = args
+    readout, uwave_switch_delay, apd_indices = args
     
+    num_steps = 1
     readout = numpy.int64(readout)
     readout = numpy.int64(readout)
     uwave_switch_delay = numpy.int64(uwave_switch_delay)
@@ -25,9 +26,10 @@ def get_seq(pulser_wiring, args):
 
     # Get what we need out of the wiring dictionary
     pulser_do_daq_clock = pulser_wiring['do_daq_clock']
-    pulser_do_apd_gate = pulser_wiring['do_apd_gate_{}'.format(apd_index)]
+    pulser_do_apd_gate = pulser_wiring['do_apd_gate_{}'.format(apd_indices)]
     pulser_do_uwave = pulser_wiring['do_uwave_gate_0']
     pulser_do_aom = pulser_wiring['do_aom']
+    pulser_do_uwave_clock = pulser_wiring['do_uwave-clock']
 
     seq = Sequence()
 
@@ -58,12 +60,11 @@ def get_seq(pulser_wiring, args):
     #over time 
     train = []
     
-    for i in range(num_steps):
-        train.append((readout*2 + clock_pulse + uwave_switch_delay,(-1)+i*(2/(num_steps))))
-        train.append((clock_pulse,(-1)+i*(2/(num_steps))))            
-        train.append((uwave_switch_delay, (-1)+(i+1)*(2/(num_steps))))
-    print(train)
-    seq.setAnalog(0,train)
+#    for i in range(num_steps):
+#        train.append((readout*2 + clock_pulse + uwave_switch_delay,(-1)+i*(2/(num_steps))))
+#        train.append((clock_pulse,(-1)+i*(2/(num_steps))))            
+#        train.append((uwave_switch_delay, (-1)+(i+1)*(2/(num_steps))))
+#    seq.setAnalog(0,train)
 
     #uwave sequence 
     train = []
@@ -93,7 +94,7 @@ def get_seq(pulser_wiring, args):
             train.append((uwave_switch_delay, LOW)) 
     seq.setDigital(pulser_do_apd_gate, train)
     
-    #pulser clock sequence
+    #pulser samplying clock sequence
     train = []
 
     for i in range(num_steps*2):
@@ -106,6 +107,15 @@ def get_seq(pulser_wiring, args):
             train.append((clock_pulse, HIGH))
             train.append((uwave_switch_delay, LOW)) 
     seq.setDigital(pulser_do_daq_clock, train)
+   
+    #set the uwave clock sequence
+    train = []
+    train.append((readout, LOW)) 
+    train.append((uwave_switch_delay, LOW))
+    train.append((readout, LOW)) 
+    train.append((clock_pulse, HIGH))
+    train.append((uwave_switch_delay, LOW)) 
+    seq.setDigital(pulser_do_uwave_clock, train)
 
     return seq, [period]
 
@@ -114,7 +124,8 @@ if __name__ == '__main__':
     wiring = {'do_daq_clock': 0,
               'do_apd_gate_0': 1,
               'do_aom': 2,
-              'do_uwave_gate_0': 3}
-    args = [10 * 10**6, 1* 10**6, 0 ,10]
+              'do_uwave_gate_0': 3,
+              'do_uwave-clock':4}
+    args = [10 * 10**6, 1* 10**6, 0 ,100]
     seq,ret_val = get_seq(wiring, args)
     seq.plot()
