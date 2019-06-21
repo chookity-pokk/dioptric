@@ -126,6 +126,6 @@ if __name__ == '__main__':
               'do_aom': 2,
               'do_uwave_gate_0': 3,
               'do_uwave-clock':4}
-    args = [10 * 10**6, 1* 10**6, 0 ,100]
+    args = [10 * 10**6, 1* 10**6, 0 ]
     seq,ret_val = get_seq(wiring, args)
     seq.plot()
