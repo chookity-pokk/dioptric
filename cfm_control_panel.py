@@ -93,7 +93,7 @@ def do_g2_measurement(name, coords, nd_filter, apd_a_index, apd_b_index):
                             apd_a_index, apd_b_index, name=name)
 
 
-def do_resonance(name, coords, nd_filter, apd_index, expected_counts, freq_center=2.87):
+def do_resonance(name, coords, nd_filter, apd_index, expected_counts, freq_center=2.83):
 
 #    freq_center = 2.87
     freq_range = 0.2
@@ -279,12 +279,15 @@ if __name__ == '__main__':
 
     name = 'ayrton12'  # Sample name
     
-    nd_filter = 1.5
+    nd_filter = 2.0
+#    nd_filter = 1.5
+    
+    apd_indices = [0]
 
-    apd_a_index = 0
-    apd_b_index = 1
-    apd_c_index = 2
-    apd_d_index = 3
+#    apd_a_index = 0
+#    apd_b_index = 1
+#    apd_c_index = 2
+#    apd_d_index = 3
     
     # %% NV coordinates
     
@@ -365,11 +368,13 @@ if __name__ == '__main__':
 #    nv2_2019_04_30 = [-0.045, 0.072, 56.5] # 5/30
 #    nv2_2019_04_30 = [-0.036, 0.071, 56.6]  # 5/30 after installing new magnet mount
 #    nv2_2019_04_30 = [-0.049, 0.081, 55.2]  # 5/31 after reinstalling new magnet mount
-    nv2_2019_04_30 = [-0.048, 0.077, 55.9]  # 5/31 11am
+#    nv2_2019_04_30 = [-0.048, 0.077, 55.9]  # 5/31 11am
 #    nv1_2019_05_10 = [0.286, 0.266, 56.5]
     
+    nv12_2019_06_10 = [-0.324, 0.325, 50.2, 21, 3]
+    
 #    nv_list = [center]
-    nv_list = [nv2_2019_04_30]
+#    nv_list = [nv12_2019_06_10]
 #    nv_list = [nv1_2019_05_10]
 
     # %% Image_sample scan ranges
@@ -457,21 +462,22 @@ if __name__ == '__main__':
     #                            uwave_pi_pulse_minus, expected_counts]
     #   uwave_MINUS should be associated with the HP signal generator
     
-    params_array = numpy.array([[nv2_2019_04_30, 2.8228, 90, 2.9079, 97, 62]])
+#    params_array = numpy.array([[nv2_2019_04_30, 2.8228, 90, 2.9079, 97, 62]])
 
     # %% Functions to run
     
     try:
         
-        for nv in nv_list:
-            coords = nv
+#        do_resonance(name, nv12_2019_06_10, nd_filter, apd_indices, expected_counts)
+        coords = nv12_2019_06_10[0:3]
+        do_image_sample(name, coords, nd_filter, scan_range, num_scan_steps, 0)
+        
+#        for nv in nv_list:
 #            set_xyz_zero()
-#            do_image_sample(name, coords, nd_filter, scan_range, num_scan_steps, apd_a_index)
 #            do_optimize(name, coords, nd_filter, apd_a_index)
 #            do_optimize_list(name, coords, nd_filter, apd_a_index)
 #            do_stationary_count(name, coords, nd_filter, apd_a_index)
 #            do_g2_measurement(name, coords, nd_filter, apd_a_index, apd_b_index)
-            do_resonance(name, coords, nd_filter, apd_a_index, expected_counts)
 #            ret_val = do_rabi(name, coords, nd_filter, apd_a_index, apd_b_index, expected_counts, 2.8554, 0)
 #            coords = ret_val 
 #            do_rabi(name, coords, nd_filter, apd_a_index, apd_b_index, expected_counts, 2.8228, 0)
