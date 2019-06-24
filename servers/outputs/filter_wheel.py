@@ -47,7 +47,7 @@ class FilterWheel(LabradServer):
         p = self.client.registry.packet()
         p.cd(['Config'])
         p.get('filter_wheel_usb_address')
-        p.cd(['FilterWheelIndexing'])
+        p.cd(['FilterWheelMapping'])
         p.dir()
         result = await p.send()
         return result
@@ -57,10 +57,10 @@ class FilterWheel(LabradServer):
         self.arduino = serial.Serial(config['get'], 9600, timeout=5)
         # Get the dictionary mapping ND values to the indices on the wheel
         reg_keys = config['dir'][1]  # dir returns subdirs followed by keys
-        indexing = ensureDeferred(self.get_mapping(reg_keys))
-        indexing.addCallback(self.on_get_mapping, reg_keys)
+        mapping = ensureDeferred(self.get_mapping(reg_keys))
+        mapping.addCallback(self.on_get_mapping, reg_keys)
 
-    def get_mapping(self, reg_keys)
+    async def get_mapping(self, reg_keys):
         p = self.client.registry.packet()
         for reg_key in reg_keys:
             p.get(reg_key, key=reg_key)  # Return as a dictionary
@@ -76,9 +76,12 @@ class FilterWheel(LabradServer):
         logging.debug(msg)
 
     @setting(0, filter_name='s')
-    def set_filter(filter_name):
-        filter_ind = filter_mapping[filter_name]
-        self.arduino.write(b'FILTER{}#'.format(filter_ind))
+    def set_filter(self, c, filter_name):
+        filter_ind = self.filter_mapping[filter_name]
+        filter_command = 'FILTER{}#'.format(filter_ind)
+        # Encode in bytes since that's what serial requires
+        filter_command_bytes = str.encode(filter_command)
+        self.arduino.write(filter_command_bytes)
 
 __server__ = FilterWheel()
 
