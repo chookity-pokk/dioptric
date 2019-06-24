@@ -311,7 +311,10 @@ if __name__ == '__main__':
 #    nv13_2019_06_10 = [*nv_sig_list[13][0:3], 18, 2]
 #    nv21_2019_06_10 = [*nv_sig_list[21][0:3], 15, 2]
 
-    nv_sig_list = [nv13_2019_06_10]
+    nv12_2019_06_10 = [*nv_sig_list[12][0:3], 40, 3]  # ND 1.5 6/24
+
+#    nv_sig_list = [nv13_2019_06_10]
+    nv_sig_list = [nv12_2019_06_10]
 
     # %% t1 measurements, preparation population and readout population.
 
@@ -433,9 +436,9 @@ if __name__ == '__main__':
 #            do_optimize(name, nv_sig, nd_filter, apd_indices)
 #            do_stationary_count(name, nv_sig, nd_filter, apd_indices)
 #            do_g2_measurement(name, nv_sig, nd_filter, apd_indices[0], apd_indices[1])
+            do_resonance(name, nv_sig, nd_filter, apd_indices)
 #            do_resonance(name, nv_sig, nd_filter, apd_indices)
-#            do_resonance(name, nv_sig, nd_filter, apd_indices)
-            do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.84, freq_range=0.05)
+#            do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.84, freq_range=0.05)
 #            do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.76, freq_range=0.10)
 #            do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.825, freq_range=0.05)
 #            do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.878, freq_range=0.05)
