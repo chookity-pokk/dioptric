@@ -95,16 +95,18 @@ def get_seq(pulser_wiring, args):
     seq.setDigital(pulser_do_apd_gate, train)
     
     #pulser samplying clock sequence
+    half_clock_pulse = clock_pulse // 2
     train = []
-
     for i in range(num_steps*2):
         if i%2 == 0:
             train.append((readout, LOW)) 
-            train.append((clock_pulse, HIGH))
+            train.append((half_clock_pulse, LOW))
+            train.append((half_clock_pulse, HIGH))
             train.append((uwave_switch_delay, LOW))
         elif i%2 != 0:
             train.append((readout, LOW)) 
-            train.append((clock_pulse, HIGH))
+            train.append((half_clock_pulse, LOW))
+            train.append((half_clock_pulse, HIGH))
             train.append((uwave_switch_delay, LOW)) 
     seq.setDigital(pulser_do_daq_clock, train)
    

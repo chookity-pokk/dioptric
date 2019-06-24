@@ -665,4 +665,3 @@ def reset_cfm_with_cxn(cxn):
     cxn.apd_tagger.reset()
     cxn.arbitrary_waveform_generator.reset()
     cxn.microwave_signal_generator.reset()
-    print('CFM reset!')
