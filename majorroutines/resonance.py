@@ -129,7 +129,8 @@ def main(cxn, nv_sig, nd_filter, apd_indices, freq_center, freq_range,
         opti_coords_list.append(opti_coords)
 
         # Load the APD task with two samples for each frequency step
-        cxn.pulse_streamer.stream_load(file_name, sequence_args)
+        ret_vals = cxn.pulse_streamer.stream_load(file_name, sequence_args)
+        period = ret_vals[0]
         cxn.apd_tagger.start_tag_stream(apd_indices)
 #%%
         
@@ -169,7 +170,8 @@ def main(cxn, nv_sig, nd_filter, apd_indices, freq_center, freq_range,
                 
                 #load the analog voltage into the DAQ
                 fm_dev = freq_subcenter - freq_sublist[ind_sublist][0]
-                cxn.microwave_signal_generator.load_fm(fm_dev, ao_voltages)
+                cxn.microwave_signal_generator.load_fm(fm_dev,
+                                                       ao_voltages, period)
                 
             end_step_ind = step_ind + num_interval_freqs
             

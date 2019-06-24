@@ -29,7 +29,7 @@ def get_seq(pulser_wiring, args):
     pulser_do_apd_gate = pulser_wiring['do_apd_gate_{}'.format(apd_indices)]
     pulser_do_uwave = pulser_wiring['do_uwave_gate_0']
     pulser_do_aom = pulser_wiring['do_aom']
-    pulser_do_uwave_clock = pulser_wiring['do_uwave-clock']
+    pulser_do_uwave_clock = pulser_wiring['do_uwave_clock']
 
     seq = Sequence()
 
@@ -125,7 +125,7 @@ if __name__ == '__main__':
               'do_apd_gate_0': 1,
               'do_aom': 2,
               'do_uwave_gate_0': 3,
-              'do_uwave-clock':4}
+              'do_uwave_clock': 4}
 
     args = [10 * 10**6, 1* 10**6, 0 ]
 
