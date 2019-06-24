@@ -104,7 +104,20 @@ class MicrowaveSignalGenerator(LabradServer):
         precision = len(str(amp).split('.')[1])
         self.sig_gen.write('AMPR {0:.{1}f}DBM'.format(amp, precision))
 
+    def daq_write_to_mod(self, voltage):
+        """Write the specified voltage."""
 
+        # Close the stream task if it exists
+        # This can happen if we quit out early
+        if self.task is not None:
+            self.close_task_internal()
+
+        with nidaqmx.Task() as task:
+            # Set up the output channels
+            task.ao_channels.add_ao_voltage_chan(self.daq_ao_sig_gen_mod,
+                                                 min_val=-1.0, max_val=1.0)
+            task.write(voltage)
+    
     def load_stream_writer(self, task_name, voltages, period=0.001*10**9):
         
         # Close the existing task
