@@ -15,108 +15,66 @@ HIGH = 1
 def get_seq(pulser_wiring, args):
 
     # Unpack the args
-    readout, uwave_switch_delay, apd_indices = args
-    
-    num_steps = 1
+    readout, uwave_switch_delay, num_steps, apd_index = args
+
+    double_num_steps = 2 * num_steps
     readout = numpy.int64(readout)
     readout = numpy.int64(readout)
     uwave_switch_delay = numpy.int64(uwave_switch_delay)
-    clock_pulse = numpy.int64(0.2*10**6)
-    period = readout + uwave_switch_delay
+    clock_pulse = numpy.int64(100)
+    half_clock_pulse = clock_pulse // 2
+    # Each ref/sig chunk is readout + clock_pulse long and there are
+    # 2 chunks per step
+    period = num_steps * (2 * (readout + clock_pulse))
 
     # Get what we need out of the wiring dictionary
     pulser_do_daq_clock = pulser_wiring['do_daq_clock']
-    pulser_do_apd_gate = pulser_wiring['do_apd_gate_{}'.format(apd_indices)]
+    pulser_do_apd_gate = pulser_wiring['do_apd_gate_{}'.format(apd_index)]
     pulser_do_uwave = pulser_wiring['do_uwave_gate_0']
     pulser_do_aom = pulser_wiring['do_aom']
     pulser_do_uwave_clock = pulser_wiring['do_uwave_clock']
 
     seq = Sequence()
 
-    # Collect two samples
-#    train = [(readout, LOW), (clock_pulse, HIGH),
-#             (uwave_switch_delay, LOW),
-#            (readout, LOW), (clock_pulse, HIGH)]
-#    seq.setDigital(pulser_do_daq_clock, train)
-    
-     #Ungate the APD channel for the readouts
-#    train = [(readout, HIGH), (clock_pulse, LOW),
-#            (uwave_switch_delay, LOW),
-#            (readout, HIGH), (clock_pulse, LOW)]
-#    seq.setDigital(pulser_do_apd_gate, train)
-
-#    # Uwave should be on for the first measurement and off for the second
-#    train = [(readout, LOW), (clock_pulse, LOW),
-#             (uwave_switch_delay, HIGH),
-#             (readout, HIGH), (clock_pulse, LOW)]
-#    seq.setDigital(pulser_do_uwave, train)
-    
-    # The AOM should always be on
-
-    train = [(period*num_steps*2, HIGH)]
-    seq.setDigital(pulser_do_aom, train)
-
-    #Analog genetrator sequence; smoothly change the voltages => frequencies
-    #over time 
+    # Microwave gating
     train = []
-    
-#    for i in range(num_steps):
-#        train.append((readout*2 + clock_pulse + uwave_switch_delay,(-1)+i*(2/(num_steps))))
-#        train.append((clock_pulse,(-1)+i*(2/(num_steps))))            
-#        train.append((uwave_switch_delay, (-1)+(i+1)*(2/(num_steps))))
-#    seq.setAnalog(0,train)
-
-    #uwave sequence 
-    train = []
-
-    for i in range(num_steps*2):
-        if i%2 == 0:
-            train.append((readout, LOW)) 
-            train.append((uwave_switch_delay, HIGH))
-        elif i%2 != 0:
-            train.append((readout, HIGH)) 
-            train.append((uwave_switch_delay, LOW))
+    for ind in range(double_num_steps):
+        if ind % 2 == 0:  # Even
+            train.append([readout + clock_pulse - uwave_switch_delay, LOW]) 
+        else:  # Odd
+            train.append([readout, HIGH]) 
+            train.append([clock_pulse + uwave_switch_delay, LOW])
     seq.setDigital(pulser_do_uwave,train)
-    
-    #apd gate sequence
+   
+    # Microwave frequency switching clock
     train = []
-
-    for i in range(num_steps*2):
-        if i%2 == 0:
-            train.append((readout, HIGH)) 
-            train.append((clock_pulse, LOW))
-            train.append((uwave_switch_delay-clock_pulse, HIGH)) 
-        elif i%2 != 0:
-            train.append((readout, HIGH)) 
-            train.append((clock_pulse, LOW))
-            train.append((uwave_switch_delay-clock_pulse, HIGH)) 
+    for ind in range(num_steps):
+        train.append([readout, LOW])
+        train.append([clock_pulse, LOW])
+        train.append([readout, LOW])
+        train.append([half_clock_pulse, LOW])
+        train.append([half_clock_pulse, HIGH])
+    seq.setDigital(pulser_do_uwave_clock, train)
+    
+    # APD gating
+    train = []
+    for ind in range(double_num_steps):
+        train.append([readout, HIGH]) 
+        train.append([clock_pulse, LOW])
     seq.setDigital(pulser_do_apd_gate, train)
     
-    #pulser samplying clock sequence
-    half_clock_pulse = clock_pulse // 2
+    # Sample clock
     train = []
-    for i in range(num_steps*2):
-        if i%2 == 0:
-            train.append((readout, LOW)) 
-            train.append((half_clock_pulse, LOW))
-            train.append((half_clock_pulse, HIGH))
-            train.append((uwave_switch_delay-clock_pulse, LOW))
-        elif i%2 != 0:
-            train.append((readout, LOW)) 
-            train.append((half_clock_pulse, LOW))
-            train.append((half_clock_pulse, HIGH))
-            train.append((uwave_switch_delay-clock_pulse, LOW)) 
+    for ind in range(double_num_steps):
+        train.append([readout, LOW]) 
+        train.append([half_clock_pulse, LOW])
+        train.append([half_clock_pulse, HIGH])
     seq.setDigital(pulser_do_daq_clock, train)
-   
-    #set the uwave clock sequence
+    
+    # AOM - open the whole time
     train = []
-    train.append((readout, LOW)) 
-    train.append((uwave_switch_delay, LOW))
-    train.append((readout, LOW)) 
-    train.append((uwave_switch_delay-clock_pulse, LOW)) 
-    train.append((half_clock_pulse, HIGH))
-    train.append((half_clock_pulse, LOW))
-    seq.setDigital(pulser_do_uwave_clock, train)
+    train.append([period, HIGH])
+    seq.setDigital(pulser_do_aom, train)
 
     return seq, [period]
 
@@ -128,7 +86,8 @@ if __name__ == '__main__':
               'do_uwave_gate_0': 3,
               'do_uwave_clock': 4}
 
-    args = [3 * 10**6, 0.5* 10**6, 0 ]
+    # readout, uwave_switch_delay, num_steps, apd_index
+    args = [5000, 500, 2, 0]
 
-    seq,ret_val = get_seq(wiring, args)
+    seq, ret_vals = get_seq(wiring, args)
     seq.plot()
