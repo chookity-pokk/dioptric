@@ -23,6 +23,7 @@ def get_seq(pulser_wiring, args):
     uwave_switch_delay = numpy.int64(uwave_switch_delay)
     clock_pulse = numpy.int64(100)
     half_clock_pulse = clock_pulse // 2
+    num_steps = 1
     # Each ref/sig chunk is readout + clock_pulse long and there are
     # 2 chunks per step
     period = num_steps * (2 * (readout + clock_pulse))
@@ -87,7 +88,7 @@ if __name__ == '__main__':
               'do_uwave_clock': 4}
 
     # readout, uwave_switch_delay, num_steps, apd_index
-    args = [5000, 500, 2, 0]
+    args = [5000, 500, 1, 0]
 
     seq, ret_vals = get_seq(wiring, args)
     seq.plot()
