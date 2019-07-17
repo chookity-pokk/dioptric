@@ -93,7 +93,7 @@ class PulseStreamer(LabradServer):
                 2: microwave gate open, everything else low
         """
 
-        if output_state == 0:  # Default, AOM on
+        if output_state == 0:  # Default, 532 nm AOM on
             pulser_do_aom = self.pulser_wiring['do_aom']
             self.output_state = OutputState([pulser_do_aom], 0, 0)
         elif output_state == 1:  # DAQ clock on
@@ -105,6 +105,10 @@ class PulseStreamer(LabradServer):
         elif output_state == 3:  # HP uwave gate open
             pulser_do_daq_clock = self.pulser_wiring['do_uwave_gate_1']
             self.output_state = OutputState([pulser_do_daq_clock], 0, 0)
+        elif output_state == 4:  # 638 nm AOM on
+#            pulser_do_daq_clock = self.pulser_wiring['ao_638_aom']
+            self.output_state = OutputState([], 1, 0)
+
 
     @setting(0, seq_file='s', num_repeat='i',
              args='*?', output_state='i', returns='*?')

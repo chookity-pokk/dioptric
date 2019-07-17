@@ -32,8 +32,15 @@ def main(cxn, aom_on_time, aom_off_time, low_voltage, high_voltage):
     file_name = os.path.basename(__file__)    
     args = [aom_on_time, aom_off_time, low_voltage, high_voltage]
     
-    cxn.pulse_streamer.stream_immediate(file_name, 1 * 10**8, args, 1)
+#    cxn.pulse_streamer.constant(4)
+#    cxn.pulse_streamer.stream_immediate(file_name, 1 * 10**6, args, 1)
 #    cxn.pulse_streamer.stream_immediate(file_name, 3, args, 1)
+    
+def on_638(cxn):
+    cxn.pulse_streamer.constant(4)
+    
+def off_638(cxn):
+    cxn.pulse_streamer.constant(1)
     
     # %%
     
@@ -41,7 +48,9 @@ if __name__ == '__main__':
     try:
         
         with labrad.connect() as cxn:
-            main(cxn, 100, 100, 0 ,1)
+#            main(cxn, 1000, 1000, 0 ,1)
+#            on_638(cxn)
+            off_638(cxn)
         
     finally:
         # Kill safe stop

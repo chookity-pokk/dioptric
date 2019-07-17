@@ -25,7 +25,7 @@ def get_seq(pulser_wiring, args):
     LOW = args[2]
     HIGH = args[3]
 
-    pulser_ao = 0
+    pulser_ao = pulser_wiring['ao_638_aom']
         
     seq = Sequence()
 
