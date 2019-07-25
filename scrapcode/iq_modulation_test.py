@@ -11,6 +11,7 @@ Created on Wed Jun 19 10:27:36 2019
 
 import labrad
 import os
+import utils.tool_belt as tool_belt
 
 
 # %% Constants
@@ -25,11 +26,11 @@ import os
 def main(cxn):
 
     # Set up the microwave signal generator
-    cxn.microwave_signal_generator.set_freq(1.00)
-#    cxn.microwave_signal_generator.set_amp(0.0)  # 0 dBm ~ 0.25 V rms
-    cxn.microwave_signal_generator.set_amp(2.0)  # 0 dBm ~ 0.25 V rms
-    cxn.microwave_signal_generator.load_iq_mod()
-    cxn.microwave_signal_generator.uwave_on()
+    cxn.signal_generator_tsg4104a.set_freq(1.00)
+#    cxn.signal_generator_tsg4104a.set_amp(0.0)  # 0 dBm ~ 0.25 V rms
+    cxn.signal_generator_tsg4104a.set_amp(2.0)  # 0 dBm ~ 0.25 V rms
+#    cxn.signal_generator_tsg4104a.load_iq_mod()
+    cxn.signal_generator_tsg4104a.uwave_on()
 
     # Load the arbitrary waveform
 #    cxn.arbitrary_waveform_generator.load_iq_waveform(16 * [1.0, 0.0],
@@ -43,13 +44,15 @@ def main(cxn):
 #    period = 45000000  # 500 MHz
 #    period = 10000  # 100 KHz
 #    period = 10**9  # 1Hz
-    cxn.pulse_streamer.stream_load(file_name, [period], 0)
+    seq_args = [period]
+    seq_args_string = tool_belt.encode_seq_args(seq_args)
+    cxn.pulse_streamer.stream_load(file_name, seq_args_string)
     cxn.pulse_streamer.stream_start(-1)
     
     input('Press enter to stop...')
     
     cxn.arbitrary_waveform_generator.wave_off()
-    cxn.microwave_signal_generator.uwave_off()
+    cxn.signal_generator_tsg4104a.uwave_off()
     cxn.pulse_streamer.force_final()
     
 

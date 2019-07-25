@@ -48,15 +48,9 @@ def get_seq(pulser_wiring, args):
     train = [(period, HIGH)]
     seq.setDigital(chan, train)
 
-    return seq, []
-
-
-def get_final(pulser_wiring):
-    """This is called along with get_seq to get the final output state that
-    the Pulse Streamer will enter when sequence has finished running.
-    """
-
-    return OutputState([], 0.0, 0.0)
+    final_digital = [pulser_wiring['do_532_aom']]
+    final = OutputState(final_digital, 0.0, 0.0)
+    return seq, final, []
 
 
 # %% Run the file
