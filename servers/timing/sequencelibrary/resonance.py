@@ -6,6 +6,7 @@ Created on Thu Apr 11 16:19:44 2019
 """
 
 from pulsestreamer import Sequence
+from pulsestreamer import OutputState
 import numpy
 
 LOW = 0
@@ -25,10 +26,10 @@ def get_seq(pulser_wiring, args):
     period = readout + clock_pulse + uwave_switch_delay + readout + clock_pulse
 
     # Get what we need out of the wiring dictionary
-    pulser_do_daq_clock = pulser_wiring['do_daq_clock']
-    pulser_do_apd_gate = pulser_wiring['do_apd_gate_{}'.format(apd_index)]
-    pulser_do_uwave = pulser_wiring['do_uwave_gate_0']
-    pulser_do_aom = pulser_wiring['do_aom']
+    pulser_do_daq_clock = pulser_wiring['do_sample_clock']
+    pulser_do_apd_gate = pulser_wiring['do_apd_{}_gate'.format(apd_index)]
+    pulser_do_uwave = pulser_wiring['do_uwave_gate_1']
+    pulser_do_aom = pulser_wiring['do_532_aom']
 
     seq = Sequence()
 
@@ -57,7 +58,9 @@ def get_seq(pulser_wiring, args):
     train = [(period, HIGH)]
     seq.setDigital(pulser_do_aom, train)
 
-    return seq, [period]
+    final_digital = [pulser_wiring['do_532_aom']]
+    final = OutputState(final_digital, 0.0, 0.0)
+    return seq, final, [period]
 
 
 if __name__ == '__main__':

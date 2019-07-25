@@ -27,12 +27,18 @@ import cv2
 import utils.image_processing as image_processing
 from matplotlib import pyplot as plt
 import numpy
+import labrad
 
 
 # %% Main
 
 
 def main(cxn, ref_file_name, nv_sig, nd_filter, apd_indices):
+
+        with labrad.connect() as cxn:
+            main_with_cxn(cxn, ref_file_name, nv_sig, nd_filter, apd_indices)
+
+def main_with_cxn(cxn, ref_file_name, nv_sig, nd_filter, apd_indices):
     """Main entry point."""
 
     # %% Get the reference image
@@ -49,7 +55,7 @@ def main(cxn, ref_file_name, nv_sig, nd_filter, apd_indices):
     # Use the last known in-focus z
     current_drift = tool_belt.get_drift()
     coords = [*ref_coords[0:2], nv_sig[2] + current_drift[2]]
-    new_data = image_sample.main(cxn, coords, nd_filter,
+    new_data = image_sample.main_with_cxn(cxn, coords, nd_filter,
                            ref_x_range, ref_y_range,
                            ref_num_steps, apd_indices,
                            save_data=False, plot_data=False)

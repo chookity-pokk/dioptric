@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-This file contains functions to control the CFM. Just change the function call
+"""This file contains functions to control the CFM. Just change the function call
 in the main section at the bottom of this file and run the file. Shared or
 frequently changed parameters are in the __main__ body and relatively static
 parameters are in the function definitions.
@@ -13,17 +12,22 @@ Created on Sun Nov 25 14:00:28 2018
 
 # %% Imports
 
+
 import labrad
 import numpy
+import copy
 import utils.tool_belt as tool_belt
 import majorroutines.image_sample as image_sample
 import majorroutines.optimize as optimize
 import majorroutines.stationary_count as stationary_count
 import majorroutines.resonance as resonance
+import majorroutines.pulsed_resonance as pulsed_resonance
+import majorroutines.optimize_magnet_angle as optimize_magnet_angle
 import majorroutines.rabi as rabi
 import majorroutines.g2_measurement as g2_measurement
 import majorroutines.t1_double_quantum as t1_double_quantum
 import majorroutines.ramsey as ramsey
+import majorroutines.spin_echo as spin_echo
 import minorroutines.set_drift_from_reference_image as set_drift_from_reference_image
 import debug.test_major_routines as test_major_routines
 
@@ -32,11 +36,12 @@ import debug.test_major_routines as test_major_routines
 
 
 def set_xyz(nv_sig):
+
     with labrad.connect() as cxn:
         tool_belt.set_xyz(cxn, nv_sig)
 
-
 def set_xyz_zero():
+
     with labrad.connect() as cxn:
         tool_belt.set_xyz_zero(cxn)
 
@@ -44,385 +49,296 @@ def set_xyz_zero():
 # %% Major Routines
 
 
-def do_image_sample(name, nv_sig, nd_filter, apd_indices):
-
-    # Scan ranges
-
-#    scan_range = 0.5
-#    num_scan_steps = 150
-#    num_scan_steps = 200
+def do_image_sample(nv_sig, apd_indices):
 
 #    scan_range = 0.2
-#    num_scan_steps = 60
+#    num_steps = 60
 
     scan_range = 0.10
-    num_scan_steps = 30
+    num_steps = 60
 
-    with labrad.connect() as cxn:
-        # For now we only support square scans so pass scan_range twice
-        image_sample.main(cxn, nv_sig, nd_filter, scan_range, scan_range,
-                          num_scan_steps, apd_indices, name=name)
+    # For now we only support square scans so pass scan_range twice
+    image_sample.main(nv_sig, scan_range, scan_range, num_steps, apd_indices)
 
+def do_optimize(nv_sig, apd_indices):
 
-def do_optimize(name, nv_sig, nd_filter, apd_indices):
+    optimize.main(nv_sig, apd_indices,
+              set_to_opti_coords=False, save_data=True, plot_data=True)
 
-    with labrad.connect() as cxn:
-        optimize.main(cxn, nv_sig, nd_filter, apd_indices, name,
-                      set_to_opti_coords=False,
-                      save_data=True, plot_data=True)
+def do_optimize_list(nv_sig_list, apd_indices):
 
+    optimize.optimize_list(nv_sig_list, apd_indices,
+               set_to_opti_coords=False, save_data=True, plot_data=False)
 
-def do_optimize_list(name, nv_sig_list, nd_filter, apd_indices):
+def do_stationary_count(nv_sig, apd_indices):
 
-    with labrad.connect() as cxn:
-        optimize.optimize_list(cxn, nv_sig_list, nd_filter, apd_indices,
-                               name, set_to_opti_coords=False,
-                               save_data=True, plot_data=False)
+    # ns
+    run_time = 120 * 10**9
 
+    stationary_count.main(nv_sig, run_time, apd_indices)
 
-def do_stationary_count(name, nv_sig, nd_filter, apd_indices):
+def do_g2_measurement(nv_sig, apd_a_index, apd_b_index):
 
-    # In nanoseconds
-    run_time = 60 * 10**9
-    readout = 100 * 10**6
-
-    with labrad.connect() as cxn:
-        stationary_count.main(cxn, nv_sig, nd_filter, run_time, readout, apd_indices,
-                              name=name)
-
-
-def do_g2_measurement(name, nv_sig, nd_filter, apd_a_index, apd_b_index):
-
-    # Run times are in seconds
-#    run_time = 2
-#    run_time = 30
-#    run_time = 60 * 3
-#    run_time = 60 * 5
-    run_time = 60 * 10
-#    run_time = 60 * 20
-
+    run_time = 60 * 10  # s
     diff_window = 150  # ns
 
-    with labrad.connect() as cxn:
-        g2_measurement.main(cxn, nv_sig, nd_filter, run_time, diff_window,
-                            apd_a_index, apd_b_index, name=name)
+    g2_measurement.main(nv_sig, run_time, diff_window,
+                        apd_a_index, apd_b_index)
 
-
-
-def do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.87, freq_range=0.2):
+def do_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.2):
 
     num_steps = 101
-    num_runs = 8
+    num_runs = 2
     uwave_power = -13.0  # -13.0 with a 1.5 ND is a good starting point
-#    uwave_power = -10.0
 
-    with labrad.connect() as cxn:
-        resonance.main(cxn, nv_sig, nd_filter, apd_indices, freq_center, freq_range,
-                               num_steps, num_runs, uwave_power, name=name)
+    resonance.main(nv_sig, apd_indices, freq_center, freq_range,
+                   num_steps, num_runs, uwave_power)
 
-def do_rabi(name, nv_sig, nd_filter, apd_indices,
+def do_pulsed_resonance(nv_sig, apd_indices,
+                        freq_center=2.87, freq_range=0.2):
+
+    num_steps = 51
+#    num_steps = 76
+#    num_steps = 101
+    num_reps = 10**5
+#    num_reps = 5 * 10**4
+    num_runs = 1
+    # 9.0 dBm is the highest reasonable value, accounting for saturation
+    uwave_power = 9.0
+    uwave_pulse_dur = 80
+
+    pulsed_resonance.main(nv_sig, apd_indices, freq_center, freq_range,
+                          num_steps, num_reps, num_runs,
+                          uwave_power, uwave_pulse_dur)
+
+def do_optimize_magnet_angle(nv_sig, apd_indices):
+
+    angle_range = [0, 150]
+    num_angle_steps = 6
+    freq_center = 2.87
+    freq_range = 0.3
+    num_freq_steps = 76
+#    num_freq_reps = 5 * 10**4
+    num_freq_reps = 10**5
+    num_freq_runs = 1
+    uwave_power = 9.0
+    uwave_pulse_dur = 250
+
+    optimize_magnet_angle.main(nv_sig, apd_indices,
+                       angle_range, num_angle_steps, freq_center, freq_range,
+                       num_freq_steps, num_freq_reps, num_freq_runs,
+                       uwave_power, uwave_pulse_dur)
+
+def do_rabi(nv_sig, apd_indices,
             uwave_freq, do_uwave_gate_number):
 
-    uwave_power = 9.0  # 9.0 is the highest reasonable value, accounting for saturation
-    uwave_time_range = [0, 400]
+    uwave_power = 9.0
+    uwave_time_range = [0, 700]
     num_steps = 51
+    num_reps = 5 * 10**4
+    num_runs = 2
 
-    num_reps = 10**5
+    rabi.main(nv_sig, apd_indices, uwave_freq, uwave_power, uwave_time_range,
+              do_uwave_gate_number, num_steps, num_reps, num_runs)
 
-#    num_runs = 1
-#    num_runs = 2
-    num_runs = 4
-#    num_runs = 6
-
-    with labrad.connect() as cxn:
-        rabi.main(cxn, nv_sig, nd_filter, apd_indices,
-                  uwave_freq, uwave_power, uwave_time_range,
-                  do_uwave_gate_number,
-                  num_steps, num_reps, num_runs, name=name)
-
-def do_t1_double_quantum(name, nv_sig, nd_filter, apd_indices,
-                         uwave_freq_plus, uwave_freq_minus,
-                         uwave_pi_pulse_plus, uwave_pi_pulse_minus,
-                         relaxation_time_range, num_steps, num_reps,
-                         init_read_list):
+def do_t1_battery(nv_sig, apd_indices, uwave_freq_plus, uwave_freq_minus,
+                  uwave_pi_pulse_plus, uwave_pi_pulse_minus):
 
     uwave_power = 9
-#    num_runs = 80  # This'll double the expected duration listed below!!
-    num_runs = 40
-#    num_runs = 20  # This'll halve the expected duration listed below
-#    num_runs = 1  # Pick this one for the best noise to signal ratio
+    num_runs = 120
 
-    with labrad.connect() as cxn:
-        t1_double_quantum.main(cxn, nv_sig, nd_filter, apd_indices,
-                     uwave_freq_plus, uwave_freq_minus, uwave_power,
-                     uwave_pi_pulse_plus, uwave_pi_pulse_minus,
-                     relaxation_time_range, num_steps, num_reps, num_runs,
-                     init_read_list, name)
+    # Tektronix controls plus, Berkeley controls minus
+#    uwave_freq_plus = 2.8086
+#    uwave_pi_pulse_plus = 65
+#    uwave_freq_minus = 2.9345
+#    uwave_pi_pulse_minus = 105
 
 
+    # T1 experiment parameters, formatted:
+    # [[init state, read state], relaxation_time_range, num_steps, num_reps]
+    t1_exp_array = numpy.array([[[1,-1], [0, 15*10**6], 11, 2000],
+                                [[1,1], [0, 15*10**6], 11, 2000],
+                                [[0,1], [0, 15*10**6], 11, 2000],
+                                [[0,0], [0, 15*10**6], 11, 2000]])
 
-def do_ramsey_measurement(name, nv_sig, nd_filter,
-                      sig_shrt_apd_index, ref_shrt_apd_index,
-                      sig_long_apd_index, ref_long_apd_index):
+    # Loop through the experiments
+    for exp_ind in range(len(t1_exp_array)):
+
+        init_read_states = t1_exp_array[exp_ind, 0]
+        relaxation_time_range = t1_exp_array[exp_ind, 1]
+        num_steps = t1_exp_array[exp_ind, 2]
+        num_reps = t1_exp_array[exp_ind, 3]
+
+
+        t1_double_quantum.main(nv_sig, apd_indices,
+                 uwave_freq_plus, uwave_freq_minus,
+                 uwave_power, uwave_power,
+                 uwave_pi_pulse_plus, uwave_pi_pulse_minus,
+                 relaxation_time_range, num_steps, num_reps, num_runs,
+                 init_read_states)
+
+def do_ramsey(nv_sig, apd_indices):
 
     uwave_power = 9
-    uwave_freq = 2.852
+    uwave_freq = 2.8086
+    detuning = 2.5  # MHz
     uwave_pi_half_pulse = 32
-    precession_time_range = [0, 1 * 10**3]
+    precession_time_range = [0, 4 * 10**3]
 
-    num_steps = 21
-    num_reps = 10**5
-    num_runs = 3
+    num_steps = 151
+    num_reps = 3 * 10**5
+    num_runs = 1
 
+    ramsey.main(nv_sig, apd_indices,
+                uwave_freq, detuning, uwave_power, uwave_pi_half_pulse,
+                precession_time_range, num_steps, num_reps, num_runs)
 
-    with labrad.connect() as cxn:
-            ramsey.main(cxn, nv_sig, nd_filter, sig_shrt_apd_index, ref_shrt_apd_index,
-                        sig_long_apd_index, ref_long_apd_index,
-                        uwave_freq, uwave_power, uwave_pi_half_pulse, precession_time_range,
-                        num_steps, num_reps, num_runs,
-                        name)
+def do_spin_echo(nv_sig, apd_indices):
 
+    uwave_power = 9
+    uwave_freq = 2.8146
+    rabi_period = 410.5
+#    precession_time_range = [0, 200 * 10**3]
+    precession_time_range = [0, 100 * 10**3]
+#    precession_time_range = [0, 50 * 10**3]
 
-def do_sample_nvs(name, nv_sig_list, nd_filter, apd_indices):
+    num_steps = 101
+    num_reps = 3 * 10**4
+    num_runs = 100
+#    num_steps = 51
+#    num_reps = 10**5
+#    num_runs = 1
+
+    spin_echo.main(nv_sig, apd_indices,
+                   uwave_freq, uwave_power, rabi_period,
+                   precession_time_range, num_steps, num_reps, num_runs)
+
+def do_sample_nvs(nv_sig_list, apd_indices):
 
     # g2 parameters
     run_time = 60 * 5
     diff_window = 150 * 10**3  # 150 ns in ps
 
-    # ESR parameters
+    # PESR parameters
     num_steps = 101
     num_runs = 5
-    uwave_power = -13.0  # -13.0 with a 1.5 ND is a good starting point
+    uwave_power = 9.0
 
-    for nv_sig in nv_sig_list:
-
-        with labrad.connect() as cxn:
-            g2_zero = g2_measurement.main(cxn, nv_sig, nd_filter, run_time,
-                                          diff_window, apd_indices[0],
-                                          apd_indices[1], name=name)
-            if g2_zero < 0.5:
-                resonance.main(cxn, nv_sig, nd_filter, apd_indices, 2.87, 0.1,
-                               num_steps, num_runs, uwave_power, name=name)
-
-
-def do_set_drift_from_reference_image(nv_sig, nd_filter, apd_indices):
-
-#    ref_file_name = '2019-06-10_15-26-39_ayrton12'  # 150 x 150
-    ref_file_name = '2019-06-10_15-22-25_ayrton12'  # 60 x 60
+    g2 = g2_measurement.main_with_cxn
+    pesr = pulsed_resonance.main_with_cxn
 
     with labrad.connect() as cxn:
-        set_drift_from_reference_image.main(cxn, ref_file_name, nv_sig, nd_filter, apd_indices)
+        for nv_sig in nv_sig_list:
+            g2_zero = g2(cxn, nv_sig, run_time, diff_window,
+                         apd_indices[0], apd_indices[1])
+            if g2_zero < 0.5:
+                pesr(cxn, nv_sig, apd_indices, 2.87, 0.1,
+                     num_steps, num_runs, uwave_power)
 
+def do_set_drift_from_reference_image(nv_sig, apd_indices):
 
-def do_test_major_routines(name, nv_sig, nd_filter, apd_indices):
+    # ref_file_name = '2019-06-10_15-22-25_ayrton12'  # 60 x 60
+    ref_file_name = '2019-06-27_16-37-18_johnson1' # bulk nv, first one we saw
+
+    set_drift_from_reference_image.main(ref_file_name, nv_sig, apd_indices)
+
+def do_test_major_routines(nv_sig, apd_indices):
     """Run this whenver you make a significant code change. It'll make sure
     you didn't break anything in the major routines.
     """
 
-    test_major_routines.main(name, nv_sig, nd_filter, apd_indices)
+    test_major_routines.main(nv_sig, apd_indices)
 
 
-# %% Script Code
+# %% Run the file
 
 
-# Functions only run when called. Since this part of the script is not in a
-# function, it will run when the script is run.
-# __name__ will only be __main__ if we're running the file as a program.
-# The below pattern enables us to import this file as a module without
-# running it as a program.
 if __name__ == '__main__':
 
-    # %% General
-
-    name = 'ayrton12'  # Sample name
-
-#    nd_filter = 2.0
-    nd_filter = 1.5
-#    nd_filter = 1.0
+    # %% Shared parameters
 
     apd_indices = [0]
 #    apd_indices = [0, 1]
+    
+    sample_name = 'johnson1'
 
-    # %% NV sigs
+    # drift = [-0.00583, -0.00100, 0.06564]
+#    nv0_2019_06_27 = {'coords': [-0.154, -0.333, 5.40], 'nd_filter': 'nd_0.5',
+#                      'expected_count_rate': 47, 'magnet_angle': 41.8,
+#                      'name': sample_name}
+#    nv1_2019_06_27 = {'coords': [-0.330, -0.342, 6.40], 'nd_filter': 'nd_0.5',
+#                      'expected_count_rate': 56, 'magnet_angle': 41.8,
+#                      'name': sample_name}
+    
+    # Reset drift 7/23, 11:46
+    nv0_2019_06_27 = {'coords': [-0.148, -0.340, 5.46], 'nd_filter': 'nd_0.5',
+                      'expected_count_rate': 47, 'magnet_angle': 41.8,
+                      'name': sample_name}
+    nv1_2019_06_27 = {'coords': [-0.331, -0.353, 6.41], 'nd_filter': 'nd_0.5',
+                      'expected_count_rate': 56, 'magnet_angle': 41.8,
+                      'name': sample_name}
 
-#    z_voltage = 50.3
-#    z_voltage = 50.8  # 6/12 3:41
-    z_voltage = 50.5  # 6/12 17:27 before starting T1
+    nv0_2019_06_27_off_axis = copy.deepcopy(nv0_2019_06_27)
+#    nv0_2019_06_27_off_axis['magnet_angle'] = 99.0  # Splitting of 125 MHz
+    nv0_2019_06_27_off_axis['magnet_angle'] = 41.8  # Temp
 
-    # ND 1.5
-    background_count_rate = 3
-    nv_sig_list = [
-               [-0.142, 0.501, z_voltage, 53, background_count_rate],
-               [-0.133, 0.420, z_voltage, 45, background_count_rate],
-               [-0.141, 0.269, z_voltage, 92, background_count_rate],
-               [-0.224, 0.070, z_voltage, 49, background_count_rate],
-               [-0.234, 0.123, z_voltage, 83, background_count_rate],
-               [-0.236, 0.163, z_voltage, 78, background_count_rate],
-               [-0.269, 0.184, z_voltage, 40, background_count_rate],
-               [-0.306, 0.160, z_voltage, 64, background_count_rate],
-               [-0.269, 0.184, z_voltage, 40, background_count_rate],
-               [-0.287, 0.260, z_voltage, 66, background_count_rate],
-               [-0.308, 0.270, z_voltage, 30, background_count_rate],
-               [-0.335, 0.280, z_voltage, 74, background_count_rate],
-               [-0.324, 0.325, z_voltage, 90, background_count_rate],
-               [-0.379, 0.280, z_voltage, 43, background_count_rate],
-               [-0.388, 0.294, z_voltage, 31, background_count_rate],
-               [-0.389, 0.264, z_voltage, 85, background_count_rate],
-               [-0.375, 0.183, z_voltage, 45, background_count_rate],
-               [-0.416, 0.398, z_voltage, 35, background_count_rate],
-               [-0.397, 0.383, z_voltage, 100, background_count_rate],
-               [-0.397, 0.337, z_voltage, 85, background_count_rate],
-               [-0.456, 0.152, z_voltage, 63, background_count_rate],
-               [-0.415, 0.398, z_voltage, 33, background_count_rate],
-               [-0.393, 0.484, z_voltage, 60, background_count_rate]]
+    nv1_2019_06_27_off_axis = copy.deepcopy(nv1_2019_06_27)
+    nv1_2019_06_27_off_axis['magnet_angle'] = 93.0  # Splitting of 125 MHz
 
-    # Before 6/13
-#    nv13_2019_06_10 = nv_sig_list[13]
-#    nv13_2019_06_10 = [-0.373, 0.279, z_voltage, 44, background_count_rate]  # 6/12 3:41
-#    nv13_2019_06_10 = [-0.376, 0.280, 51.1, 40, background_count_rate]  # 6/12 4:29
-#    nv13_2019_06_10 = [-0.379, 0.278, 50.5, 40, background_count_rate]  # 6/12 17:27 before starting T1
-#    nv13_2019_06_10 = [-0.379, 0.278, 50.5, 71, background_count_rate]  # ND 1.0
-#    nv13_2019_06_10 = [-0.379, 0.278, 50.5, 40, background_count_rate]  # ND 1.5
-#    nv13_2019_06_10 = [-0.379, 0.278, 50.5, 15, background_count_rate]  # ND 2.0
-
-    # After 6/13
-    nv13_2019_06_10 = [*nv_sig_list[13][0:3], 32, 3]  # ND 1.5
-#    nv13_2019_06_10 = [*nv_sig_list[13][0:3], 12, 3]  # ND 2.0
-
-    # For ND 2.0
-#    nv12_2019_06_10 = [*nv_sig_list[12][0:3], 20, 2]
-#    nv13_2019_06_10 = [*nv_sig_list[13][0:3], 18, 2]
-#    nv21_2019_06_10 = [*nv_sig_list[21][0:3], 15, 2]
-
-    nv_sig_list = [nv13_2019_06_10]
-
-    # %% t1 measurements, preparation population and readout population.
-
-    zero_to_zero = [0,0]
-    plus_to_plus = [1,1]
-    minus_to_minus = [-1,-1]
-    plus_to_zero = [1,0]
-    minus_to_zero = [-1,0]
-    zero_to_plus = [0,1]
-    zero_to_minus = [0,-1]
-    plus_to_minus = [1,-1]
-    minus_to_plus = [-1,1]
-
-    # Array for the t1 measuremnt, formatted:
-    # [init_read_list, relaxation_time_range, num_steps, num_reps]
-
-#    t1_exp_array = numpy.array([
-#                                [plus_to_minus, [0, 800*10**3], 51, 2 * 10**4],
-#                                [minus_to_plus, [0, 800*10**3], 51, 2 * 10**4],
-#                                [plus_to_minus, [0, 100*10**3], 101, 4 * 10**4],
-#                                [minus_to_plus, [0, 100*10**3], 101, 4 * 10**4],
-#
-#                                [plus_to_plus,   [0, 100*10**3],  101, 4 * 10**4],
-#                                [minus_to_minus, [0, 100*10**3],  101, 4 * 10**4],
-#                                [plus_to_plus,   [0, 800*10**3],  26, 2 * 10**4],
-#                                [minus_to_minus, [0, 800*10**3],  26, 2 * 10**4],
-#
-#                                [zero_to_plus,   [0, 1000*10**3], 26, 2 * 10**4],
-#                                [zero_to_minus,  [0, 1000*10**3], 26, 2 * 10**4],
-#                                [plus_to_zero,   [0, 800*10**3], 51, 2 * 10**4],
-#                                [minus_to_zero,  [0, 800*10**3], 51, 2 * 10**4],
-#
-#                                [zero_to_zero,   [0, 1000*10**3], 26, 2 * 10**4]])
-
-
-    # For splittings < 75 MHz
-
-    # ~13 hours
-    t1_exp_array = numpy.array([[plus_to_minus,  [0, 100*10**3], 51, 2 * 10**4],
-                                [plus_to_minus,  [0, 500*10**3], 41,  1 * 10**4],
-                                [plus_to_plus,   [0, 100*10**3], 51, 2 * 10**4],
-                                [plus_to_plus,   [0, 500*10**3], 41,  1 * 10**4],
-                                [plus_to_zero,   [0, 500*10**3], 41, 1 * 10**4],
-                                [zero_to_plus,   [0, 1500*10**3], 41, 1 * 10**4],
-                                [zero_to_zero,   [0, 1500*10**3], 41, 1 * 10**4]])
-
-    # For splittings > 75 MHz
-
-    # ~18 hours
-#    t1_exp_array = numpy.array([[plus_to_minus,  [0, 1500*10**3], 41, 1 * 10**4],
-#                                [plus_to_plus,   [0, 1500*10**3], 41, 1 * 10**4],
-#                                [plus_to_zero,   [0, 1500*10**3], 41, 1 * 10**4],
-#                                [zero_to_plus,   [0, 1500*10**3], 41, 1 * 10**4],
-#                                [zero_to_zero,   [0, 1500*10**3], 41, 1 * 10**4]])
-
-    # ~18 hours
-#    t1_exp_array = numpy.array([[plus_to_minus,  [0, 1500*10**3], 41, 1 * 10**4],
-#                                [plus_to_plus,   [0, 1500*10**3], 41, 1 * 10**4],
-#                                [plus_to_zero,   [0, 2000*10**3], 31, 1 * 10**4],
-#                                [zero_to_plus,   [0, 2000*10**3], 31, 1 * 10**4],
-#                                [zero_to_zero,   [0, 2000*10**3], 31, 1 * 10**4]])
-
-    # Array for the parameters of a given NV, formatted:
-    # [nv_sig, uwave_freq_plus, uwave_pi_pulse_plus, uwave_freq_minus, uwave_pi_pulse_minus]
-    # uwave_MINUS should be associated with the HP signal generator
-    params_array = numpy.array([[nv13_2019_06_10, 2.8082, 121, 2.8806, 96]])
+#    nv_sig_list = [nv0_2019_06_27_off_axis, nv0_2019_06_27]
+#    nv_sig_list = [nv1_2019_06_27_off_axis]
+    nv_sig_list = [nv0_2019_06_27]
 
     # %% Functions to run
 
     try:
 
-        # Routines that don't need an NV
-#        set_xyz_zero()
-#        set_xyz()
-#        tool_belt.set_drift([-0.006, 0.002, 0.0])
+        # Operations that don't need an NV
+        # set_xyz_zero()
+        # set_xyz([0.229, 0.163, 50.0])
+#        drift = tool_belt.get_drift()
+#        tool_belt.set_drift([float(drift[0])+0.02, float(drift[1])-0.02, 0.15])
+#        tool_belt.set_drift([0.0, 0.0, 0.0])
+        # 
+#        set_xyz([0.0, 0.0, z_voltage + tool_belt.get_drift()[2]])
 
-        # Routines that expect listss
-#        optimize_list(name, cxn, nv_sig_list, nd_filter, apd_indices)
-#        do_sample_nvs(name, nv_sig_list, nd_filter, apd_indices)
+        # Routines that expect lists of NVs
+        # optimize_list(cxn, nv_sig_list, apd_indices)
+        # do_sample_nvs(nv_sig_list, apd_indices)
 
         # Routines that expect single NVs
-        for nv_sig in nv_sig_list:
-#            coords = [-0.3, 0.3, z_voltage]
-            coords = (numpy.array(nv_sig[0:3]) + numpy.array(tool_belt.get_drift())).tolist()
-#            nv_sig = [*coords, *nv_sig[3:]]
-            do_image_sample(name, coords, nd_filter, apd_indices)
-#            do_optimize(name, nv_sig, nd_filter, apd_indices)
-#            do_stationary_count(name, nv_sig, nd_filter, apd_indices)
-#            do_g2_measurement(name, nv_sig, nd_filter, apd_indices[0], apd_indices[1])
-#            do_resonance(name, nv_sig, nd_filter, apd_indices)
-#            do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.845, freq_range=0.12)
-#            do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.839, freq_range=0.05)
-#            do_resonance(name, nv_sig, nd_filter, apd_indices, freq_center=2.878, freq_range=0.05)
-#            do_rabi(name, nv_sig, nd_filter, apd_indices, 2.8082, 0)
-#            do_rabi(name, nv_sig, nd_filter, apd_indices, 2.8806, 1)
-#            do_ramsey_measurement(name, nv_sig, nd_filter, apd_indices)
-#            do_set_drift_from_reference_image(nv_sig, nd_filter, apd_indices)
-#            do_test_major_routines(name, nv_sig, nd_filter, apd_indices)
+        for ind in range(len(nv_sig_list)):
+            nv_sig = nv_sig_list[ind]
+#            if ind == 0:
+#                do_t1_battery(nv_sig, apd_indices, 2.8127, 2.9408, 64, 105)
+#            if ind == 1:
+#                do_t1_battery(nv_sig, apd_indices, 2.7567, 2.9899, 58, 105)
 
-#         %% FULL CONTROL T1
-
-#        for nv_ind in range(len(params_array)):
-#
-#            nv_sig = params_array[nv_ind, 0]
-#
-#            uwave_freq_plus = params_array[nv_ind, 1]
-#            uwave_pi_pulse_plus = params_array[nv_ind, 2]
-#            uwave_freq_minus = params_array[nv_ind, 3]
-#            uwave_pi_pulse_minus = params_array[nv_ind, 4]
-#
-#            for exp_ind in range(len(t1_exp_array)):
-##            for exp_ind in [2,3,4,5,6,7]:
-#
-#                init_read_list = t1_exp_array[exp_ind, 0]
-#                relaxation_time_range = t1_exp_array[exp_ind, 1]
-#                num_steps = t1_exp_array[exp_ind, 2]
-#                num_reps = t1_exp_array[exp_ind, 3]
-#
-#                do_t1_double_quantum(name, nv_sig, nd_filter,
-#                              apd_indices,
-#                              uwave_freq_plus, uwave_freq_minus,
-#                              uwave_pi_pulse_plus, uwave_pi_pulse_minus,
-#                              relaxation_time_range, num_steps, num_reps,
-#                              init_read_list)
-
+#            do_image_sample(nv_sig, apd_indices)
+#            do_optimize(nv_sig, apd_indices)
+#            do_stationary_count(nv_sig, apd_indices)
+#            do_g2_measurement(nv_sig, apd_indices[0], apd_indices[1])
+#            do_optimize_magnet_angle(nv_sig, apd_indices)
+#            do_pulsed_resonance(nv_sig, apd_indices)
+            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.76, freq_range=0.1)
+            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.98, freq_range=0.1)
+#            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.3)
+#            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.935, freq_range=0.06)
+#            do_rabi(nv_sig, apd_indices, 2.8146, 0)  # 128.0
+#            do_rabi(nv_sig, apd_indices, 2.986, 1)  # 209.7
+#            do_t1_battery(nv_sig, apd_indices)
+#            do_ramsey(nv_sig, apd_indices)
+#            do_spin_echo(nv_sig, apd_indices)
+#            do_set_drift_from_reference_image(nv_sig, apd_indices)
+#            do_test_major_routines(nv_sig, apd_indices)
+#            with labrad.connect() as cxn:
+#                tool_belt.set_xyz_on_nv(cxn, nv_sig)
 
     finally:
+        # Reset our hardware - this should be done in each routine, but
+        # let's double check here
+        tool_belt.reset_cfm()
         # Kill safe stop
         if tool_belt.check_safe_stop_alive():
-            print("\n\nRoutine complete. Press enter to exit.")
+            print('\n\nRoutine complete. Press enter to exit.')
             tool_belt.poll_safe_stop()

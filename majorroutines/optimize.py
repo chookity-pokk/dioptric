@@ -16,11 +16,8 @@ import numpy
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import time
-
-
-# %% Define a few parameters
-
-num_steps = 51
+import copy
+import labrad
 
 
 # %% Plotting functions
@@ -91,25 +88,19 @@ def read_timed_counts(cxn, num_steps, period, apd_indices):
     
 def stationary_count_lite(cxn, coords, shared_params, apd_indices):
     
-    readout = shared_params['continuous_readout_ns']
-    
-    #  Some initial calculations
-    x_center, y_center, z_center = coords
-    readout = readout // 2
-
-    # Load the PulseStreamer
-    cxn.pulse_streamer.stream_load('simple_readout.py',
-                                   [0, readout, apd_indices[0]])
+    # Some initial values
+    readout = shared_params['continuous_readout_dur']
     total_num_samples = 2
+    x_center, y_center, z_center = coords
 
-    # Set x, y, and z
-    cxn.galvo.write(x_center, y_center)
-    cxn.objective_piezo.write_voltage(z_center)
+    seq_args = [shared_params['532_aom_delay'], readout, apd_indices[0]]
+    seq_args_string = tool_belt.encode_seq_args(seq_args)
+    cxn.pulse_streamer.stream_load('simple_readout.py', seq_args_string)
 
-    # Set up the APD
-    cxn.apd_tagger.start_tag_stream(apd_indices)
-    
+    tool_belt.set_xyz(cxn, [x_center, y_center, z_center])
+
     # Collect the data
+    cxn.apd_tagger.start_tag_stream(apd_indices)
     cxn.pulse_streamer.stream_start(total_num_samples)
     new_samples = cxn.apd_tagger.read_counter_simple(total_num_samples)
     new_samples_avg = numpy.average(new_samples)
@@ -123,12 +114,14 @@ def optimize_on_axis(cxn, nv_sig, axis_ind, shared_params,
                      apd_indices, fig=None):
     
     seq_file_name = 'simple_readout.py'
-    
-    axis_center = nv_sig[axis_ind]
-    x_center, y_center, z_center = nv_sig[0: 3]
-    
-    scan_range_nm = 3 * shared_params['airy_radius_nm']
-    readout = shared_params['continuous_readout_ns']
+    num_steps = 31
+    coords = nv_sig['coords']
+    x_center, y_center, z_center = coords
+    scan_range_nm = 2 * shared_params['airy_radius']
+    readout = shared_params['continuous_readout_dur']
+
+    # Reset to centers
+    tool_belt.set_xyz(cxn, coords)
     
     tool_belt.init_safe_stop()
     
@@ -136,63 +129,36 @@ def optimize_on_axis(cxn, nv_sig, axis_ind, shared_params,
     if axis_ind in [0, 1]:
         
         scan_range = scan_range_nm / shared_params['galvo_nm_per_volt']
-        
-        seq_params = [shared_params['galvo_delay_ns'],
-                      readout,
-                      apd_indices[0]]
-        ret_vals = cxn.pulse_streamer.stream_load(seq_file_name, seq_params)
+        seq_args = [shared_params['galvo_delay'], readout, apd_indices[0]]
+        seq_args_string = tool_belt.encode_seq_args(seq_args)
+        ret_vals = cxn.pulse_streamer.stream_load(seq_file_name,
+                                                  seq_args_string)
         period = ret_vals[0]
-        
-        # Fix the piezo
-        cxn.objective_piezo.write_voltage(z_center)
-        
+
         # Get the proper scan function
         if axis_ind == 0:
             scan_func = cxn.galvo.load_x_scan
         elif axis_ind == 1:
             scan_func = cxn.galvo.load_y_scan
             
-        voltages = scan_func(x_center, y_center, scan_range, num_steps, period)
-        counts = read_timed_counts(cxn, num_steps, period, apd_indices)
-        
+        voltages = scan_func(x_center, y_center, scan_range,
+                             num_steps, period)
+
     # z
     elif axis_ind == 2:
         
         scan_range = scan_range_nm / shared_params['piezo_nm_per_volt']
-        half_scan_range = scan_range / 2
-        low_voltage = axis_center - half_scan_range
-        high_voltage = axis_center + half_scan_range
-        voltages = numpy.linspace(low_voltage, high_voltage, num_steps)
-    
-        # Fix the galvo
-        cxn.galvo.write(x_center, y_center)
-    
-        # Set up the stream
-        seq_params = [shared_params['piezo_delay_ns'],
-                      readout,
-                      apd_indices[0]]
-        ret_vals = cxn.pulse_streamer.stream_load(seq_file_name, seq_params)
+        seq_args = [shared_params['objective_piezo_delay'],
+                    readout, apd_indices[0]]
+        seq_args_string = tool_belt.encode_seq_args(seq_args)
+        ret_vals = cxn.pulse_streamer.stream_load(seq_file_name,
+                                                  seq_args_string)
         period = ret_vals[0]
-    
-        # Set up the APD
-        cxn.apd_tagger.start_tag_stream(apd_indices)
-    
-        counts = numpy.zeros(num_steps, dtype=int)
-    
-        for ind in range(num_steps):
-            
-            if tool_belt.safe_stop():
-                break
-    
-            cxn.objective_piezo.write_voltage(voltages[ind])
-    
-            # Start the timing stream
-            cxn.pulse_streamer.stream_start()
-    
-            counts[ind] = int(cxn.apd_tagger.read_counter_simple(1)[0])
-    
-        cxn.apd_tagger.stop_tag_stream()
-        
+
+        voltages = cxn.objective_piezo.load_z_scan(z_center, scan_range,
+                                                   num_steps, period)
+
+    counts = read_timed_counts(cxn, num_steps, period, apd_indices)
     count_rates = (counts / 1000) / (readout / 10**9)
     
     if fig is not None:
@@ -200,7 +166,7 @@ def optimize_on_axis(cxn, nv_sig, axis_ind, shared_params,
         
     opti_coord = fit_gaussian(nv_sig, voltages, count_rates, axis_ind, fig)
         
-    return opti_coord, voltages, counts, 
+    return opti_coord, voltages, counts
     
     
 def fit_gaussian(nv_sig, voltages, count_rates, axis_ind, fig=None):
@@ -212,16 +178,21 @@ def fit_gaussian(nv_sig, voltages, count_rates, axis_ind, fig=None):
     # 1: mean, defines the center of the Gaussian
     # 2: standard deviation, defines the width of the Gaussian
     # 3: constant y value to account for background
-    expected_count_rate = float(nv_sig[3])
-    background_count_rate = nv_sig[4]
-    if background_count_rate is None:
-        background_count_rate = 0
-    background_count_rate = float(background_count_rate)
+    expected_count_rate = nv_sig['expected_count_rate']
+    if expected_count_rate is None:
+        expected_count_rate = 50  # Guess 50
+    expected_count_rate = float(expected_count_rate)
+#    background_count_rate = nv_sig[4]
+#    if background_count_rate is None:
+#        background_count_rate = 0  # Guess 0
+#    background_count_rate = float(background_count_rate)
+    background_count_rate = 0.0  # Guess 0
     low_voltage = voltages[0]
     high_voltage = voltages[-1]
     scan_range = high_voltage - low_voltage
+    coords = nv_sig['coords']
     init_fit = (expected_count_rate - background_count_rate,
-                nv_sig[axis_ind],
+                coords[axis_ind],
                 scan_range / 3,
                 background_count_rate)
     opti_params = None
@@ -269,11 +240,16 @@ def fit_gaussian(nv_sig, voltages, count_rates, axis_ind, fig=None):
 # %% User functions
     
 
-def optimize_list(cxn, nv_sig_list, nd_filter, apd_indices):
+def optimize_list(nv_sig_list, nd_filter, apd_indices):
+
+    with labrad.connect() as cxn:
+        optimize_list_with_cxn(cxn, nv_sig_list, nd_filter, apd_indices)
+
+def optimize_list_with_cxn(cxn, nv_sig_list, nd_filter, apd_indices):
     
     tool_belt.init_safe_stop()
     
-    opti_nv_sig_list = []
+    opti_coords_list = []
     for ind in range(len(nv_sig_list)):
         
         print('Optimizing on NV {}...'.format(ind))
@@ -282,33 +258,50 @@ def optimize_list(cxn, nv_sig_list, nd_filter, apd_indices):
             break
         
         nv_sig = nv_sig_list[ind]
-        opti_coords = main(cxn, nv_sig, nd_filter, apd_indices,
+        opti_coords = main_with_cxn(cxn, nv_sig, nd_filter, apd_indices,
                            set_to_opti_coords=False)
         if opti_coords is not None:
-            opti_nv_sig_list.append('[{:.3f}, {:.3f}, {:.1f}, {}, {}],'.format(*opti_coords, *nv_sig[3: ]))
+            opti_coords_list.append('[{:.3f}, {:.3f}, {:.2f}],'.format(*opti_coords))
         else:
-            opti_nv_sig_list.append('Optimization failed for NV {}.'.format(ind))
+            opti_coords_list.append('Optimization failed for NV {}.'.format(ind))
     
-    for nv_sig in opti_nv_sig_list:
-        print(nv_sig)
+    for coords in opti_coords_list:
+        print(coords)
     
 
 # %% Main
 
 
-def main(cxn, nv_sig, nd_filter, apd_indices, name='untitled', 
+def main(nv_sig, apd_indices,
          set_to_opti_coords=True, save_data=False, plot_data=False):
+
+    with labrad.connect() as cxn:
+        main_with_cxn(cxn, nv_sig, apd_indices,
+                      set_to_opti_coords, save_data, plot_data)
+
+def main_with_cxn(cxn, nv_sig, apd_indices,
+                  set_to_opti_coords=True, save_data=False, plot_data=False):
+    
+    # Reset the microscope and make sure we're at the right ND
+    tool_belt.reset_cfm(cxn)
+    
+    # Be sure the right ND is in place and the magnet aligned
+    cxn.filter_slider_ell9k.set_filter(nv_sig['nd_filter'])
+    magnet_angle = nv_sig['magnet_angle']
+    if magnet_angle is not None:
+        cxn.rotation_stage_ell18k.set_angle(magnet_angle)
     
     # Adjust the sig we use for drift
     drift = tool_belt.get_drift()
-    passed_coords = nv_sig[0: 3]
+    passed_coords = nv_sig['coords']
     adjusted_coords = (numpy.array(passed_coords) + numpy.array(drift)).tolist()
-    adjusted_nv_sig = [*adjusted_coords, *nv_sig[3:]]
+    adjusted_nv_sig = copy.deepcopy(nv_sig)
+    adjusted_nv_sig['coords'] = adjusted_coords
     
     # Get the shared parameters from the registry
     shared_params = tool_belt.get_shared_parameters_dict(cxn)
     
-    expected_count_rate = nv_sig[3]
+    expected_count_rate = adjusted_nv_sig['expected_count_rate']
     
     opti_succeeded = False
     
@@ -349,13 +342,13 @@ def main(cxn, nv_sig, nd_filter, apd_indices, name='untitled',
         # the count rate at the center against the expected count rate
         if expected_count_rate is not None:
             
-            lower_threshold = expected_count_rate * 3/4
-            upper_threshold = expected_count_rate * 5/4
+            lower_threshold = expected_count_rate * 4/5
+            upper_threshold = expected_count_rate * 6/5
             
             if ind == 0:
                 print('Expected count rate: {}'.format(expected_count_rate))
                 
-            print('Count rate at optimized coordinates: {:.0f}'.format(opti_count_rate))
+            print('Count rate at optimized coordinates: {:.1f}'.format(opti_count_rate))
             
             # If the count rate close to what we expect, we succeeded!
             if lower_threshold <= opti_count_rate <= upper_threshold:
@@ -369,7 +362,7 @@ def main(cxn, nv_sig, nd_filter, apd_indices, name='untitled',
                 # true optimized coordinates regardless of the other initial
                 # coordinates, however. So we might succeed by trying z again 
                 # at the optimized x/y. 
-                adjusted_nv_sig = [*opti_coords, *nv_sig[3:]]
+                adjusted_nv_sig['coords'] = opti_coords
                 
         # If the threshold is not set, we succeed based only on optimize       
         else:
@@ -402,15 +395,17 @@ def main(cxn, nv_sig, nd_filter, apd_indices, name='untitled',
     else:
         if opti_succeeded:
             print('Optimized coordinates: ')
-            print('{:.3f}, {:.3f}, {:.1f}'.format(*opti_coords))
+            print('{:.3f}, {:.3f}, {:.2f}'.format(*opti_coords))
             print('Drift: ')
-            print('{:.3f}, {:.3f}, {:.1f}'.format(*drift))
+            print('{:.3f}, {:.3f}, {:.2f}'.format(*drift))
         else:
             print('Optimization failed.')
             
     print('\n')
                                
-    # %% Save the data
+    # %% Clean up and save the data
+    
+    tool_belt.reset_cfm(cxn)
 
     # Don't bother saving the data if we're just using this to find the
     # optimized coordinates
@@ -419,13 +414,9 @@ def main(cxn, nv_sig, nd_filter, apd_indices, name='untitled',
         timestamp = tool_belt.get_time_stamp()
 
         rawData = {'timestamp': timestamp,
-                   'name': name,
                    'nv_sig': nv_sig,
                    'nv_sig-units': tool_belt.get_nv_sig_units(),
-                   'nv_sig-format': tool_belt.get_nv_sig_format(),
-                   'nd_filter': nd_filter,
-                   'num_steps': num_steps,
-                   'readout': shared_params['continuous_readout_ns'],
+                   'readout': shared_params['continuous_readout_dur'],
                    'readout-units': 'ns',
                    'opti_coords': opti_coords,
                    'opti_coords-units': 'V',
@@ -442,7 +433,8 @@ def main(cxn, nv_sig, nd_filter, apd_indices, name='untitled',
                    'z_counts': counts_by_axis[2].tolist(),
                    'z_counts-units': 'number'}
 
-        filePath = tool_belt.get_file_path(__file__, timestamp, name)
+        filePath = tool_belt.get_file_path(__file__, timestamp,
+                                           nv_sig['name'])
         tool_belt.save_raw_data(rawData, filePath)
         
         if fig is not None:

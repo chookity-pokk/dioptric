@@ -6,6 +6,7 @@ Created on Sat May  4 08:34:08 2019
 """
 
 from pulsestreamer import Sequence
+from pulsestreamer import OutputState
 import numpy
 
 LOW = 0
@@ -34,7 +35,7 @@ def get_seq(pulser_wiring, args):
     init_state = args[14]
     read_state = args[15]
 
-    pulser_do_apd_gate = pulser_wiring['do_apd_gate_{}'.format(apd_index)]
+    pulser_do_apd_gate = pulser_wiring['do_apd_{}_gate'.format(apd_index)]
 
     pulser_do_uwave_plus = pulser_wiring['do_uwave_gate_0']
     pulser_do_uwave_minus = pulser_wiring['do_uwave_gate_1']
@@ -84,7 +85,7 @@ def get_seq(pulser_wiring, args):
 #    if read_state == 0:
 #        pulser_do_uwave_read = pulser_wiring['do_uwave_gate_0']
 
-    pulser_do_aom = pulser_wiring['do_aom']
+    pulser_do_aom = pulser_wiring['do_532_aom']
 
     # %% Write the microwave sequence to be used.
 
@@ -200,18 +201,27 @@ def get_seq(pulser_wiring, args):
 #        train.extend([(pi_pulse_init, HIGH), (tau_long, LOW), (pi_pulse_read, HIGH)])
 #        train.extend([(post_duration, LOW)])
 #        seq.setDigital(pulser_do_uwave, train)
-#
 
-    return seq, [period]
+    final_digital = [pulser_wiring['do_532_aom'],
+                     pulser_wiring['do_sample_clock']]
+    final = OutputState(final_digital, 0.0, 0.0)
+    return seq, final, [period]
 
 if __name__ == '__main__':
-    wiring = {'do_daq_clock': 0,
-              'do_apd_gate_0': 4,
-              'do_aom': 1,
+    wiring = {'do_sample_clock': 0,
+              'do_apd_0_gate': 4,
+              'do_532_aom': 1,
               'do_uwave_gate_0': 2,
               'do_uwave_gate_1': 3}
 
-    args = [32000, 3000, 3000, 3000, 2000, 1000, 1000,
-            750, 40, 450, 34, 48, 68000, 0, 1, -1]
+#    args = [32000, 3000, 3000, 3000, 2000, 1000, 1000,
+#            750, 40, 450, 34, 48, 68000, 0, 1, -1]
+#    args = [6240, 3000, 3000, 3000, 2000, 1000, 1000,
+#            750, 40, 320, 36, 0, 1760, 0, 1, 1]
+    # no delay
+    args = [6240, 3000, 3000, 3000, 2000, 1000, 1000,
+            0, 0, 320, 36, 0, 1760, 0, 1, 1]
+    args = [0, 3000, 3000, 3000, 2000, 1000, 1000,
+            0, 0, 320, 36, 0, 0, 0, 1, 1]
     seq, ret_vals = get_seq(wiring, args)
     seq.plot()

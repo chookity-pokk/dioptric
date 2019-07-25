@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Output server for the microwave signal generator.
+Output server for the Tektronix TSG4104A microwave signal generator.
 
 Created on Wed Apr 10 12:53:38 2019
 
@@ -8,7 +8,7 @@ Created on Wed Apr 10 12:53:38 2019
 
 ### BEGIN NODE INFO
 [info]
-name = microwave_signal_generator
+name = signal_generator_tsg4104a
 version = 1.0
 description =
 
@@ -31,18 +31,17 @@ import nidaqmx.stream_writers as stream_writers
 from nidaqmx.constants import AcquisitionType
 
 
-class MicrowaveSignalGenerator(LabradServer):
-    name = 'microwave_signal_generator'
+class SignalGeneratorTsg4104a(LabradServer):
+    name = 'signal_generator_tsg4104a'
 
     def initServer(self):
         config = ensureDeferred(self.get_config())
         config.addCallback(self.on_get_config)
-        self.task = None
 
     async def get_config(self):
         p = self.client.registry.packet()
         p.cd('Config')
-        p.get('uwave_sig_gen_visa_address')
+        p.get('signal_generator_tsg4104a_visa_address')
         p.cd(['Wiring', 'Daq'])
         p.get('di_clock')
         p.get('ao_uwave_sig_gen_mod')
@@ -52,12 +51,15 @@ class MicrowaveSignalGenerator(LabradServer):
     def on_get_config(self, config):
         resource_manager = visa.ResourceManager()
         self.sig_gen = resource_manager.open_resource(config[0])
+        # Set the VISA read and write termination. This is specific to the
+        # instrument - you can find it in the instrument's programming manual
+        self.sig_gen.read_termination = '\r\n'
+        self.sig_gen.write_termination = '\r\n'
+        # Set our channels for FM
         self.daq_di_pulser_clock = config[1]
         self.daq_ao_sig_gen_mod = config[2]
-
-    def stopServer(self):
-        if self.task is not None:
-            self.task.close()
+        self.task = None    # Initialize state variable
+        self.reset(None)
 
     @setting(0)
     def uwave_on(self, c):
@@ -154,7 +156,7 @@ class MicrowaveSignalGenerator(LabradServer):
         """Turn off the modulation."""
 
         self.sig_gen.write('MODL 0')
-        task = self.stream_task
+        task = self.task
         if task is not None:
             task.close()
 
@@ -165,8 +167,23 @@ class MicrowaveSignalGenerator(LabradServer):
         # Turn on modulation
         self.sig_gen.write('MODL 1')
 
+    @setting(7)
+    def reset(self, c):
+        self.sig_gen.write('FDEV 0')
+        self.uwave_off(c)
+        self.mod_off(c)
+        # Clean up the DAQ task!
+        if self.task is not None:
+            crash = 1/0
+        # Set the DAQ AO to 0
+        with nidaqmx.Task() as task:
+            # Set up the output channels
+            task.ao_channels.add_ao_voltage_chan(self.daq_ao_sig_gen_mod,
+                                                 min_val=-1.0, max_val=1.0)
+            task.write(0.0)
 
-__server__ = MicrowaveSignalGenerator()
+
+__server__ = SignalGeneratorTsg4104a()
 
 if __name__ == '__main__':
     from labrad import util

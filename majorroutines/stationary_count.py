@@ -15,6 +15,8 @@ import utils.tool_belt as tool_belt
 import numpy
 import matplotlib.pyplot as plt
 import time
+import labrad
+import majorroutines.optimize as optimize
 
 
 # %% Functions
@@ -37,26 +39,34 @@ def update_line_plot(new_samples, num_read_so_far, *args):
 # %% Main
 
 
-def main(cxn, coords, nd_filter, run_time, readout, apd_indices,
-         name='untitled', continuous=False):
+def main(nv_sig, run_time, apd_indices, continuous=False):
 
-    # %% Some initial calculations
+    with labrad.connect() as cxn:
+        main_with_cxn(cxn, nv_sig, run_time, apd_indices, continuous)
 
-    x_center, y_center, z_center = coords[0:3]
+def main_with_cxn(cxn, nv_sig, run_time, apd_indices, continuous=False):
+
+    # %% Some initial setup
+    
+    tool_belt.reset_cfm(cxn)
+
+    shared_parameters = tool_belt.get_shared_parameters_dict(cxn)
+    readout = shared_parameters['continuous_readout_dur']
     readout_sec = readout / 10**9
+
+    # %% Optimize
+
+    optimize.main_with_cxn(cxn, nv_sig, apd_indices)
 
     # %% Load the PulseStreamer
 
+    seq_args = [0, readout, apd_indices[0]]
+    seq_args_string = tool_belt.encode_seq_args(seq_args)
     ret_vals = cxn.pulse_streamer.stream_load('simple_readout.py',
-                                              [0, readout, apd_indices[0]])
+                                              seq_args_string)
     period = ret_vals[0]
 
     total_num_samples = int(run_time / period)
-
-    # %% Set x, y, and z
-
-    cxn.galvo.write(x_center, y_center)
-    cxn.objective_piezo.write_voltage(z_center)
 
     # %% Set up the APD
 
@@ -115,9 +125,8 @@ def main(cxn, coords, nd_filter, run_time, readout, apd_indices,
             num_read_so_far += num_new_samples
 
     # %% Clean up and report the data
-
-    cxn.apd_tagger.stop_tag_stream()
     
+    tool_belt.reset_cfm(cxn)
     
     # Replace x/0=inf with 0
     try:

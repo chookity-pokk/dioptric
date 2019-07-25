@@ -6,6 +6,7 @@ Created on Tue Apr 23 17:39:27 2019
 """
 
 from pulsestreamer import Sequence
+from pulsestreamer import OutputState
 import numpy
 
 LOW = 0
@@ -33,13 +34,13 @@ def get_seq(pulser_wiring, args):
     do_uwave_gate = args[10]
 
     # Get what we need out of the wiring dictionary
-    key = 'do_apd_gate_{}'.format(apd_index)
+    key = 'do_apd_{}_gate'.format(apd_index)
     pulser_do_apd_gate = pulser_wiring[key]
     if do_uwave_gate == 0:
         pulser_do_uwave = pulser_wiring['do_uwave_gate_0']
     if do_uwave_gate == 1:
         pulser_do_uwave = pulser_wiring['do_uwave_gate_1']
-    pulser_do_aom = pulser_wiring['do_aom']
+    pulser_do_aom = pulser_wiring['do_532_aom']
 
     # %% Couple calculated values
 
@@ -92,16 +93,18 @@ def get_seq(pulser_wiring, args):
     train = [(pre_duration, LOW), (tau, HIGH), (post_duration, LOW)]
     seq.setDigital(pulser_do_uwave, train)
 
-    return seq, [period]
+    final_digital = [pulser_wiring['do_532_aom'],
+                     pulser_wiring['do_sample_clock']]
+    final = OutputState(final_digital, 0.0, 0.0)
+    return seq, final, [period]
 
 
 if __name__ == '__main__':
     wiring = {'do_daq_clock': 0,
-              'do_apd_gate_0': 5,
-              'do_apd_gate_1': 5,
-              'do_aom': 3,
+              'do_apd_0_gate': 5,
+              'do_532_aom': 3,
               'do_uwave_gate_0': 4,
               'do_uwave_gate_1': 1}
-    args = [120, 3000, 1000, 1000, 2000, 1000, 750, 450, 400, 0, 0]
+    args = [120, 3000, 1000, 1000, 2000, 1000, 750, 450, 400, 0, 1]
     seq = get_seq(wiring, args)[0]
     seq.plot()

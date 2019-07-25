@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-Saves the data necessary to relocate specific NVs.
-
-Also can probably (?) illustrate a mapping from an NV list to an image_sample.
+"""Saves the data necessary to relocate specific NVs. Also can probably (?)
+illustrate a mapping from an NV list to an image_sample.
 
 Created on Mon Jun 10 13:54:07 2019
 
@@ -67,10 +65,8 @@ def generate_mapping_files(sample_name, micrometer_coords,
             'micrometer_coords': micrometer_coords,
             'micrometer_coords-units': 'mm',
             'image_sample_file_name': image_sample_file_name,
-            'nd_filter': nd_filter,
             'nv_sig_list': nv_sig_list,
             'nv_sig_list-units': tool_belt.get_nv_sig_units(),
-            'nv_sig_list-format': tool_belt.get_nv_sig_format(),
             }
     
     folder_dir = tool_belt.get_folder_dir(__file__)
@@ -93,44 +89,14 @@ if __name__ == '__main__':
     # Ignore this...
 #    if False:
 #        # Circle NVs from an existing mapping
-#        file_name = '2019-06-10_15-26-39_ayrton12_mapping.txt'
+#        file_name = '2019-06-10_15-26-39_ayrton12_mapping'
 #        illustrate_mapping(file_name)
 #    else:
     
     # Generate the mapping files
-    sample_name = 'ayrton12'
+    sample_name = 'johnson1'
     micrometer_coords = [208.3, 277.3, 146.8]
-    image_sample_file_name = '2019-06-10_15-26-39_ayrton12.txt'
-    nd_filter = 1.5
-    z_voltage = 50.0
-    background_count_rate = None
-    nv_sig_list = [
-               [-0.142, 0.501, z_voltage, 53, background_count_rate],
-               [-0.133, 0.420, z_voltage, 45, background_count_rate],
-               [-0.141, 0.269, z_voltage, 92, background_count_rate],
-               [-0.224, 0.070, z_voltage, 49, background_count_rate],
-               [-0.234, 0.123, z_voltage, 83, background_count_rate],
-               [-0.236, 0.163, z_voltage, 78, background_count_rate],
-               [-0.269, 0.184, z_voltage, 40, background_count_rate],
-               [-0.306, 0.160, z_voltage, 64, background_count_rate],
-               [-0.269, 0.184, z_voltage, 40, background_count_rate],
-               [-0.287, 0.260, z_voltage, 66, background_count_rate],
-               [-0.308, 0.270, z_voltage, 30, background_count_rate],
-               [-0.335, 0.280, z_voltage, 74, background_count_rate],
-               [-0.324, 0.325, z_voltage, 90, background_count_rate],
-               [-0.379, 0.280, z_voltage, 43, background_count_rate],
-               [-0.388, 0.294, z_voltage, 31, background_count_rate],
-               [-0.389, 0.264, z_voltage, 85, background_count_rate],
-               [-0.375, 0.183, z_voltage, 45, background_count_rate],
-               [-0.416, 0.398, z_voltage, 35, background_count_rate],
-               [-0.397, 0.383, z_voltage, 100, background_count_rate],
-               [-0.397, 0.337, z_voltage, 85, background_count_rate],
-               [-0.456, 0.152, z_voltage, 63, background_count_rate],
-               [-0.415, 0.398, z_voltage, 33, background_count_rate],
-               [-0.393, 0.484, z_voltage, 60, background_count_rate]]
-    
-#    nv_sig_list = [[*nv, None, None] for nv in nv_list]
-#    nv_sig_list = [nv_sig_list[13]]
+    image_sample_file_name = '2019-07-23_17-37-01_johnson1'
     
 #    generate_mapping_files(sample_name, micrometer_coords,
 #                           image_sample_file_name, nv_sig_list)

@@ -11,7 +11,8 @@ Created on Sun Jun 16 11:38:17 2019
 # %% Imports
 
 
-# %% Constants
+import utils.tool_belt as tool_belt
+import labrad
 
 
 # %% Functions
@@ -19,7 +20,7 @@ Created on Sun Jun 16 11:38:17 2019
 
 def clean_up(cxn):
 
-    pass
+    tool_belt.reset_cfm()
 
 
 # %% Main
@@ -30,7 +31,15 @@ def main():
     body of the routine.
     """
 
+    with labrad.connect() as cxn:
+        main_with_cxn(cxn)
+    
+    
+def main_with_cxn(cxn):
+
     # %% Initial set up here
+    
+    tool_belt.reset_cfm(cxn)
 
     # %% Collect the data
 
@@ -46,5 +55,5 @@ def main():
 # This allows a file's functions, classes, etc to be imported without running
 # the script that you set up here.
 if __name__ == '__main__':
-
+    
     pass

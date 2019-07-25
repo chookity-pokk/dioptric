@@ -4,12 +4,15 @@ Created on Mon Jun 17 09:52:43 2019
 
 This analysis script will take a set of T1 experiments and fit the fucntions
 defined in the Myer's paper ((0,0) - (0,1) and (1,1) - (1,-1)) to extract a 
-value for Omega nad Gamma. 
+rate for the two modified data set exponential fits. It allows the data to be
+split into different bins, which is used for the analysis of stdev. This file 
+does not convert these rates into omega and gamma, this function passes these 
+basic rates onto the stdev analysis file.
 
-Additionally, this fucntion allows the user to pass in a variable to define the
-number of bins to seperate the data into. We can split the data up into bins
-based on the num_runs. This allows us to see the data does not significantly 
-changes over the course of the experiment.
+This file averages the reference counts in a bin and uses the single value as 
+the reference.
+
+THis file also allows the user to specify if the offset shoudl be a free param
 
 @author: Aedan
 """
@@ -17,9 +20,8 @@ changes over the course of the experiment.
 # %% Imports
 
 import numpy
-from scipy import asarray as ar, exp
+from scipy import exp
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
 
 import utils.tool_belt as tool_belt
 
@@ -29,18 +31,17 @@ data_folder = 't1_double_quantum'
 
 # %% Functions
 
-# The functions we will fit the data to
+# The exponential function used to fit the data
 
-def zero_relaxation_eq(t, omega, amp, offset):
-    return offset + amp * exp(-3 * omega * t)
+def exp_eq(t, rate, amp):
+    return amp * exp(- rate * t)
 
-    
-def plus_relaxation_eq(t, gamma, omega, amp, offset):
-    return offset + amp * exp(-(omega + gamma * 2) * t)
+def exp_eq_offset(t, rate, amp, offset):
+    return offset + amp * exp(- rate * t)
 
 # %% Main
     
-def main(folder_name, num_bins, doPlot = False, save_data = True):
+def main(folder_name, num_bins, save_data = True, offset = True):
     
     print('Number of bins: {}'.format(num_bins))
 
@@ -57,8 +58,13 @@ def main(folder_name, num_bins, doPlot = False, save_data = True):
             num_runs_set = data['num_runs']
         except Exception:
             continue
+    if num_bins > num_runs_set:
+        print('num_bins > num_runs. bin_size will be set to 1')
         
-    bin_size = int(num_runs_set / num_bins)
+        bin_size = 1
+        
+    else: 
+        bin_size = int(num_runs_set / num_bins)
         
     # Define booleans to be used later in putting data into usable arrays
     zero_zero_bool = False
@@ -66,16 +72,17 @@ def main(folder_name, num_bins, doPlot = False, save_data = True):
     plus_plus_bool = False
     plus_minus_bool = False
     
-    omega_fit_failed_list = []
-    gamma_fit_failed_list = []
+    o_fit_failed_list = []
+    g_fit_failed_list = []
     
     # Create lists to store the omega and gamma rates
-    omega_rate_list = []
-    omega_amp_list = []
-    omega_offset_list = []
-    gamma_rate_list = []
-    gamma_amp_list = []
-    gamma_offset_list = []
+    o_rate_list = []
+    o_amp_list = []
+    o_offset_list = []
+    
+    g_rate_list = []
+    g_amp_list = []
+    g_offset_list = []
     
     # %% Unpack the data
     
@@ -227,7 +234,7 @@ def main(folder_name, num_bins, doPlot = False, save_data = True):
         except Exception:
             continue
     
-# Some error handeling if the count arras don't match up            
+    # Some error handeling if the count arras don't match up            
     if len(zero_zero_sig_counts) != len(zero_plus_sig_counts): 
                     
          print('Error: length of zero_zero_sig_counts and zero_plus_sig_counts do not match')
@@ -235,190 +242,120 @@ def main(folder_name, num_bins, doPlot = False, save_data = True):
     if len(plus_plus_sig_counts) != len(plus_minus_sig_counts):
         print('Error: length of plus_plus_sig_counts and plus_minus_sig_counts do not match')
     
-# %% Fit the data based on the bin size
+    # %% Fit the data based on the bin size
         
     i = 0
     
-    # For any number of bins except the maximum amount, we want to slice the
-    # arrays from [i:i+bin_size-1]. However, this doesn't work for the maximum
-    # amount of bins, when the bin_size is 1. In that case, we do want to take
-    # slices [i:i+bin_size]
-    if num_bins == num_runs:
-        slice_size = bin_size
-    else:
-        slice_size = bin_size - 1
+    # We want to slice the arrays using [i:i+bin_size].
+    
+    slice_size = bin_size
     
     while i < (num_runs):
-        if doPlot:
-            fig, axes_pack = plt.subplots(1, 2, figsize=(17, 8))
         
         #Fit to the (0,0) - (0,1) data to find Omega
         zero_zero_avg_sig_counts =  \
             numpy.average(zero_zero_sig_counts[i:i+slice_size, ::], axis=0)
-        zero_zero_avg_ref_counts =  \
-            numpy.average(zero_zero_ref_counts[i:i+slice_size, ::], axis=0)
+        zero_zero_avg_ref =  \
+            numpy.average(zero_zero_ref_counts[i:i+slice_size, ::])
         
-        zero_zero_norm_avg_sig = zero_zero_avg_sig_counts / zero_zero_avg_ref_counts
+        zero_zero_norm_avg_sig = zero_zero_avg_sig_counts / zero_zero_avg_ref
                
         zero_plus_avg_sig_counts = \
             numpy.average(zero_plus_sig_counts[i:i+slice_size, ::], axis=0)
-        zero_plus_avg_ref_counts = \
-            numpy.average(zero_plus_ref_counts[i:i+slice_size, ::], axis=0)
+        zero_plus_avg_ref = \
+            numpy.average(zero_plus_ref_counts[i:i+slice_size, ::])
         
-        zero_plus_norm_avg_sig = zero_plus_avg_sig_counts / zero_plus_avg_ref_counts 
+        zero_plus_norm_avg_sig = zero_plus_avg_sig_counts / zero_plus_avg_ref 
     
         # Define the counts for the zero relaxation equation
         zero_relaxation_counts =  zero_zero_norm_avg_sig - zero_plus_norm_avg_sig
         
-        omega_fit_failed = False
-        gamma_fit_failed = False
-    
+        o_fit_failed = False
+        g_fit_failed = False
+        
+        init_params_list = [1.0, 0.4]
+        
         try:
-
-            init_params = (0.33, 0.4, 0)
-            opti_params, cov_arr = curve_fit(zero_relaxation_eq, zero_zero_time,
-                                         zero_relaxation_counts, p0 = init_params)
+            if offset:
+                init_params_list.append(0)
+                init_params = tuple(init_params_list)
+                omega_opti_params, cov_arr = curve_fit(exp_eq_offset, zero_zero_time,
+                                             zero_relaxation_counts, p0 = init_params)
+                
+            else: 
+                init_params = tuple(init_params_list)
+                omega_opti_params, cov_arr = curve_fit(exp_eq, zero_zero_time,
+                                             zero_relaxation_counts, p0 = init_params)
            
         except Exception:
             
-            omega_fit_failed = True
-            omega_fit_failed_list.append(omega_fit_failed)
-            
-            if doPlot:
-                ax = axes_pack[0]
-                ax.plot(zero_zero_time, zero_relaxation_counts, 'bo', label = 'data')
-                ax.set_xlabel('Relaxation time (ms)')
-                ax.set_ylabel('Normalized signal Counts')
-                ax.set_title('(0,0) - (0,+1)')
-                ax.legend()
+            o_fit_failed = True
+            o_fit_failed_list.append(o_fit_failed)
 
-        if not omega_fit_failed:
-            omega_fit_failed_list.append(omega_fit_failed)
+        if not o_fit_failed:
+            o_fit_failed_list.append(o_fit_failed)
             
-            omega_rate_list.append(opti_params[0])
-            omega_amp_list.append(opti_params[1])
-            omega_offset_list.append(opti_params[2])
-            
-            omega = opti_params[0]
-            omega_unc= cov_arr[0,0]
-        
-            # Plotting the data
-            if doPlot:
-                zero_time_linspace = numpy.linspace(0, zero_zero_time[-1], num=1000)
-                ax = axes_pack[0]
-                ax.plot(zero_zero_time, zero_relaxation_counts, 'bo', label = 'data')
-                ax.plot(zero_time_linspace, 
-                        zero_relaxation_eq(zero_time_linspace, *opti_params), 
-                        'r', label = 'fit') 
-                ax.set_xlabel('Relaxation time (ms)')
-                ax.set_ylabel('Normalized signal Counts')
-                ax.set_title('(0,0) - (0,+1)')
-                ax.legend()
-                text = r'$\Omega = $ {} kHz'.format('%.2f'%opti_params[0])
-    
-                props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
-                ax.text(0.55, 0.95, text, transform=ax.transAxes, fontsize=12,
-                        verticalalignment='top', bbox=props)
+            o_rate_list.append(omega_opti_params[0])
+            o_amp_list.append(omega_opti_params[1])
+            if offset:
+                o_offset_list.append(omega_opti_params[2])
 
 # %% Fit to the (1,1) - (1,-1) data to find Gamma, only if Omega waas able
 # to fit
         
         plus_plus_avg_sig_counts = \
             numpy.average(plus_plus_sig_counts[i:i+slice_size, ::], axis=0)
-        plus_plus_avg_ref_counts = \
-            numpy.average(plus_plus_ref_counts[i:i+slice_size, ::], axis=0)
+        plus_plus_avg_ref = \
+            numpy.average(plus_plus_ref_counts[i:i+slice_size, ::])
         
-        plus_plus_norm_avg_sig = plus_plus_avg_sig_counts / plus_plus_avg_ref_counts
+        plus_plus_norm_avg_sig = plus_plus_avg_sig_counts / plus_plus_avg_ref
                
         plus_minus_avg_sig_counts = \
             numpy.average(plus_minus_sig_counts[i:i+slice_size, ::], axis=0)
-        plus_minus_avg_ref_counts = \
-            numpy.average(plus_minus_ref_counts[i:i+slice_size, ::], axis=0)
+        plus_minus_avg_ref = \
+            numpy.average(plus_minus_ref_counts[i:i+slice_size, ::])
         
-        plus_minus_norm_avg_sig = plus_minus_avg_sig_counts / plus_minus_avg_ref_counts
+        plus_minus_norm_avg_sig = plus_minus_avg_sig_counts / plus_minus_avg_ref
         
         # Define the counts for the plus relaxation equation
         plus_relaxation_counts =  plus_plus_norm_avg_sig - plus_minus_norm_avg_sig
-        
-        # If omega failed, we can't fit gamma to this data, so we will set the
-        # gamma fail to True and just plot the points
-        if omega_fit_failed:
-            gamma_fit_failed = True
-            gamma_fit_failed_list.append(gamma_fit_failed)
+
+        init_params_list = [0.1, 0.40]
+        try:
+            if offset:
+                init_params_list.append(0)
+                init_params = tuple(init_params_list)
+                gamma_opti_params, cov_arr = curve_fit(exp_eq_offset,
+                                 plus_plus_time, plus_relaxation_counts,
+                                 p0 = init_params)
+                
+            else:
+                init_params = tuple(init_params_list)
+                gamma_opti_params, cov_arr = curve_fit(exp_eq,
+                                 plus_plus_time, plus_relaxation_counts,
+                                 p0 = init_params)
+
+        except Exception:
+            g_fit_failed = True
+            g_fit_failed_list.append(g_fit_failed)
             
-            if doPlot:
-                ax = axes_pack[1]
-                ax.plot(plus_plus_time, plus_relaxation_counts, 'bo')
-                ax.set_xlabel('Relaxation time (ms)')
-                ax.set_ylabel('Normalized signal Counts')
-                ax.set_title('(+1,+1) - (+1,-1)')
-                
-        else:
-            # we will use the omega found to fit to, and add bounds to the 
-            # omega param given by +/- the covariance of the fit.
-            
-            omega_max = omega + omega_unc
-            omega_min = omega - omega_unc
-            try:
-                init_params = (100, omega, 0.40, 0)
-                bound_params = ((-numpy.inf, omega_min, -numpy.inf, -numpy.inf),
-                          (numpy.inf, omega_max, numpy.inf, numpy.inf))
-                opti_params, cov_arr = curve_fit(plus_relaxation_eq, 
-                                 plus_plus_time, plus_relaxation_counts, 
-                                 p0 = init_params, bounds = bound_params)
-    
-            except Exception:
-                gamma_fit_failed = True
-                gamma_fit_failed_list.append(gamma_fit_failed)
-                
-                if doPlot:
-                    ax = axes_pack[1]
-                    ax.plot(plus_plus_time, plus_relaxation_counts, 'bo')
-                    ax.set_xlabel('Relaxation time (ms)')
-                    ax.set_ylabel('Normalized signal Counts')
-                    ax.set_title('(+1,+1) - (+1,-1)')
-                
-            if not gamma_fit_failed:
-                gamma_fit_failed_list.append(gamma_fit_failed)
-                
-                gamma_rate_list.append(opti_params[0])
-                gamma_amp_list.append(opti_params[1])
-                gamma_offset_list.append(opti_params[2])
-            
-           
-                # Plotting
-                if doPlot:
-                    plus_time_linspace = numpy.linspace(0, plus_plus_time[-1], num=1000)
-                    ax = axes_pack[1]
-                    ax.plot(plus_plus_time, plus_relaxation_counts, 'bo')
-                    ax.plot(plus_time_linspace, 
-                            plus_relaxation_eq(plus_time_linspace, *opti_params), 
-                            'r', label = 'fit')   
-#                    ax.set_xlim(0,0.1)
-                    ax.set_xlabel('Relaxation time (ms)')
-                    ax.set_ylabel('Normalized signal Counts')
-                    ax.set_title('(+1,+1) - (+1,-1)')
-                    ax.legend()
-                    text = r'$\gamma = $ {} kHz'.format('%.2f'%opti_params[0])
-        
-                    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-                    ax.text(0.55, 0.95, text, transform=ax.transAxes, fontsize=12,
-                            verticalalignment='top', bbox=props)
-            if doPlot:
-                fig.canvas.draw()
-                fig.canvas.flush_events()
+        if not g_fit_failed:
+            g_fit_failed_list.append(g_fit_failed)
+              
+            g_rate_list.append(gamma_opti_params[0])
+            g_amp_list.append(gamma_opti_params[1])
+            if offset:
+                g_offset_list.append(gamma_opti_params[2])
                     
         # Advance_ the index
         i = i + bin_size
     
-    omega_average = numpy.average(omega_rate_list)
-    omega_stdev = numpy.std(omega_rate_list)
+    o_average = numpy.average(o_rate_list)
+    o_stdev = numpy.std(o_rate_list)
     
-    gamma_average = numpy.average(gamma_rate_list)
-    gamma_stdev = numpy.std(gamma_rate_list)
-    
-#    print('Omega list: {} \nGamma list: {}'.format(omega_rate_list, gamma_rate_list))
-    
+    g_average = numpy.average(g_rate_list)
+    g_stdev = numpy.std(g_rate_list)
+      
 # %% Saving data
     
     if save_data: 
@@ -426,48 +363,50 @@ def main(folder_name, num_bins, doPlot = False, save_data = True):
         raw_data = {'time_stamp': time_stamp,
                     'level_splitting': splitting_MHz,
                     'level_splitting-units': 'MHz',
+                    'offset_free_param?': offset,
                     'num_runs': num_runs,
                     'num_bins': num_bins,
                     'bin_size': bin_size,
-                    'omega_fit_failed_list': omega_fit_failed_list,
-                    'gamma_fit_failed_list': gamma_fit_failed_list,
-                    'omega_average': omega_average,
-                    'omega_average-units': 'kHz',
-                    'omega_stdev': omega_stdev,
-                    'omega_stdev-units': 'kHz',
-                    'gamma_average': gamma_average,
-                    'gamma_average-units': 'kHz',
-                    'gamma_stdev': gamma_stdev,
-                    'gamma_stdev-units': 'kHz',
-                    'omega_rate_list': omega_rate_list,
-                    'omega_rate_list-units': 'kHz',
-                    'omega_amp_list': omega_rate_list,
-                    'omega_amp_list-units': 'arb',
-                    'omega_offset_list': omega_offset_list,
-                    'omega_offset_list-units': 'arb',
-                    'gamma_rate_list': gamma_rate_list,
-                    'gamma_rate_list-units': 'kHz',
-                    'gamma_amp_list': gamma_rate_list,
-                    'gamma_amp_list-units': 'arb',
-                    'gamma_offset_list': gamma_offset_list,
-                    'gamma_offset_list-units': 'arb'}
+                    'o_fit_failed_list': o_fit_failed_list,
+                    'g_fit_failed_list': g_fit_failed_list,
+                    'o_average': o_average,
+                    'o_average-units': 'kHz',
+                    'o_stdev': o_stdev,
+                    'o_stdev-units': 'kHz',
+                    'g_average': g_average,
+                    'g_average-units': 'kHz',
+                    'g_stdev': g_stdev,
+                    'g_stdev-units': 'kHz',
+                    'o_rate_list': o_rate_list,
+                    'o_rate_list-units': 'kHz',
+                    'o_amp_list': o_amp_list,
+                    'o_amp_list-units': 'arb',
+                    'o_offset_list': o_offset_list,
+                    'o_offset_list-units': 'arb',
+                    'g_rate_list': g_rate_list,
+                    'g_rate_list-units': 'kHz',
+                    'g_amp_list': g_amp_list,
+                    'g_amp_list-units': 'arb',
+                    'g_offset_list': g_offset_list,
+                    'g_offset_list-units': 'arb'}
         
         data_dir='E:/Shared drives/Kolkowitz Lab Group/nvdata'
         
-        file_name = str('%.1f'%splitting_MHz) + '_MHz_splitting_' + str(num_bins) + '_bins' 
+        file_name = str('%.1f'%splitting_MHz) + '_MHz_splitting_' + str(num_bins) + '_bins_v2' 
         file_path = '{}/{}/{}/{}'.format(data_dir, data_folder, folder_name, 
                                                          file_name)
     
         tool_belt.save_raw_data(raw_data, file_path)
-
-    return omega_average, omega_stdev, gamma_average, gamma_stdev, \
-                  splitting_MHz, omega_fit_failed_list, gamma_fit_failed_list
+    
+    return o_average, o_stdev, g_average, g_stdev, \
+                  splitting_MHz, o_fit_failed_list, g_fit_failed_list
                   
 # %% Run the file
                   
 if __name__ == '__main__':
     
-    folder = 'nv2_2019_04_30_56MHz'
+    folder = 'nv0_2019_06_27_23MHz'
+
     
-    main(folder, 1, True, True)
+    main(folder, 1,  False,  True)
 

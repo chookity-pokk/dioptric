@@ -16,10 +16,13 @@ from scipy.optimize import curve_fit
 def AbsCos(angle, offset, amp, phase):
     return offset + abs(amp * numpy.cos(angle * numpy.pi / 180 + phase * numpy.pi / 180))
 
+def AbsCosNoOff(angle, amp, phase):
+    return abs(amp * numpy.cos(angle * numpy.pi / 180 + phase * numpy.pi / 180))
+
 # %% Scatter raw data
 
-angles = [180, 216, 240, 270, 300, 260]
-splittings = [16, 52, 66, 70, 68, 69]
+angles = [100, 120, 140, 60, 80]
+splittings = [108, 95, 72, 82, 101]
 
 fig, ax = plt.subplots()
 
@@ -33,15 +36,19 @@ ax.scatter(angles, splittings, c='r')
 # %% Fitting
 
 offset = 0
-amp = 70
+amp = 230
 phase = 90
 
-popt, pcov = curve_fit(AbsCos, angles, splittings, 
-                       p0=[offset, amp, phase])
+#popt, pcov = curve_fit(AbsCos, angles, splittings, 
+#                       p0=[offset, amp, phase])
+
+popt, pcov = curve_fit(AbsCosNoOff, angles, splittings, 
+                       p0=[amp, phase])
 
 print(popt)
 
 x_vals = numpy.linspace(0, 360, 1000)
-y_vals = AbsCos(x_vals, *popt)
+#y_vals = AbsCos(x_vals, *popt)
+y_vals = AbsCosNoOff(x_vals, *popt)
 
 ax.plot(x_vals, y_vals)

@@ -68,10 +68,10 @@ class SpectrumAnalyzer(LabradServer):
     ############
 
     def acquire_spectrum_internal(self, freq_center=2.87, freq_range=0.5):
-        freq_center_hz = freq_center / 10**9
-        freq_range_hz = freq_range / 10**9
+        freq_center_hz = freq_center * 10**9
+        freq_range_hz = freq_range * 10**9
         ref_level = 0
-        resolution_bandwidth = 300e3
+        resolution_bandwidth = 300e3  # I don't know what this means
         specSet = self.config_spectrum(freq_center_hz, ref_level,
                                        freq_range_hz, resolution_bandwidth)
         spec_trace_1 = rsa_api.SpectrumTraces.SpectrumTrace1
@@ -89,7 +89,7 @@ class SpectrumAnalyzer(LabradServer):
         freqs, powers = self.acquire_spectrum_internal(freq_center, freq_range)
         peakPower = numpy.amax(powers)
         peakFreq = freqs[numpy.argmax(powers)]
-        return peakFreq / 10**9, peakPower
+        return float(peakFreq / 10**9), float(peakPower)
 
 
 __server__ = SpectrumAnalyzer()

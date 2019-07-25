@@ -24,8 +24,8 @@ from random import shuffle
 # %% Main
 
 
-def main(cxn, coords, nd_filter, sig_apd_index, ref_apd_index, expected_counts,
-         uwave_freq, uwave_power, uwave_pi_pulse, count_gate_time,
+def main(cxn, nv_sig, nd_filter, apd_indices,
+         uwave_freq, uwave_power, pi_pulse, count_gate_time,
          num_steps, num_reps, num_runs, name='untitled'):
 
     # %% Get the starting time of the function
@@ -43,27 +43,13 @@ def main(cxn, coords, nd_filter, sig_apd_index, ref_apd_index, expected_counts,
         do_uwave_gen = 'HP'
     
     # Define some times (in ns)
-    polarization_time = 3 * 10**3
-    signal_time = 3 * 10**3
-    reference_time = 3 * 10**3
-    pre_uwave_exp_wait_time = 1 * 10**3
-    post_uwave_exp_wait_time = 1 * 10**3
-    sig_to_ref_wait_time = pre_uwave_exp_wait_time + post_uwave_exp_wait_time
-    aom_delay_time = 750
-    rf_delay_time = 40
+    polarization_dur = 5 * 10**3
+    exp_dur = 5 * 10**3
+    aom_delay = 750
+    uwave_delay = 40
     gate_time = int(count_gate_time)
-    pi_pulse = round(uwave_pi_pulse)
-
-    # Analyze the sequence
-    file_name = os.path.basename(__file__)
     
-    sequence_args = [polarization_time, signal_time,
-                    reference_time, sig_to_ref_wait_time,
-                    pre_uwave_exp_wait_time, post_uwave_exp_wait_time,  aom_delay_time,
-                    rf_delay_time, gate_time, pi_pulse,
-                    sig_apd_index, ref_apd_index, do_uwave_gate]
-    ret_vals = cxn.pulse_streamer.stream_load(file_name, sequence_args, 1)
-    period = ret_vals[0]
+    file_name = os.path.basename(__file__)
 
     # Set up our data structure, an array of NaNs that we'll fill
     # incrementally. NaNs are ignored by matplotlib, which is why they're
@@ -76,26 +62,12 @@ def main(cxn, coords, nd_filter, sig_apd_index, ref_apd_index, expected_counts,
     
     # %% Make some lists and variables to save at the end
     
-    passed_coords = coords
-    
     opti_coords_list = []
-    optimization_success_list = []
-    
     
     # Create a list of indices to step through the taus. This will be shuffled
-    
     ind_list = list(range(0, num_steps))
 
-    # %% Set up the microwaves
-
-    cxn.microwave_signal_generator.set_freq(uwave_freq)
-    cxn.microwave_signal_generator.set_amp(uwave_power)
-    cxn.microwave_signal_generator.uwave_on()
-
     # %% Collect the data
-
-    # Start 'Press enter to stop...'
-    tool_belt.init_safe_stop()
 
     for run_ind in range(num_runs):
 
@@ -106,19 +78,14 @@ def main(cxn, coords, nd_filter, sig_apd_index, ref_apd_index, expected_counts,
             break
         
         # Optimize
-        ret_val = optimize.main(cxn, coords, nd_filter, sig_apd_index, 
-                               expected_counts = expected_counts)
-        
-        coords = ret_val[0]
-        optimization_success = ret_val[1]
-        
-        # Save the coords found and if it failed
-        optimization_success_list.append(optimization_success)
-        opti_coords_list.append(coords)
+        opti_coords_list.append(optimize.main(cxn, nv_sig, nd_filter, apd_indices))
 
-        # Load the APD tasks
-        cxn.apd_counter.load_stream_reader(sig_apd_index, period, num_steps)
-        cxn.apd_counter.load_stream_reader(ref_apd_index, period, num_steps)
+        cxn.microwave_signal_generator.set_freq(uwave_freq)
+        cxn.microwave_signal_generator.set_amp(uwave_power)
+        cxn.microwave_signal_generator.uwave_on()
+
+        # Load the APD stream
+        cxn.apd_tagger.start_tag_stream(apd_indices)
         
         # Shuffle the list of indices to use for stepping through the taus
         shuffle(ind_list)     
@@ -127,26 +94,30 @@ def main(cxn, coords, nd_filter, sig_apd_index, ref_apd_index, expected_counts,
 
             # Break out of the while if the user says stop
             if tool_belt.safe_stop():
-                break
+                break 
 
             # Stream the sequence
-            args = [polarization_time, signal_time,
-                    reference_time, sig_to_ref_wait_time,
-                    pre_uwave_exp_wait_time, post_uwave_exp_wait_time,  aom_delay_time,
-                    rf_delay_time, gate_time, pi_pulse,
-                    sig_apd_index, ref_apd_index, do_uwave_gate]
+            # polarization_dur, exp_dur, aom_delay, uwave_delay, 
+            # readout_dur, pi_pulse, apd_index, uwave_gate_index
+            args = [polarization_dur, exp_dur, aom_delay, uwave_delay, 
+                    gate_time, pi_pulse, apd_indices[0], do_uwave_gate]
             
             cxn.pulse_streamer.stream_immediate(file_name, num_reps, args, 1)
 
-            count = cxn.apd_counter.read_stream(sig_apd_index, 1)
-            sig_counts[run_ind, ind] = count
-
-            count = cxn.apd_counter.read_stream(ref_apd_index, 1)
-            ref_counts[run_ind, ind] = count
-
-    # %% Turn off the signal generator
-
-    cxn.microwave_signal_generator.uwave_off()
+            # Get the counts
+            new_counts = cxn.apd_tagger.read_counter_separate_gates(1)
+            
+            sample_counts = new_counts[0]
+            
+            # signal counts are even - get every second element starting from 0
+            sig_gate_counts = sample_counts[0::2]
+            sig_counts[run_ind, ind] = sum(sig_gate_counts)
+            
+            # ref counts are odd - sample_counts every second element starting from 1
+            ref_gate_counts = sample_counts[1::2]  
+            ref_counts[run_ind, ind] = sum(ref_gate_counts)
+    
+        tool_belt.reset_cfm(cxn)
 
     # %% Average the counts over the iterations
 
@@ -155,7 +126,7 @@ def main(cxn, coords, nd_filter, sig_apd_index, ref_apd_index, expected_counts,
 
     # %% Calculate the statistics of the run
 
-    norm_avg_sig = avg_ref_counts - avg_sig_counts  
+    norm_avg_sig = avg_ref_counts - avg_sig_counts
     
     sig_stat = numpy.average(norm_avg_sig)
     
@@ -166,7 +137,7 @@ def main(cxn, coords, nd_filter, sig_apd_index, ref_apd_index, expected_counts,
     print('Gate Time: {} ns \nSignal: {:.3f} \nNoise: {:.3f} \nSNR: {:.1f}'.format(gate_time, \
           sig_stat, st_dev_stat, sig_to_noise_ratio))
     
-    # %% Plot the Rabi signal
+    # %% Plot the counts
 
     raw_fig, axes_pack = plt.subplots(1, 2, figsize=(17, 8.5))
 
@@ -202,12 +173,9 @@ def main(cxn, coords, nd_filter, sig_apd_index, ref_apd_index, expected_counts,
                 'sig_stat': sig_stat,
                 'st_dev_stat': st_dev_stat,
                 'sig_to_noise_ratio': sig_to_noise_ratio,
-                'passed_coords': passed_coords,
+                'nv_sig': nv_sig,
                 'opti_coords_list': opti_coords_list,
                 'coords-units': 'V',
-                'optimization_success_list': optimization_success_list,
-                'expected_counts': expected_counts,
-                'expected_counts-units': 'kcps',
                 'nd_filter': nd_filter,
                 'uwave_freq': uwave_freq,
                 'uwave_freq-units': 'GHz',
@@ -229,7 +197,7 @@ def main(cxn, coords, nd_filter, sig_apd_index, ref_apd_index, expected_counts,
     tool_belt.save_figure(raw_fig, file_path)
     tool_belt.save_raw_data(raw_data, file_path)
     
-    return sig_to_noise_ratio, coords
+    return sig_to_noise_ratio
 
 # %%
     
@@ -238,20 +206,25 @@ if __name__ == '__main__':
     import labrad
     from scipy.optimize import curve_fit
     
-    name = 'Ayrton 12'
-    coords = [0.246, 0.235, 49.4]
-    nd_filter = 1.5
+    name = 'Johnson1'
+    # nv0_2019_06_27
+#    nv_sig = [-0.241, -0.335, 47.7, 40, 2]  # nd 0.5
+    nv_sig = [-0.241, -0.335, 47.7, 20, 2]  # nd 1.0
+    nv_sig = [-0.241, -0.335, 47.7, 10, 2]  # nd 1.5
+    nv_sig = [-0.241, -0.335, 47.7, 3, 2]  # nd 2.0
+    nd_filter = 0.5
 
-    apd_a_index = 0
-    apd_b_index = 1
-    expected_counts = 30
+    apd_indices = [0]
     
-    uwave_freq = 2.851
+    uwave_freq = 2.7628
     uwave_power = 9
-    uwave_pi_pulse = 60.45
+    uwave_pi_pulse = 58
 
-    num_steps = 101
-    num_reps = 10 * 10**4
+    # num_steps should be high and num_reps low so that we can actually
+    # analyze the noise - if num_steps = 0, then st_dev = 0 too!
+#    num_steps = 101
+    num_steps = 51
+    num_reps = 10**5
     num_runs = 1
     
 #    count_gate_time = 350
@@ -261,41 +234,43 @@ if __name__ == '__main__':
 #             uwave_freq, uwave_power, uwave_pi_pulse, count_gate_time,
 #             num_steps, num_reps, num_runs, name)
         
+#    delay_range = [100, 600]
+    delay_range = [200, 600]
+    
+    delay_time_list = numpy.linspace(delay_range[0], delay_range[1], num=9).astype(int)
+    
+    # Start 'Press enter to stop...'
+    tool_belt.init_safe_stop()
+    
     snr_list = []
-    min_delay_time = 400
-    max_delay_time = 500
-
-#    min_delay_time = 500
-#    max_delay_time = 520    
-    
-    num_delay_steps = int((max_delay_time - min_delay_time) / 25 + 1)
-    delay_time_list = numpy.linspace(min_delay_time, max_delay_time, num = num_delay_steps).astype(int)
-    
     for gate_ind in delay_time_list:
+        
+        # Break out of the while if the user says stop
+        if tool_belt.safe_stop():
+            break
+        
         count_gate_time = gate_ind
     
         with labrad.connect() as cxn:
-            ret_vals = main(cxn, coords, nd_filter, apd_a_index, apd_b_index, expected_counts,
+            snr_value = main(cxn, nv_sig, nd_filter, apd_indices,
                  uwave_freq, uwave_power, uwave_pi_pulse, count_gate_time,
                  num_steps, num_reps, num_runs, name)
             
-            snr_value = ret_vals[0]
             snr_list.append(snr_value)
-            coords = ret_vals[1]
             
     print(snr_list)
     
     def parabola(t, offset, amplitude, delay_time):
         return offset + amplitude * (t - delay_time)**2  
     
-    offset = 10
+    offset = 130
     amplitude = 100
-    delay_time = 300
+    delay_time = numpy.average(delay_range)
     
-    popt,pcov = curve_fit(parabola, delay_time_list, snr_list, 
-                              p0=[offset, amplitude, delay_time]) 
+    popt,pcov = curve_fit(parabola, delay_time_list, snr_list,
+                          p0=[offset, amplitude, delay_time]) 
     
-    linspace_time = numpy.linspace(min_delay_time, max_delay_time, num = 1000)
+    linspace_time = numpy.linspace(delay_range[0], delay_range[1], num=1000)
     
     fig, ax = plt.subplots(1, 1, figsize=(12, 10))
     ax.plot(delay_time_list, snr_list, 'ro', label = 'data')
@@ -318,8 +293,11 @@ if __name__ == '__main__':
             'snr_list': snr_list,
             'delay_time_list': delay_time_list.tolist()}
     
-    file_path = tool_belt.get_file_path(__file__, timestamp, 'Ayrton12_SNR_fit')
+    file_path = tool_belt.get_file_path(__file__, timestamp, 'Johnson1_SNR_fit')
     tool_belt.save_figure(fig, file_path)
     tool_belt.save_raw_data(raw_data, file_path)
     
+    if tool_belt.check_safe_stop_alive():
+        print("\n\nRoutine complete. Press enter to exit.")
+        tool_belt.poll_safe_stop()
             

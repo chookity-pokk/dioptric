@@ -6,6 +6,7 @@ Created on Tue Apr 23 17:39:27 2019
 """
 
 from pulsestreamer import Sequence
+from pulsestreamer import OutputState
 import numpy
 
 LOW = 0
@@ -26,22 +27,20 @@ def get_seq(pulser_wiring, args):
         pre_uwave_exp_wait_time, post_uwave_exp_wait_time, aom_delay_time, \
         rf_delay_time, gate_time, pi_pulse = durations
 
-    # Get the APD indices
-    sig_apd_index, ref_apd_index = args[10:12]
+    # Get the APD index
+    apd_index = args[10]
     
     #Signify which signal generator to use
-    do_uwave_gate = args[12]
+    do_uwave_gate = args[11]
 
     # Get what we need out of the wiring dictionary
-    key = 'do_apd_gate_{}'.format(sig_apd_index)
-    pulser_do_sig_apd_gate = pulser_wiring[key]
-    key = 'do_apd_gate_{}'.format(ref_apd_index)
-    pulser_do_ref_apd_gate = pulser_wiring[key]
+    key = 'do_apd_{}_gate'.format(apd_index)
+    apd_index = pulser_wiring[key]
     if do_uwave_gate == 0:
         pulser_do_uwave = pulser_wiring['do_uwave_gate_0']
     if do_uwave_gate == 1:
         pulser_do_uwave = pulser_wiring['do_uwave_gate_1']
-    pulser_do_aom = pulser_wiring['do_aom']
+    pulser_do_aom = pulser_wiring['do_532_aom']
 
     # %% Couple calculated values
 
@@ -58,17 +57,14 @@ def get_seq(pulser_wiring, args):
 
     seq = Sequence()
 
-    # Signal APD gate
+    # APD gating
     pre_duration = prep_time
-    post_duration = signal_time - gate_time + sig_to_ref_wait_time + reference_time
-    train = [(pre_duration, LOW), (gate_time, HIGH), (post_duration, LOW)]
-    seq.setDigital(pulser_do_sig_apd_gate, train)
-
-    # Reference APD gate
-    pre_duration = prep_time + signal_time + sig_to_ref_wait_time
     post_duration = reference_time - gate_time
-    train = [(pre_duration, LOW), (gate_time, HIGH), (post_duration, LOW)]
-    seq.setDigital(pulser_do_ref_apd_gate, train)
+    post_duration = signal_time - gate_time + sig_to_ref_wait_time + reference_time
+    train = [(pre_duration, LOW), (gate_time, HIGH),
+             (sig_to_ref_wait_time, LOW), 
+             (gate_time, HIGH), (post_duration, LOW)]
+    seq.setDigital(apd_index, train)
 
     # Pulse the laser with the AOM for polarization and readout
     train = [(rf_delay_time + polarization_time, HIGH),
@@ -85,7 +81,10 @@ def get_seq(pulser_wiring, args):
     train = [(pre_duration, LOW), (pi_pulse, HIGH), (post_duration, LOW)]
     seq.setDigital(pulser_do_uwave, train)
 
-    return seq, [period]
+    final_digital = [pulser_wiring['do_532_aom'],
+                     pulser_wiring['do_sample_clock']]
+    final = OutputState(final_digital, 0.0, 0.0)
+    return seq, final, [period]
 
 
 if __name__ == '__main__':
@@ -95,6 +94,12 @@ if __name__ == '__main__':
               'do_aom': 3,
               'do_uwave_gate_0': 4,
               'do_uwave_gate_1': 5}
-    args = [3000, 3000, 3000, 2000 , 1000, 1000, 0, 0, 300, 100, 0, 1, 0]
+    
+    # polarization_time, signal_time, reference_time, sig_to_ref_wait_time,
+    # pre_uwave_exp_wait_time, post_uwave_exp_wait_time, aom_delay_time,
+    # rf_delay_time, gate_time, pi_pulse, apd_index, uwave_gate_index
+    args = [3000, 3000, 3000, 2000,
+            1000, 1000, 0,
+            0, 300, 100, 0, 0]
     seq, ret_vals = get_seq(wiring, args)
     seq.plot()   

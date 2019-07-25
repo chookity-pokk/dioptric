@@ -32,7 +32,7 @@ import logging
 
 class ArbitraryWaveformGenerator(LabradServer):
     name = 'arbitrary_waveform_generator'
-    logging.basicConfig(level=logging.DEBUG, 
+    logging.basicConfig(level=logging.DEBUG,
                 format='%(asctime)s %(levelname)-8s %(message)s',
                 datefmt='%y-%m-%d_%H-%M-%S',
                 filename='E:/Shared drives/Kolkowitz Lab Group/nvdata/labrad_logging/{}.log'.format(name))
@@ -51,6 +51,7 @@ class ArbitraryWaveformGenerator(LabradServer):
     def on_get_config(self, config):
         resource_manager = visa.ResourceManager()
         self.wave_gen = resource_manager.open_resource(config)
+        self.reset(None)
         logging.debug('init complete')
 
     @setting(0, i_voltages='*v[]', q_voltages='*v[]')
@@ -59,7 +60,7 @@ class ArbitraryWaveformGenerator(LabradServer):
         external source. Triggered off the rising edge of an external
         trigger input.
         """
-        
+
         # Clear the memory so we can load waveforms with existing names
         self.wave_gen.write('SOUR1:DATA:VOL:CLE')
         self.wave_gen.write('SOUR2:DATA:VOL:CLE')
@@ -78,7 +79,7 @@ class ArbitraryWaveformGenerator(LabradServer):
         self.wave_gen.write('SOUR2:FUNC DC')
         self.wave_gen.write('SOUR2:VOLT:OFFS 0.0')
         self.wave_gen.write('OUTP2 ON')
-        
+
         # Set to arbitrary mode
         self.wave_gen.write('SOUR1:FUNC ARB')
         self.wave_gen.write('SOUR2:FUNC ARB')
@@ -86,11 +87,11 @@ class ArbitraryWaveformGenerator(LabradServer):
         # Load the waveforms we just set up
         self.wave_gen.write('SOUR1:FUNC:ARB i_voltages')
         self.wave_gen.write('SOUR2:FUNC:ARB q_voltages')
-        
+
         # Set the amplitude to the full 2.0 V range
         self.wave_gen.write('SOUR1:FUNC:ARB:PTP 2.0')
         self.wave_gen.write('SOUR2:FUNC:ARB:PTP 2.0')
-        
+
         # Turn off the filter so we can use an external trigger
         self.wave_gen.write('SOUR1:FUNC:ARB:FILT OFF')
         self.wave_gen.write('SOUR2:FUNC:ARB:FILT OFF')
@@ -122,6 +123,10 @@ class ArbitraryWaveformGenerator(LabradServer):
     def wave_off(self, c):
         self.wave_gen.write('OUTP1 OFF')
         self.wave_gen.write('OUTP2 OFF')
+
+    @setting(6)
+    def reset(self, c):
+        pass
 
 
 __server__ = ArbitraryWaveformGenerator()

@@ -12,32 +12,7 @@ Created on Sun Jun 16 11:38:17 2019
 
 
 import utils.tool_belt as tool_belt
-
-
-# %% Constants
-
-
-# %% Functions
-
-
-def clean_up(cxn):
-
-    pass
-
-
-def save_data(name, raw_data, figs):
-    """Save the raw data to a txt file as a json object. Save the figures as
-    svgs.
-    """
-
-    time_stamp = tool_belt.get_time_stamp()
-
-    file_path = tool_belt.get_file_path(__file__, time_stamp, name)
-
-    tool_belt.save_raw_data(rawData, file_path)
-
-    for fig in figs:
-        tool_belt.save_figure(fig, file_path)
+import labrad
 
 
 # %% Figure functions
@@ -89,13 +64,46 @@ def create_fit_figure():
     pass
 
 
+# %% Other functions
+
+
+def clean_up(cxn):
+
+    tool_belt.reset_cfm()
+
+
+def save_data(name, raw_data, figs):
+    """Save the raw data to a txt file as a json object. Save the figures as
+    svgs.
+    """
+
+    time_stamp = tool_belt.get_time_stamp()
+
+    file_path = tool_belt.get_file_path(__file__, time_stamp, name)
+
+    tool_belt.save_raw_data(raw_data, file_path)
+
+    for fig in figs:
+        tool_belt.save_figure(fig, file_path)
+
+
 # %% Main
 
 
-def main(cxn):
+def main(name='untitled'):
     """When you run the file, we'll call into main, which should contain the
     body of the routine.
     """
+
+    with labrad.connect() as cxn:
+        main_with_cxn(cxn)
+    
+    
+def main_with_cxn(cxn, name):
+
+    # %% Initial set up here
+    
+    tool_belt.reset_cfm(cxn)
 
     # %% Initial set up here
 

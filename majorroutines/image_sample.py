@@ -18,7 +18,7 @@ import time
 
 import json
 import matplotlib.pyplot as plt
-import numpy
+import labrad
 
 
 def populate_img_array(valsToAdd, imgArray, writePos):
@@ -227,18 +227,29 @@ def create_figure(file_name, folder_name='E:/Shared drives/Kolkowitz Lab Group/n
     return fig
 
 
-    # %%
+# %% Mains
 
-def main(cxn, coords, nd_filter, x_range, y_range,
-         num_steps, apd_indices,
-         name='untitled', continuous=False, save_data=True, plot_data=True):
 
-    # %% Some initial calculations
+def main(nv_sig, x_range, y_range, num_steps, apd_indices,
+         continuous=False, save_data=True, plot_data=True):
+
+    with labrad.connect() as cxn:
+        main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps, apd_indices,
+                      continuous, save_data, plot_data)
+
+def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps, apd_indices,
+                  continuous=False, save_data=True, plot_data=True):
+
+    # %% Some initial setup
+    
+    tool_belt.reset_cfm(cxn)
 
     shared_params = tool_belt.get_shared_parameters_dict(cxn)
-    readout = shared_params['continuous_readout_ns']
+    readout = shared_params['continuous_readout_dur']
 
-    x_center, y_center, z_center = coords
+    adj_coords = (numpy.array(nv_sig['coords']) + \
+                  numpy.array(tool_belt.get_drift())).tolist()
+    x_center, y_center, z_center = adj_coords
 
     readout_sec = float(readout) / 10**9
 
@@ -253,9 +264,15 @@ def main(cxn, coords, nd_filter, x_range, y_range,
 
     # %% Load the PulseStreamer
 
+    seq_args = [delay, readout, apd_indices[0]]
+    seq_args_string = tool_belt.encode_seq_args(seq_args)
     ret_vals = cxn.pulse_streamer.stream_load('simple_readout.py',
-                                              [delay, readout, apd_indices[0]])
+                                              seq_args_string)
     period = ret_vals[0]
+
+    # %% Initialize at the passed coordinates
+
+    tool_belt.set_xyz(cxn, [x_center, y_center, z_center])
 
     # %% Set up the galvo
 
@@ -271,10 +288,6 @@ def main(cxn, coords, nd_filter, x_range, y_range,
     y_high = y_voltages[y_num_steps-1]
 
     pixel_size = x_voltages[1] - x_voltages[0]
-
-    # %% Set the piezo
-
-    cxn.objective_piezo.write_voltage(z_center)
 
     # %% Set up the APD
 
@@ -337,25 +350,19 @@ def main(cxn, coords, nd_filter, x_range, y_range,
             num_read_so_far += num_new_samples
 
     # %% Clean up
-
-    # Stop the pulse streamer
-    cxn.pulse_streamer.force_final()
+    
+    tool_belt.reset_cfm(cxn)
 
     # Return to center
     cxn.galvo.write(x_center, y_center)
-
-    # Close the tagger stream
-    cxn.apd_tagger.stop_tag_stream()
 
     # %% Save the data
 
     timestamp = tool_belt.get_time_stamp()
 
     rawData = {'timestamp': timestamp,
-               'name': name,
-               'coords': list(coords),
-               'coords-units': 'V',
-               'nd_filter': nd_filter,
+               'nv_sig': nv_sig,
+               'nv_sig-units': tool_belt.get_nv_sig_units(),
                'x_range': x_range,
                'x_range-units': 'V',
                'y_range': y_range,
@@ -372,7 +379,7 @@ def main(cxn, coords, nd_filter, x_range, y_range,
 
     if save_data:
 
-        filePath = tool_belt.get_file_path(__file__, timestamp, name)
+        filePath = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
         tool_belt.save_raw_data(rawData, filePath)
 
         if plot_data:
@@ -386,5 +393,5 @@ def main(cxn, coords, nd_filter, x_range, y_range,
 
 
 if __name__ == '__main__':
-    file_name = '2019-06-10_15-26-39_ayrton12.txt'
+    file_name = '2019-06-27_16-02-37_ayrton14.txt'
     create_figure(file_name)
