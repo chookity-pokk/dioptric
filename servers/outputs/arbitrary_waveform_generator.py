@@ -126,7 +126,7 @@ class ArbitraryWaveformGenerator(LabradServer):
 
     @setting(6)
     def reset(self, c):
-        pass
+        self.wave_off(None)
 
 
 __server__ = ArbitraryWaveformGenerator()

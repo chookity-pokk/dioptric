@@ -38,14 +38,17 @@ def get_seq(pulser_wiring, args):
     
     period = numpy.int64(args[0])
     half_period = period // 2
+    uwave_gate_delay = 40
     
     chan = pulser_wiring['do_arb_wave_trigger']
-    train = [(half_period, HIGH),
-             (half_period, LOW)]
+    train = [(half_period, LOW),
+             (half_period, HIGH)]
     seq.setDigital(chan, train)
     
     chan = pulser_wiring['do_uwave_gate_0']
-    train = [(period, HIGH)]
+    train = [(half_period-10-uwave_gate_delay, HIGH),
+             (20, HIGH),
+             (half_period-10+uwave_gate_delay, HIGH)]
     seq.setDigital(chan, train)
 
     final_digital = [pulser_wiring['do_532_aom']]

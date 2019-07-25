@@ -162,7 +162,23 @@ class SignalGeneratorTsg4104a(LabradServer):
 
     @setting(6)
     def load_iq_mod(self, c):
-        # Load IQ modulation with an external source
+        
+        # Amplitude shift keying, no constellation
+        self.sig_gen.write('TYPE 0')
+        self.sig_gen.write('STYP 1')
+        
+        # Phase shift keying, 2 bit constellation
+#        self.sig_gen.write('TYPE 2')
+#        self.sig_gen.write('STYP 3')
+        
+        # Frequency shift keying, no constellation
+#        self.sig_gen.write('TYPE 1')
+#        self.sig_gen.write('STYP 1')
+        
+        # Set the pulse shaping filter to the fastest available (triangle)
+        self.sig_gen.write('FLTR 14')
+        
+        # External source
         self.sig_gen.write('QFNC 5')
         # Turn on modulation
         self.sig_gen.write('MODL 1')
