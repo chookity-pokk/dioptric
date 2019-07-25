@@ -45,11 +45,11 @@ def get_seq(pulser_wiring, args):
              (half_period, HIGH)]
     seq.setDigital(chan, train)
     
-    chan = pulser_wiring['do_uwave_gate_0']
-    train = [(half_period-10-uwave_gate_delay, HIGH),
-             (20, HIGH),
-             (half_period-10+uwave_gate_delay, HIGH)]
-    seq.setDigital(chan, train)
+#    chan = pulser_wiring['do_uwave_gate_0']
+#    train = [(half_period-10-uwave_gate_delay, HIGH),
+#             (20, HIGH),
+#             (half_period-10+uwave_gate_delay, HIGH)]
+#    seq.setDigital(chan, train)
 
     final_digital = [pulser_wiring['do_532_aom']]
     final = OutputState(final_digital, 0.0, 0.0)

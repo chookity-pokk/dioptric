@@ -32,12 +32,12 @@ def main(cxn):
     cxn.signal_generator_tsg4104a.uwave_on()
 
     # Load the arbitrary waveform
-#    cxn.arbitrary_waveform_generator.load_iq_waveform(16 * [0.5, 0.0],
-#                                                      16 * [0.0, 0.5])
-#    cxn.arbitrary_waveform_generator.load_iq_waveform(16 * [0.5, 0.0],
-#                                                      16 * [0.0, 0.5])
     cxn.arbitrary_waveform_generator.load_iq_waveform(16 * [0.5, 0.0],
-                                                      16 * [0.0, 0.0])
+                                                      16 * [0.0, 0.5])
+#    cxn.arbitrary_waveform_generator.load_iq_waveform(16 * [0.5, 0.0],
+#                                                      16 * [0.0, 0.5])
+#    cxn.arbitrary_waveform_generator.load_iq_waveform(16 * [0.5, 0.0],
+#                                                      16 * [0.0, 0.0])
 #    cxn.arbitrary_waveform_generator.load_iq_waveform([0.5] + 31*[0.0],
 #                                                      16 * [0.0, 0.0])
 #    cxn.arbitrary_waveform_generator.load_iq_waveform(32*[0.5],
@@ -47,7 +47,8 @@ def main(cxn):
     file_name = os.path.basename(__file__)
     # Square wave periods in ns
 #    period = 10**9  # 1Hz
-    period = 100  # 10 MHz
+#    period = 100  # 10 MHz
+    period = 10  # 100 MHz
     seq_args = [period]
     seq_args_string = tool_belt.encode_seq_args(seq_args)
     cxn.pulse_streamer.stream_load(file_name, seq_args_string)
