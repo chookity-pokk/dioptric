@@ -48,11 +48,15 @@ class SignalGeneratorBnc835(LabradServer):
         return result['get']
 
     def on_get_config(self, visa_address):
+        # Note that this instrument works with pyvisa's default
+        # termination assumptions
         resource_manager = visa.ResourceManager()
         self.sig_gen = resource_manager.open_resource(visa_address)
         logging.debug(self.sig_gen)
-        # Note that this instrument works with pyvisa's default
-        # termination assumptions
+        self.sig_gen.write('*RST')
+        # Set to the external frequency source 
+        self.sig_gen.write('ROSC:EXT:FREQ 10MHZ')
+        self.sig_gen.write('ROSC:SOUR EXT')
         self.reset(None)
         logging.debug('init complete')
 
@@ -137,11 +141,35 @@ class SignalGeneratorBnc835(LabradServer):
 
     @setting(6)
     def reset(self, c):
-        self.sig_gen.write('*RST')
         self.uwave_off(c)
         # Default to a continuous wave at 2.87 GHz and 0.0 dBm
         self.set_freq(c, 2.87)
         self.set_amp(c, 0.0)
+        
+    @setting(7, splitting='v[]')
+    def load_split_freq(self, c, splitting):
+        """Set up frequency modulation to send the carrier to 0 and maximize
+        the first two sidebands
+        """
+        
+        # Sets the modulation source to internal
+        self.sig_gen.write('FM:SOUR INT')
+        
+        # Modulate with a simple sine wave
+        self.sig_gen.write('FM:INT:SHAP SINE')
+        
+        # So that the first sidebands are at the split frequencies, the
+        # deviation must be equal to the distance between one of these
+        # frequencies and the center
+        freq_dev = splitting / 2
+        self.sig_gen.write('FM:DEV {0:.4f}GHZ'.format(freq_dev))
+        
+        # We need a modulation index of h = 2.41 = freq_dev / mod_freq
+        mod_freq = freq_dev / 2.41
+        self.sig_gen.write('FM:INT:FREQ {0:.4f}GHZ'.format(mod_freq))
+
+        # Turns on the modulation
+        self.sig_gen.write('FM:STAT ON')
 
 
 __server__ = SignalGeneratorBnc835()

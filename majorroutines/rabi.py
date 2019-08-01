@@ -188,17 +188,17 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
         opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
         opti_coords_list.append(opti_coords)
 
-        # Apply the microwaves
-        sig_gen_cxn = tool_belt.get_signal_generator_cxn(cxn, state)
-        sig_gen_cxn.set_freq(uwave_freq)
-        sig_gen_cxn.set_amp(uwave_power)
+        ####### TEST for split resonance #######
+        sig_gen_cxn = tool_belt.get_signal_generator_cxn(cxn, States.LOW)
+        sig_gen_cxn.set_freq(nv_sig['resonance_LOW'])
+        sig_gen_cxn.set_amp(nv_sig['uwave_power_LOW'])
         sig_gen_cxn.uwave_on()
     
-        # TEST for split resonance
-#        sig_gen_cxn = cxn.signal_generator_bnc835
-#        sig_gen_cxn.set_freq(uwave_freq + 0.008)
-#        sig_gen_cxn.set_amp(uwave_power)
-#        sig_gen_cxn.uwave_on()
+        sig_gen_cxn = tool_belt.get_signal_generator_cxn(cxn, States.HIGH)
+        sig_gen_cxn.set_freq(nv_sig['resonance_HIGH'])
+        sig_gen_cxn.set_amp(nv_sig['uwave_power_HIGH'])
+        sig_gen_cxn.uwave_on()
+        ####### TEST for split resonance #######
 
         # Load the APD
         cxn.apd_tagger.start_tag_stream(apd_indices)

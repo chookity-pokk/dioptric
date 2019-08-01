@@ -147,7 +147,7 @@ def do_optimize_magnet_angle(nv_sig, apd_indices):
 
 def do_rabi(nv_sig, apd_indices, state):
 
-    uwave_time_range = [0, 150]
+    uwave_time_range = [0,500]
     num_steps = 51
     num_reps = 3*10**5
     num_runs = 3
@@ -322,12 +322,12 @@ if __name__ == '__main__':
           'resonance_LOW': None, 'rabi_LOW': None, 'uwave_power_LOW': 9.0,
           'resonance_HIGH': None, 'rabi_HIGH': None, 'uwave_power_HIGH': 10.0}
     
-#    nv16_2019_07_25 = {'coords': coords_list[16],
-#          'name': '{}-nv{}_2019_07_25'.format(sample_name, 16),
-#          'expected_count_rate': 30,
-#          'nd_filter': 'nd_1.5', 'pulsed_readout_dur': 450, 'magnet_angle': 194.1,
-#          'resonance_LOW': 2.8148, 'rabi_LOW': 109.8, 'uwave_power_LOW': 14.5,
-#          'resonance_HIGH': 2.8242, 'rabi_HIGH': 108.4, 'uwave_power_HIGH': 14.5}
+    nv16_2019_07_25 = {'coords': coords_list[16],
+          'name': '{}-nv{}_2019_07_25'.format(sample_name, 16),
+          'expected_count_rate': 30,
+          'nd_filter': 'nd_1.5', 'pulsed_readout_dur': 450, 'magnet_angle': 194.1,
+          'resonance_LOW': 2.8148, 'rabi_LOW': None, 'uwave_power_LOW': 10.0,
+          'resonance_HIGH': 2.8242, 'rabi_HIGH': None, 'uwave_power_HIGH': 10.0}
     
 #    Debug NV
 #    nv27_2019_07_25 = {'coords': coords_list[27],
@@ -374,7 +374,7 @@ if __name__ == '__main__':
 #            do_g2_measurement(nv_sig, apd_indices[0], apd_indices[1])
 #            do_optimize_magnet_angle(nv_sig, apd_indices)
 #            do_resonance(nv_sig, apd_indices)
-            do_resonance_state(nv_sig, apd_indices, States.LOW)
+#            do_resonance_state(nv_sig, apd_indices, States.LOW)
 #            do_pulsed_resonance(nv_sig, apd_indices)
 #            do_pulsed_resonance_state(nv_sig, apd_indices, States.LOW)
 #            do_pulsed_resonance_state(nv_sig, apd_indices, States.HIGH)
@@ -384,7 +384,7 @@ if __name__ == '__main__':
 #                        freq_center=nv_sig['resonance_HIGH'], freq_range=0.1)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.15)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.935, freq_range=0.06)
-#            do_rabi(nv_sig, apd_indices, States.LOW)
+            do_rabi(nv_sig, apd_indices, States.LOW)
 #            do_rabi(nv_sig, apd_indices, States.HIGH)
 #            do_t1_battery(nv_sig, apd_indices)
 #            do_ramsey(nv_sig, apd_indices)
