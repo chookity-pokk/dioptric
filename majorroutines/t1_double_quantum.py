@@ -107,11 +107,11 @@ def main_with_cxn(cxn, nv_sig, apd_indices, relaxation_time_range,
         uwave_freq_read = uwave_freq_low
         uwave_power_read = uwave_power_low
 
-    print('Init state: {}'.format(init_state.name))
+    print('Init state: {}'.format('LOW'))
     print('Init pi pulse: {} ns'.format(uwave_pi_pulse_init))
     print('Init frequency: {} GHz'.format(uwave_freq_init))
     print('Init power: {} dBm'.format(uwave_power_init))
-    print('Read state: {}'.format(read_state.name))
+    print('Read state: {}'.format('LOW'))
     print('Read pi pulse: {} ns'.format(uwave_pi_pulse_read))
     print('Read frequency: {} GHz'.format(uwave_freq_read))
     print('Read power: {} dBm'.format(uwave_power_read))
@@ -296,8 +296,8 @@ def main_with_cxn(cxn, nv_sig, apd_indices, relaxation_time_range,
         # %% Save the data we have incrementally for long measurements
 
         raw_data = {'start_timestamp': start_timestamp,
-                    'init_state': init_state.name,
-                    'read_state': read_state.name,
+                    'init_state': 'LOW',
+                    'read_state': 'LOW',
                     'nv_sig': nv_sig,
                     'nv_sig-units': tool_belt.get_nv_sig_units(),
                     'gate_time': gate_time,
@@ -366,7 +366,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, relaxation_time_range,
 
     ax = axes_pack[1]
     ax.plot(taus / 10**6, norm_avg_sig, 'b-')
-    ax.set_title('T1 Measurement. Initial state: {}, readout state: {}'.format(init_state.name, read_state.name))
+    ax.set_title('T1 Measurement. Initial state: {}, readout state: {}'.format('LOW', 'LOW'))
     ax.set_xlabel('Relaxation time (ms)')
     ax.set_ylabel('Contrast (arb. units)')
 
@@ -384,8 +384,8 @@ def main_with_cxn(cxn, nv_sig, apd_indices, relaxation_time_range,
 
     raw_data = {'timestamp': timestamp,
             'timeElapsed': timeElapsed,
-            'init_state': init_state.name,
-            'read_state': read_state.name,
+            'init_state': 'LOW',
+            'read_state': 'LOW',
             'nv_sig': nv_sig,
             'nv_sig-units': tool_belt.get_nv_sig_units(),
             'gate_time': gate_time,
