@@ -31,7 +31,7 @@ import logging
 
 class SignalGeneratorBnc835(LabradServer):
     name = 'signal_generator_bnc835'
-    logging.basicConfig(level=logging.DEBUG, 
+    logging.basicConfig(level=logging.WARNING, 
                 format='%(asctime)s %(levelname)-8s %(message)s',
                 datefmt='%y-%m-%d_%H-%M-%S',
                 filename='E:/Shared drives/Kolkowitz Lab Group/nvdata/labrad_logging/{}.log'.format(name))

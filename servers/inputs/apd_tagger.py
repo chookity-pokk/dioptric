@@ -237,6 +237,9 @@ class ApdTagger(LabradServer):
             # Reset leftovers from the last sample clock
             self.leftover_timestamps = timestamps[sample_end_ind:].tolist()
             self.leftover_channels = channels[sample_end_ind:].tolist()
+            
+        logging.debug(len(self.leftover_timestamps))
+        logging.debug(len(self.leftover_channels))
 
         return return_counts
     

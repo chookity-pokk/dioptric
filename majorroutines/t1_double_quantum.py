@@ -272,12 +272,13 @@ def main_with_cxn(cxn, nv_sig, apd_indices, relaxation_time_range,
             new_counts = cxn.apd_tagger.read_counter_separate_gates(1)
             sample_counts = new_counts[0]
 
-#            sig_gate_counts = sample_counts[::4]
-#            sig_counts[run_ind, tau_ind] = sum(sig_gate_counts)
-
             count = sum(sample_counts[0::4])
             sig_counts[run_ind, tau_ind_first] = count
             print('First signal = ' + str(count))
+            if count == 0:
+                file_path = 'E:/Shared drives/Kolkowitz Lab Group/nvdata/labrad_logging/test.txt'
+                with open(file_path, 'w') as file:
+                    file.write(str(new_counts))
 
             count = sum(sample_counts[1::4])
             ref_counts[run_ind, tau_ind_first] = count

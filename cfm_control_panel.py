@@ -172,7 +172,7 @@ def do_t1_battery(nv_sig, apd_indices):
 #                                [[States.LOW, States.HIGH], [0, 10*10**3], 11, 20*10**4, num_runs],
 #                                [[States.LOW, States.LOW], [0, 10*10**3], 11, 20*10**4, num_runs]])
     num_runs = 1
-    t1_exp_array = numpy.array([[[States.LOW, States.HIGH], [0, 10*10**3], 11, 96*10**4, num_runs]])
+    t1_exp_array = numpy.array([[[States.LOW, States.LOW], [0, 10*10**3], 11, 150*10**4, num_runs]])
 
     # Loop through the experiments
     for exp_ind in range(len(t1_exp_array)):
