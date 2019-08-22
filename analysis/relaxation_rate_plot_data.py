@@ -450,7 +450,7 @@ def main(folder_name, omega = None, omega_unc = None, doPlot = False, offset = T
 
 if __name__ == '__main__':
 
-    folder = 'nv2_2019_04_30_57MHz'
+    folder = 'nv2_2019_04_30_29MHz_11'
 
 
 #    for folder in folder_list:

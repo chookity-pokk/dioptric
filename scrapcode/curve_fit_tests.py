@@ -30,9 +30,12 @@ def exp_dec_d_amp(t, rate, amp):
 def exp_dec_offset(t, rate, amp, offset):
     return offset + (amp * numpy.exp(-rate * t))
 
-t = numpy.linspace(0, 10, 6)
+t = numpy.linspace(0, 10, 12)
 y_vals = [9, 6, 4, 3, 2, 1.5]
-y_st_devs = numpy.array([2, 1, 1, 0.5, 1, 0.5])
+y_vals *= 2
+y_st_devs = [2, 1, 1, 0.5, 1, 0.5]
+y_st_devs *= 2
+y_st_devs = numpy.array(y_st_devs)
 # y_st_devs *= 10
 y_vars = y_st_devs**2
 y_vars_inv = 1/y_vars
@@ -40,11 +43,14 @@ y_vars_inv = 1/y_vars
 # plt.plot(t, y_vals)
 # plt.errorbar(t, y_vals, yerr=sigmas, linestyle='None')
 
-fit_func = line
-# fit_func = exp_dec
+# fit_func = line
+fit_func = exp_dec
 
 # popt, pcov = curve_fit(fit_func, t, y_vals)
 popt, pcov = curve_fit(fit_func, t, y_vals, sigma=y_st_devs, absolute_sigma=True)
+print(popt)
+print(numpy.sqrt(pcov))
+print('\n')
 print(pcov)
 
 # Get the chi squared

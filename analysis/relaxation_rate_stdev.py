@@ -223,7 +223,7 @@ def main(folder_name, omega = None, omega_unc = None, num_bins_list = None,
 
 #    print(file_path)
 
-    tool_belt.save_raw_data(raw_data, file_path)
+    # tool_belt.save_raw_data(raw_data, file_path)
 
 
 # %% Run the file
@@ -234,7 +234,7 @@ if __name__ == '__main__':
     # Set the file to pull data from here. These should be files in our
     # Double_Quantum nvdata folder, filled with the 6 relevant experiments
 
-    folder = 'nv2_2019_04_30_29MHz_11'
+    folder = 'nv1_2019_05_10_28MHz_2'
 
 
     '''
@@ -257,7 +257,7 @@ if __name__ == '__main__':
     '''
 
 
-    main(folder, 0.34, 0.07, offset= True)
+    main(folder, None, None, offset= True)
 
 
     # Specify the number of bins
