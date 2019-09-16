@@ -34,7 +34,7 @@ def get_seq(pulser_wiring, args):
     
     sig_gen_name = tool_belt.get_signal_generator_name(States(state_value))
     sig_gen_gate_chan_name = 'do_{}_gate'.format(sig_gen_name)
-    pulser_do_sig_gen_gate = pulser_wiring[sig_gen_gate_chan_name]
+    pulser_do_sig_gen_gate = pulser_wiring['sig_gen_gate_chan_name']
 
     seq = Sequence()
 
@@ -65,14 +65,15 @@ def get_seq(pulser_wiring, args):
 
     final_digital = [pulser_wiring['do_532_aom']]
     final = OutputState(final_digital, 0.0, 0.0)
-    return seq, final, [period]
+    return seq, [period]
 
 
 if __name__ == '__main__':
     wiring = {'do_daq_clock': 0,
-              'do_apd_gate_0': 1,
-              'do_aom': 2,
-              'do_uwave_gate_0': 3}
-    args = [10 * 10**6, 1 * 10**6, 0]
+              'do_apd_0_gate': 1,
+              'do_532_aom': 2,
+              'sig_gen_gate_chan_name': 3,
+               'do_sample_clock':4}
+    args = [10 * 10**6, 1 * 10**6, 0, States.HIGH]
     seq, ret_vals = get_seq(wiring, args)
     seq.plot()

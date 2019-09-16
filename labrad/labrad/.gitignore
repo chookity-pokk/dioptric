@@ -1,0 +1,6 @@
+# compiled python files
+*.py[cod]
+__pycache__/
+
+# Text editor backup files
+*~

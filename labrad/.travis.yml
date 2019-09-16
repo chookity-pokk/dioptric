@@ -1,0 +1,30 @@
+dist: xenial
+language: python
+sudo: false
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "3.7"
+  - "3.8-dev"
+matrix:
+  allow_failures:
+  - python: "3.8-dev"
+install:
+  - cat requirements.txt | perl -p -i -e 's/>=/==/g' > exact_requirements.txt
+  - pip install -r exact_requirements.txt
+  - pip install .
+  - pip install pytest coveralls
+env:
+  - SCALABRAD_VERSION=0.8.0
+cache:
+  directories:
+    - $HOME/scalabrad-$SCALABRAD_VERSION
+before_script:
+  - bash scripts/test/install-scalabrad.sh
+  - export PATH=$PATH:$HOME/scalabrad-$SCALABRAD_VERSION/bin/
+script: scripts/test/test.sh
+after_success:
+  - coveralls
+
