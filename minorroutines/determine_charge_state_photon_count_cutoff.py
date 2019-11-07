@@ -13,15 +13,13 @@ import numpy
 import os
 import time
 import matplotlib.pyplot as plt
-from random import shuffle
-from scipy.optimize import curve_fit
 import labrad
 from utils.tool_belt import States
 
 #%% Main
 
-def main_with_cxn(cxn, nv_sig, apd_indices, readout_time, state,
-                  num_runs):
+def main_with_cxn(cxn, nv_sig, apd_indices, readout_power,readout_time,ionization_power, 
+                  ionization_time,state,num_runs):
 
     tool_belt.reset_cfm(cxn)
     
@@ -33,7 +31,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time, state,
     
     shared_params = tool_belt.get_shared_parameters_dict(cxn)
     
-    #Define some time
+    #Define parameters
     #We need high power pump 532 laser to ionize NV to NV-
     polarization_dur = 150 * 10**3
     #exp_dur = 5 * 10**3 #not sure what it is
@@ -42,7 +40,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time, state,
     aom_delay589 = None
     aom_delay638 = None
     #ionization time, typically ~150 ns, just make sure NV is ionized
-    Ionization_time = 300
+    Ionization_time = ionization_time
     #not sure necessary
     buffer_time = 100
     #TBD 
@@ -99,9 +97,57 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time, state,
 
     cxn.apd_tagger.stop_tag_stream()
 #%% Save data 
-    
-    
-    
+    timestamp = tool_belt.get_time_stamp()
+     
+    raw_data = {'timestamp': timestamp,
+            'nv_sig': nv_sig,
+            'readout_power':readout_power,
+            'readout_power_unit':'nW',
+            'readout_time':readout_time,
+            'readout_time_unit':'ns',
+            'ionization_time':Ionization_time,
+            'ionization_time_units':'ns',
+            'ionization_power':ionization_power,
+            'ionization_power_unit':'nW',
+            '532_aom_delay':aom_delay532,
+            '532_aom_delay_time_unit':'ns',
+            'nv_sig-units': tool_belt.get_nv_sig_units(),
+            'gate_time': gate_time,
+            'gate_time-units': 'ns',
+            'num_runs': num_runs,
+            'sig_counts': sig_counts.astype(int).tolist(),
+            'sig_counts-units': 'counts',
+            'ref_counts': ref_counts.astype(int).tolist(),
+            'ref_counts-units': 'counts'}
+
+    file_path = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
+    tool_belt.save_raw_data(raw_data, file_path)    
+#%% Convert photon counts into photon distribution
+#The raw data only gives us how many photons are gotten from each run (same tR, same P). 
+#Now, we need to convert the raw data to the photon distribution
+    def plot_Probability_distribution(aList,colorlabel):
+        aList = aList.tolist()
+        def get_unique_value(aList):
+            unique_value_list = []
+            for i in range(0,len(aList)):
+                if aList[i] not in unique_value_list:
+                    unique_value_list.append(aList[i])
+            return unique_value_list
+        unique_value = get_unique_value(aList)
+        relative_frequency = []
+        for i in range(0,len(unique_value)):
+            relative_frequency.append(aList.count(unique_value[i])/ (len(aList)))
+        fig = plt.plot(unique_value,relative_frequency,'or', color = colorlabel)
+        plt.xlabel('number of photons (n)')
+        plt.ylabel('P(n)')
+        return fig
+     
+    sig_plot = plot_Probability_distribution(sig_counts,'r')
+    ref_plot = plot_Probability_distribution(ref_counts,'b')
+    raw_plot = plt.show()
+    timestamp = tool_belt.get_time_stamp()
+    file_path = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])    
+    tool_belt.save_raw_figure(raw_plot, file_path)
     
     
     

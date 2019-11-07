@@ -14,7 +14,6 @@ from utils.tool_belt import States
 
 LOW = 0
 HIGH = 1
-gate_time = 2*10**6
 
 def get_seq(pulser_wiring, args):
 
