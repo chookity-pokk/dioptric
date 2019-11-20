@@ -8,6 +8,7 @@ Created on Tue Apr  9 21:24:36 2019
 from pulsestreamer import Sequence
 from pulsestreamer import OutputState
 import numpy
+import utils.tool_belt as tool_belt
 
 LOW = 0
 HIGH = 1
@@ -53,5 +54,5 @@ if __name__ == '__main__':
               'do_apd_0_gate': 1,
               'do_532_aom': 2}
     args = [250, 500, 0]
-    seq, ret_vals = get_seq(wiring, args)
+    seq, final, ret_vals = get_seq(wiring, args)
     seq.plot()

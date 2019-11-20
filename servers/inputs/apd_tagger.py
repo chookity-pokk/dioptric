@@ -162,6 +162,9 @@ class ApdTagger(LabradServer):
         # Find clock clicks (sample breaks)
         result = numpy.nonzero(channels == self.tagger_di_clock)
         clock_click_inds = result[0].tolist()
+        # MCC test
+        if len(clock_click_inds) > 0:
+            logging.debug('clock_click_inds: {}'.format(clock_click_inds))
 
         previous_sample_end_ind = None
         sample_end_ind = None
@@ -204,12 +207,18 @@ class ApdTagger(LabradServer):
                 # Find gate open clicks
                 result = numpy.nonzero(sample_channels == gate_open_channel)
                 gate_open_click_inds = result[0].tolist()
+                # MCC test
+                if len(gate_open_click_inds) > 0:
+                    logging.debug('gate_open_click_inds: {}'.format(gate_open_click_inds))
     
                 # Find gate close clicks
                 # Gate close channel is negative of gate open channel,
                 # signifying the falling edge
                 result = numpy.nonzero(sample_channels == gate_close_channel)
                 gate_close_click_inds = result[0].tolist()
+                # MCC test
+                if len(gate_close_click_inds) > 0:
+                    logging.debug('gate_close_click_inds: {}'.format(gate_close_click_inds))
     
                 # The number of APD clicks is simply the number of items in the
                 # buffer between gate open and gate close clicks
@@ -348,6 +357,11 @@ class ApdTagger(LabradServer):
         # Just find the sum of each sample in complete_counts
         return_counts = [numpy.sum(sample, dtype=int) for sample
                          in complete_counts]
+        
+        # MCC test
+#        if 0 in return_counts:
+#            overflows = self.tagger.getOverflows()
+#            logging.debug('Overflows: {}'.format(overflows))
             
         return return_counts
 

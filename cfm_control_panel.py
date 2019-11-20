@@ -59,9 +59,9 @@ def do_image_sample(nv_sig, apd_indices):
 #    num_steps = 200
 #    num_steps = 120
 #    num_steps = 90
-#    scan_range = 0.5
+    scan_range = 0.5
 #    num_steps = 150
-    scan_range = 0.2
+#    scan_range = 0.2
     num_steps = 90
 #    scan_range = 0.1
 #    num_steps = 60
@@ -99,7 +99,7 @@ def do_g2_measurement(nv_sig, apd_a_index, apd_b_index):
 def do_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.2):
 
     num_steps = 51
-    num_runs = 3
+    num_runs = 1
     uwave_power = -13.0  # -13.0 with a 1.5 ND is a good starting point
 
     resonance.main(nv_sig, apd_indices, freq_center, freq_range,
@@ -384,9 +384,20 @@ if __name__ == '__main__':
             'pulsed_readout_dur': 450, 'magnet_angle': None,
             'resonance_LOW': None, 'rabi_LOW': None, 'uwave_power_LOW': 9.0,
             'resonance_HIGH': None, 'rabi_HIGH': None, 'uwave_power_HIGH': 10.0}
+    nv_test = { 'coords': [-0.250, 0.0, 5.0],
+            'name': '{}-nv_test'.format(sample_name),
+            'expected_count_rate': None, 'nd_filter': 'nd_1.5',
+            'pulsed_readout_dur': 450, 'magnet_angle': None,
+            'resonance_LOW': None, 'rabi_LOW': None, 'uwave_power_LOW': 9.0,
+            'resonance_HIGH': None, 'rabi_HIGH': None, 'uwave_power_HIGH': 10.0}
+    nv_bright = { 'coords': [-0.270, 0.043, 5.34],
+            'name': '{}-nv_bright'.format(sample_name),
+            'expected_count_rate': None, 'nd_filter': 'nd_0',
+            'pulsed_readout_dur': 450, 'magnet_angle': None,
+            'resonance_LOW': None, 'rabi_LOW': None, 'uwave_power_LOW': 9.0,
+            'resonance_HIGH': None, 'rabi_HIGH': None, 'uwave_power_HIGH': 10.0}
     
-    
-    nv_sig_list = [NV_search]
+    nv_sig_list = [nv_bright]
     
 
     # %% Functions to run
@@ -401,6 +412,7 @@ if __name__ == '__main__':
 #        drift = tool_belt.get_drift()
 #        print(drift)
 #        tool_belt.set_drift([0.0, 0.0, 0.0])
+        tool_belt.set_drift([0.0, 0.0, float(tool_belt.get_drift()[2])])
 #        set_xyz([0.0, 0.0, 5.02 + tool_belt.get_drift()[2]])
 #        with labrad.connect() as cxn:
 #            cxn.filter_slider_ell9k.set_filter('nd_0.5')
@@ -426,8 +438,8 @@ if __name__ == '__main__':
 #            do_stationary_count(nv_sig, apd_indices)
 #            do_g2_measurement(nv_sig, apd_indices[0], apd_indices[1])
 #            do_optimize_magnet_angle(nv_sig, apd_indices)
-            do_resonance(nv_sig, apd_indices)
-#            do_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.1)
+#            do_resonance(nv_sig, apd_indices)
+            do_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.1)
 #            do_resonance_state(nv_sig, apd_indices, States.LOW)
 #            do_resonance_state(nv_sig, apd_indices, States.HIGH)
 #            do_pulsed_resonance(nv_sig, apd_indices)
