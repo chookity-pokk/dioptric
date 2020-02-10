@@ -52,6 +52,11 @@ def update_figure(fig, axis_ind, voltages, count_rates, text=None):
 
 
 # %% Other functions
+    
+    
+def record_temperature(cxn):
+    
+    print(cxn.thermistor.read_temperature())
 
 
 def read_timed_counts(cxn, num_steps, period, apd_indices):
@@ -373,7 +378,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices,
         # Break out of the loop if optimization succeeded
         if opti_succeeded:
             break
-        
+
     if not opti_succeeded:
         opti_coords = None
         

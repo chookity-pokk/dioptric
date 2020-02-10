@@ -416,7 +416,7 @@ if __name__ == '__main__':
             'resonance_LOW': None, 'rabi_LOW': None, 'uwave_power_LOW': 9.0,
             'resonance_HIGH': None, 'rabi_HIGH': None, 'uwave_power_HIGH': 10.0}
     
-    nv3_2020_02_04 = { 'coords': [0.113, -0.094, 4.83],
+    nv3_2020_02_04 = { 'coords': [0.062, -0.047, 4.84],
             'name': '{}-nv3_2020_02_04'.format(sample_name),
             'expected_count_rate': 35, 'nd_filter': 'nd_0.5',
             'pulsed_readout_dur': 375, 'magnet_angle': 0.0,
