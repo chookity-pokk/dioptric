@@ -209,13 +209,13 @@ def main_with_cxn(cxn, nv_sig, apd_indices, relaxation_time_range,
         if tool_belt.safe_stop():
             break
 
-        # Optimize
-        opti_coords = optimize.record_temperature(cxn)
-        opti_coords_list.append(opti_coords)
-        
         # Get the temperature
-        temp = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+        temp = cxn.thermistor.read_temperature().tolist()
         temps_list.append(temp)
+        
+        # Optimize
+        opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+        opti_coords_list.append(opti_coords)
 
         # Set up the microwaves for the low and high states
         low_sig_gen_cxn = tool_belt.get_signal_generator_cxn(cxn, States.LOW)
@@ -325,8 +325,6 @@ def main_with_cxn(cxn, nv_sig, apd_indices, relaxation_time_range,
                     'tau_index_master_list': tau_index_master_list,
                     'opti_coords_list': opti_coords_list,
                     'opti_coords_list-units': 'V',
-                    'temps_list': temps_list,
-                    'temps_list-units': 'V',
                     'sig_counts': sig_counts.astype(int).tolist(),
                     'sig_counts-units': 'counts',
                     'ref_counts': ref_counts.astype(int).tolist(),
@@ -415,6 +413,8 @@ def main_with_cxn(cxn, nv_sig, apd_indices, relaxation_time_range,
             'tau_index_master_list': tau_index_master_list,
             'opti_coords_list': opti_coords_list,
             'opti_coords_list-units': 'V',
+            'temps_list': temps_list,
+            'temps_list-units': 'V',
             'sig_counts': sig_counts.astype(int).tolist(),
             'sig_counts-units': 'counts',
             'ref_counts': ref_counts.astype(int).tolist(),

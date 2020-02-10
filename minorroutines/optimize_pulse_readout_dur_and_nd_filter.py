@@ -370,16 +370,16 @@ def main(nv_sig):
 if __name__ == '__main__':
 
     # Define the nv_sig to be used
-    sample_name = 'goeppert_mayer'
-    nv7_2019_11_27 = { 'coords': [-0.092, -0.300, 4.98],
-            'name': '{}-nv7_2019_11_27'.format(sample_name),
-            'expected_count_rate': 33, 'nd_filter': 'nd_0.5',
-            'pulsed_readout_dur': 375, 'magnet_angle': 45.0,
-            'resonance_LOW': 2.6481, 'rabi_LOW': 76.2, 'uwave_power_LOW': 9.0,
-            'resonance_HIGH': 3.2038, 'rabi_HIGH': 232.0, 'uwave_power_HIGH': 10.0}
+    sample_name = 'johnson'
+    nv3_2020_02_04 = { 'coords': [0.054, -0.046, 4.80],
+            'name': '{}-nv3_2020_02_04'.format(sample_name),
+            'expected_count_rate': 375, 'nd_filter': 'nd_0.5',
+            'pulsed_readout_dur': 375, 'magnet_angle': 0.0,
+            'resonance_LOW': 2.699, 'rabi_LOW':  94.8, 'uwave_power_LOW': 9.0,
+            'resonance_HIGH': 2.9312, 'rabi_HIGH': 147.7, 'uwave_power_HIGH': 10.0}
     
     ### MAIN ###
-    main(nv7_2019_11_27)
+    main(nv3_2020_02_04)
     
     # The individual functions in this file
 #    snr_measurement(nv_sig, 320, 'nd_1.5', 51, 10**5, 1, True, True)
