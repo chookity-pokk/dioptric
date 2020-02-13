@@ -185,7 +185,7 @@ def do_rabi(nv_sig, apd_indices, state, uwave_time_range=[0, 200]):
 
     num_steps = 51
 #    num_reps = int(10**5)
-    num_reps = int(10**3)
+    num_reps = int(2*10**3)
     num_runs = 1
 
     rabi.main(nv_sig, apd_indices, uwave_time_range,
@@ -415,7 +415,7 @@ if __name__ == '__main__':
 #    apd_indices = [0, 1]
     
     sample_name = 'hopper'
-    ensemble = { 'coords': [0.366, 0.085, 5.00],
+    ensemble = { 'coords': [0.283, 0.153, 5.00],
             'name': '{}-ensemble'.format(sample_name),
             'expected_count_rate': None, 'nd_filter': 'nd_0',
             'pulsed_readout_dur': 200, 'magnet_angle': 5.8,
@@ -488,7 +488,7 @@ if __name__ == '__main__':
 #            do_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.4)
 #            do_resonance_state(nv_sig, apd_indices, States.LOW)
 #            do_resonance_state(nv_sig, apd_indices, States.HIGH)
-#            do_pulsed_resonance(nv_sig, apd_indices)
+            do_pulsed_resonance(nv_sig, apd_indices)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.4542, freq_range=0.1)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.72, freq_range=0.1)
 #            do_pulsed_resonance_state(nv_sig, apd_indices, States.LOW)
@@ -499,7 +499,7 @@ if __name__ == '__main__':
 #                        freq_center=nv_sig['resonance_HIGH'], freq_range=0.1)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.600, freq_range=0.15)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=3.100, freq_range=0.15)
-            do_rabi(nv_sig, apd_indices, States.LOW, [0, 100])
+#            do_rabi(nv_sig, apd_indices, States.LOW, [0, 100])
 #            do_rabi(nv_sig, apd_indices, States.HIGH, [0, 100])
 #            find_resonance_and_rabi(nv_sig, apd_indices)
 #            do_t1_battery(nv_sig, apd_indices)

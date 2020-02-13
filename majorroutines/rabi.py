@@ -267,7 +267,8 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 
         # Shuffle the list of indices to use for stepping through the taus
         shuffle(tau_ind_list)
-
+        
+        counts_list = []
         for tau_ind in tau_ind_list:
 #        for tau_ind in range(len(taus)):
 #            print('Tau: {} ns'. format(taus[tau_ind]))
@@ -293,14 +294,21 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
             new_counts = cxn.apd_tagger.read_counter_separate_gates(1)
 
             sample_counts = new_counts[0]
+            
+            counts_list.append(sample_counts)
+            raw_data = {'sample_counts': sample_counts.tolist()}
+            file_path = tool_belt.get_file_path(__file__, '2020_02_13-test',
+                                            nv_sig['name'], 'incremental')
+            tool_belt.save_raw_data(raw_data, file_path)
+            print(sample_counts)
 
             # signal counts are even - get every second element starting from 0
-            sig_gate_counts = sample_counts[0::2]
-            sig_counts[run_ind, tau_ind] = sum(sig_gate_counts)
+            sig_gate_counts = sum(sample_counts[0::2])
+            sig_counts[run_ind, tau_ind] = sig_gate_counts
 
             # ref counts are odd - sample_counts every second element starting from 1
-            ref_gate_counts = sample_counts[1::2]
-            ref_counts[run_ind, tau_ind] = sum(ref_gate_counts)
+            ref_gate_counts = sum(sample_counts[1::2])
+            ref_counts[run_ind, tau_ind] = ref_gate_counts
 
         cxn.apd_tagger.stop_tag_stream()
 
