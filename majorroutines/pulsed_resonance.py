@@ -80,8 +80,8 @@ def double_gaussian_dip(freq, low_constrast, low_sigma, low_center,
     high_gauss = gaussian(freq, high_constrast, high_sigma, high_center)
     return 1.0 - low_gauss - high_gauss
 
-def single_gaussian_dip(freq, constrast, sigma, center):
-    return 1.0 - gaussian(freq, constrast, sigma, center)
+def single_gaussian_dip(freq, constrast, sigma, center, offset):
+    return offset - gaussian(freq, constrast, sigma, center)
 
 def fit_resonance(freq_range, freq_center, num_steps,
                   norm_avg_sig, ref_counts):
@@ -96,6 +96,7 @@ def fit_resonance(freq_range, freq_center, num_steps,
     sigma = 0.001  # MHz
 #    sigma = 0.010  # MHz
     fwhm = 2.355 * sigma
+    offset = 0.98
 
     # Convert to index space
     fwhm_ind = fwhm * (num_steps / freq_range)
@@ -158,14 +159,14 @@ def fit_resonance(freq_range, freq_center, num_steps,
     
     if low_freq_guess is None:
         return None, None
-
-#    low_freq_guess = 2.82
-#    high_freq_guess = 2.93
+#
+##    low_freq_guess = 2.8149
+##    high_freq_guess = 2.8293
     # %% Fit!
 
     if high_freq_guess is None:
         fit_func = single_gaussian_dip
-        guess_params = [contrast, sigma, low_freq_guess]
+        guess_params = [contrast, sigma, low_freq_guess, offset]
     else:
         fit_func = double_gaussian_dip
         guess_params=[contrast, sigma, low_freq_guess,
@@ -289,7 +290,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
             break
 
         # Optimize and save the coords we found
-        opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+        opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices, disable = True)
         opti_coords_list.append(opti_coords)
 
         # Load the pulse streamer (must happen after optimize since optimize
@@ -473,8 +474,8 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
 
 if __name__ == '__main__':
 
-    path = 'pulsed_resonance/2020_02'
-    file = '2020_02_05-14_40_20-johnson-nv3_2020_02_04'
+    path = 'resonance/branch_hopper_disable_opt/2020_02'
+    file = '2020_02_12-14_16_52-hopper-ensemble'
     # data = tool_belt.get_raw_data('pulsed_resonance.py', file)
     data = tool_belt.get_raw_data(path, file)
 

@@ -32,8 +32,10 @@ def main(nv_sig, apd_indices, freq_center, freq_range,
          num_steps, num_runs, uwave_power):
 
     with labrad.connect() as cxn:
-        main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
+        resonances = main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
                       num_steps, num_runs, uwave_power)
+        
+        return resonances
 
 def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
                   num_steps, num_runs, uwave_power):
@@ -101,7 +103,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
             break
         
         # Optimize and save the coords we found
-        opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+        opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices, disable = True)
         opti_coords_list.append(opti_coords)
 
         # Load the APD task with two samples for each frequency step
