@@ -176,7 +176,7 @@ def get_data_lists(folder_name):
 
             # MCC
             if init_state_name == zero_state_name and \
-                                read_state_name == high_state_name:
+                                read_state_name == low_state_name:
                 if zero_plus_bool == False:
                     zero_plus_counts = norm_avg_sig
                     zero_plus_ste = norm_avg_sig_ste
@@ -303,9 +303,7 @@ def main(folder_name, omega = None, omega_ste = None, doPlot = False, offset = T
         zero_plus_counts = omega_exp_list[2]
         zero_plus_ste = omega_exp_list[3]
         zero_zero_time = omega_exp_list[4]
-        
-#        print(omega_exp_list)
-#        print(zero_plus_counts)
+
         zero_relaxation_counts =  zero_zero_counts - zero_plus_counts
         zero_relaxation_ste = numpy.sqrt(zero_zero_ste**2 + zero_plus_ste**2)
 
@@ -503,7 +501,7 @@ def main(folder_name, omega = None, omega_ste = None, doPlot = False, offset = T
 if __name__ == '__main__':
 
     path = 't1_double_quantum/paper_data/bulk_dq/'
-    folder = 'hopper-ensemble-303MHz-85 deg'
+    folder = 'johnson-nv3_2020_02_04-121MHz-1deg'
     path += folder
 
     gamma, ste = main(path, omega=None, omega_ste=None,
