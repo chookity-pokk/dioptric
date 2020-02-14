@@ -292,15 +292,9 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 
             # Get the counts
             new_counts = cxn.apd_tagger.read_counter_separate_gates(1)
-
             sample_counts = new_counts[0]
-            
+            print(new_counts)
             counts_list.append(sample_counts)
-            raw_data = {'sample_counts': sample_counts.tolist()}
-            file_path = tool_belt.get_file_path(__file__, '2020_02_13-test',
-                                            nv_sig['name'], 'incremental')
-            tool_belt.save_raw_data(raw_data, file_path)
-            print(sample_counts)
 
             # signal counts are even - get every second element starting from 0
             sig_gate_counts = sum(sample_counts[0::2])
