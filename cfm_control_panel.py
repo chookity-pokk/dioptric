@@ -67,9 +67,9 @@ def do_image_sample(nv_sig, apd_indices):
 #    num_steps = 200
 #    num_steps = 150
 #    num_steps = 135
-    num_steps = 120
+#    num_steps = 120
 #    num_steps = 90
-#    num_steps = 60
+    num_steps = 60
 
     # For now we only support square scans so pass scan_range twice
     image_sample.main(nv_sig, scan_range, scan_range, num_steps, apd_indices)
@@ -185,8 +185,8 @@ def do_rabi(nv_sig, apd_indices, state, uwave_time_range=[0, 200]):
 
     num_steps = 51
 #    num_reps = int(10**5)
-    num_reps = int(2*10**3)
-    num_runs = 1
+    num_reps = int(10**3)
+    num_runs = 10
 
     rabi.main(nv_sig, apd_indices, uwave_time_range,
               state, num_steps, num_reps, num_runs)
@@ -418,16 +418,23 @@ if __name__ == '__main__':
     ensemble = { 'coords': [0.366, 0.085, 5.00],
             'name': '{}-ensemble'.format(sample_name),
             'expected_count_rate': None, 'nd_filter': 'nd_0',
-            'pulsed_readout_dur': 200, 'magnet_angle': 30,
-            'resonance_LOW': 2.7264, 'rabi_LOW': 109.8, 'uwave_power_LOW': 9.0, 
-            'resonance_HIGH': 3.0201, 'rabi_HIGH': 84.8, 'uwave_power_HIGH': 10.0}
+            'pulsed_readout_dur': 200, 'magnet_angle': 53,
+            'resonance_LOW': 2.7707, 'rabi_LOW': 92.8, 'uwave_power_LOW': 9.0, 
+            'resonance_HIGH': 2.9881, 'rabi_HIGH': 72.4, 'uwave_power_HIGH': 10.0}
     
     ensemble_0 = { 'coords': [0.366, 0.085, 5.00],
             'name': '{}-ensemble'.format(sample_name),
             'expected_count_rate': None, 'nd_filter': 'nd_0',
             'pulsed_readout_dur': 200, 'magnet_angle': 5.8,
             'resonance_LOW': 2.7088, 'rabi_LOW': 109.8, 'uwave_power_LOW': 9.0, 
-            'resonance_HIGH': 3.0329, 'rabi_HIGH': 84.8, 'uwave_power_HIGH': 10.0}
+            'resonance_HIGH': 3.0329, 'rabi_HIGH': 80.2, 'uwave_power_HIGH': 10.0}
+    
+    ensemble_26 = { 'coords': [0.366, 0.085, 5.00],
+            'name': '{}-ensemble'.format(sample_name),
+            'expected_count_rate': None, 'nd_filter': 'nd_0',
+            'pulsed_readout_dur': 200, 'magnet_angle': 30,
+            'resonance_LOW': 2.7264, 'rabi_LOW': 98.7, 'uwave_power_LOW': 9.0, 
+            'resonance_HIGH': 3.0201, 'rabi_HIGH': 72.4, 'uwave_power_HIGH': 10.0}
     
 #    ensemble_35 = { 'coords': [0.366, 0.085, 5.00],
 #            'name': '{}-ensemble'.format(sample_name),
@@ -493,8 +500,8 @@ if __name__ == '__main__':
 #            do_resonance(nv_sig, apd_indices)
 #            do_resonance(nv_sig, apd_indices, freq_center=2.870, freq_range=0.260)
 #            do_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.4)
-#            do_resonance_state(nv_sig, apd_indices, States.LOW)
-#            do_resonance_state(nv_sig, apd_indices, States.HIGH)
+            do_resonance_state(nv_sig, apd_indices, States.LOW)
+            do_resonance_state(nv_sig, apd_indices, States.HIGH)
 #            do_pulsed_resonance(nv_sig, apd_indices)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.4542, freq_range=0.1)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.72, freq_range=0.1)
@@ -506,8 +513,8 @@ if __name__ == '__main__':
 #                        freq_center=nv_sig['resonance_HIGH'], freq_range=0.1)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.600, freq_range=0.15)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=3.100, freq_range=0.15)
-            do_rabi(nv_sig, apd_indices, States.LOW, [0, 100])
-            do_rabi(nv_sig, apd_indices, States.HIGH, [0, 100])
+#            do_rabi(nv_sig, apd_indices, States.LOW, [0, 100])
+#            do_rabi(nv_sig, apd_indices, States.HIGH, [0, 100])
 #            find_resonance_and_rabi(nv_sig, apd_indices)
 #            do_t1_battery(nv_sig, apd_indices)
 #            do_t1_interleave(nv_sig, apd_indices)

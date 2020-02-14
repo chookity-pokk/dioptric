@@ -727,7 +727,7 @@ if __name__ == '__main__':
 #    file = '2020_01_27-16_48_32-goeppert_mayer-nv7_2019_11_27'
 
     # temp
-    file = '2020_02_13-16_29_47-hopper-ensemble'
+    file = '2020_02_13-20_21_28-hopper-ensemble'
 
     # fit_func, popt, stes, fit_fig = fit_data_from_file(folder, file)
 

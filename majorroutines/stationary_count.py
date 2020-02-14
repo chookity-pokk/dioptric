@@ -56,7 +56,7 @@ def main_with_cxn(cxn, nv_sig, run_time, apd_indices, continuous=False):
 
     # %% Optimize
 
-    optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+    optimize.main_with_cxn(cxn, nv_sig, apd_indices, disable=True)
 
     # %% Load the PulseStreamer
 

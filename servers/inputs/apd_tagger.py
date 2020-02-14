@@ -345,6 +345,9 @@ class ApdTagger(LabradServer):
         # Add the APD counts as vectors for each sample in complete_counts
         return_counts = [numpy.sum(sample, 0, dtype=int).tolist() for sample
                          in complete_counts]
+        
+#        if return_counts == [0]:
+#            return_counts = [numpy.zeros(400, dtype=int).tolist()]
             
         return return_counts
 

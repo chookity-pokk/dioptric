@@ -292,17 +292,34 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 
             # Get the counts
             new_counts = cxn.apd_tagger.read_counter_separate_gates(1)
+            
             sample_counts = new_counts[0]
-            print(new_counts)
+            print(len(sample_counts))
             counts_list.append(sample_counts)
 
             # signal counts are even - get every second element starting from 0
             sig_gate_counts = sum(sample_counts[0::2])
+            
+#            if sig_gate_counts == 0:
+#                if tau_ind == 0:
+#                    sig_counts[run_ind, tau_ind] = sig_counts[run_ind, tau_ind+1]
+#                else:
+#                    sig_counts[run_ind, tau_ind] = sig_counts[run_ind, tau_ind-1]
+#            else:
             sig_counts[run_ind, tau_ind] = sig_gate_counts
+
 
             # ref counts are odd - sample_counts every second element starting from 1
             ref_gate_counts = sum(sample_counts[1::2])
+            
+#            if ref_gate_counts == 0:
+#                if tau_ind == 0:
+#                    ref_counts[run_ind, tau_ind] = ref_counts[run_ind, tau_ind+1]
+#                else:
+#                    ref_counts[run_ind, tau_ind] = ref_counts[run_ind, tau_ind-1]
+#            else:
             ref_counts[run_ind, tau_ind] = ref_gate_counts
+
 
         cxn.apd_tagger.stop_tag_stream()
 
