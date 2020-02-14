@@ -247,7 +247,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
             break
 
         # Optimize
-        opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+        opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices, disable=True)
         opti_coords_list.append(opti_coords)
 
         # Apply the microwaves
@@ -294,7 +294,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
             new_counts = cxn.apd_tagger.read_counter_separate_gates(1)
             
             sample_counts = new_counts[0]
-            print(len(sample_counts))
+#            print(len(sample_counts))
             counts_list.append(sample_counts)
 
             # signal counts are even - get every second element starting from 0

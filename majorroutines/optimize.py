@@ -273,15 +273,15 @@ def optimize_list_with_cxn(cxn, nv_sig_list, apd_indices):
 
 
 def main(nv_sig, apd_indices,
-         set_to_opti_coords=True, save_data=False, plot_data=False):
+         set_to_opti_coords=True, save_data=False, plot_data=False, disable = False):
 
     with labrad.connect() as cxn:
         main_with_cxn(cxn, nv_sig, apd_indices,
-                      set_to_opti_coords, save_data, plot_data)
+                      set_to_opti_coords, save_data, plot_data, disable)
 
 def main_with_cxn(cxn, nv_sig, apd_indices,
                   set_to_opti_coords=True, save_data=False,
-                  plot_data=False, set_drift=True):
+                  plot_data=False, set_drift=True, disable = False):
     
     # Reset the microscope and make sure we're at the right ND
     tool_belt.reset_cfm(cxn)
@@ -305,6 +305,15 @@ def main_with_cxn(cxn, nv_sig, apd_indices,
     expected_count_rate = adjusted_nv_sig['expected_count_rate']
     
     opti_succeeded = False
+    
+    # If optimize is disabled, then this routine just sets the galvo at the 
+    # passed coordinates, and does not try to optimize
+    
+    if disable:
+        coords = adjusted_nv_sig['coords']
+        tool_belt.set_xyz(cxn, coords)
+        
+        return coords
     
     # %% Try to optimize
     

@@ -123,12 +123,14 @@ def do_resonance_state(nv_sig, apd_indices, state):
 #    num_runs = 2
     
     # Zoom
-    freq_range = 0.05
+    freq_range = 0.04
     num_steps = 51
-    num_runs = 4
+    num_runs = 1
 
-    resonance.main(nv_sig, apd_indices, freq_center, freq_range,
+    resonances = resonance.main(nv_sig, apd_indices, freq_center, freq_range,
                    num_steps, num_runs, uwave_power)
+    
+    return resonances
 
 def do_pulsed_resonance(nv_sig, apd_indices,
                         freq_center=2.87, freq_range=0.2):
@@ -183,7 +185,7 @@ def do_rabi(nv_sig, apd_indices, state, uwave_time_range=[0, 200]):
     num_steps = 51
 #    num_reps = int(10**5)
     num_reps = int(10**3)
-    num_runs = 10
+    num_runs = 5
 
     rabi.main(nv_sig, apd_indices, uwave_time_range,
               state, num_steps, num_reps, num_runs)
@@ -220,17 +222,17 @@ def do_t1_interleave(nv_sig, apd_indices):
     # T1 experiment parameters, formatted:
     # [[init state, read state], relaxation_time_range, num_steps, num_reps]
     # ~18 hrs
-    num_runs = 30
+    num_runs = 200
     t1_exp_array = numpy.array([
-        [[States.HIGH, States.LOW], [0, 50*10**3], 51, 8*10**4, num_runs],
-        [[States.HIGH, States.LOW], [0, 120*10**3], 26, 8*10**4, num_runs],
+        [[States.HIGH, States.LOW], [0, 2*10**6], 11, 10**2, num_runs],
+        [[States.HIGH, States.LOW], [0, 15*10**6], 11, 10**2, num_runs],
     
-        [[States.HIGH, States.HIGH], [0, 50*10**3], 51, 8*10**4, num_runs],
-        [[States.HIGH, States.HIGH], [0, 120*10**3], 26, 8*10**4, num_runs],
+        [[States.HIGH, States.HIGH], [0, 2*10**6], 11, 10**2, num_runs],
+        [[States.HIGH, States.HIGH], [0, 15*10**6], 11, 10**2, num_runs],
     
-        [[States.ZERO, States.HIGH], [0, 2.5*10**6], 26, 1*10**4, num_runs],
+        [[States.ZERO, States.HIGH], [0, 20*10**6], 11, 10**2, num_runs],
     
-        [[States.ZERO, States.ZERO], [0, 2.5*10**6], 26, 1*10**4, num_runs],
+        [[States.ZERO, States.ZERO], [0, 20*10**6], 11, 10**2, num_runs],
         ])
 
     t1_interleave.main(nv_sig, apd_indices, t1_exp_array, num_runs)
@@ -269,9 +271,9 @@ def do_spin_echo(nv_sig, apd_indices):
 #    num_runs = 4
     
     num_steps = 101
-    precession_time_range = [0, 150 * 10**3]
-    num_reps = int(1.75 * 10**4)
-    num_runs = 4
+    precession_time_range = [0, 100 * 10**3]
+    num_reps = int(10**3)
+    num_runs = 30
     
 #    num_steps = 151
 #    precession_time_range = [0, 10*10**3]
@@ -311,7 +313,7 @@ def find_resonance_and_rabi(nv_sig, apd_indices):
     # Given resonances and rabi periods in the nv_sig, automatically remeasures
     state_list = [States.LOW, States.HIGH]
     num_steps = 51
-    num_runs = 2
+    num_runs = 10
 
     fail_bool = False
 
@@ -319,12 +321,11 @@ def find_resonance_and_rabi(nv_sig, apd_indices):
     for state in state_list:
 
         # Run resonance and save the resonance found
-        num_reps = 10**5
-        freq_range = 0.04
+#        num_reps = 10**5
+#        freq_range = 0.04
 
         print('Measureing pESR on {}\n'.format(state.name))
-        resonance_list = pulsed_resonance.state(nv_sig, apd_indices, state, freq_range,
-                              num_steps, num_reps, num_runs)
+        resonance_list = do_resonance_state(nv_sig, apd_indices, state)
         resonance = resonance_list[0]
         value_list.append('%.4f'%resonance)
 
@@ -334,7 +335,7 @@ def find_resonance_and_rabi(nv_sig, apd_indices):
             return
 
         # If the resonance has shifted more than 1 MHz in either direction, stop
-        shift_res = 10/1000
+        shift_res = 50/1000
         limit_high_res = (nv_sig['resonance_{}'.format(state.name)] + shift_res)
         limit_low_res =  (nv_sig['resonance_{}'.format(state.name)] - shift_res)
 
@@ -346,8 +347,8 @@ def find_resonance_and_rabi(nv_sig, apd_indices):
             nv_sig['resonance_{}'.format(state.name)] = float('%.4f'%resonance)
 
         # Run rabi and save the rabi period
-        uwave_time_range = [0, 200]
-        num_reps = 2*10**5
+        uwave_time_range = [0, 100]
+        num_reps = 10**3
 
         print('Measureing rabi on {}\n'.format(state.name))
         rabi_per = rabi.main(nv_sig, apd_indices, uwave_time_range,
@@ -414,9 +415,9 @@ if __name__ == '__main__':
     ensemble = { 'coords': [0.366, 0.085, 5.00],
             'name': '{}-ensemble'.format(sample_name),
             'expected_count_rate': None, 'nd_filter': 'nd_0',
-            'pulsed_readout_dur': 200, 'magnet_angle': 53,
-            'resonance_LOW': 2.7707, 'rabi_LOW': 92.8, 'uwave_power_LOW': 9.0, 
-            'resonance_HIGH': 2.9881, 'rabi_HIGH': 72.4, 'uwave_power_HIGH': 10.0}
+            'pulsed_readout_dur': 200, 'magnet_angle': 70,
+            'resonance_LOW': 2.8146, 'rabi_LOW': 77.0, 'uwave_power_LOW': 9.0, 
+            'resonance_HIGH': 2.9511, 'rabi_HIGH': 69.2, 'uwave_power_HIGH': 10.0}
     
     ensemble_0 = { 'coords': [0.366, 0.085, 5.00],
             'name': '{}-ensemble'.format(sample_name),
@@ -431,6 +432,20 @@ if __name__ == '__main__':
             'pulsed_readout_dur': 200, 'magnet_angle': 30,
             'resonance_LOW': 2.7264, 'rabi_LOW': 98.7, 'uwave_power_LOW': 9.0, 
             'resonance_HIGH': 3.0201, 'rabi_HIGH': 72.4, 'uwave_power_HIGH': 10.0}
+    
+    ensemble_45 = { 'coords': [0.366, 0.085, 5.00],  # still need to take spin echo
+            'name': '{}-ensemble'.format(sample_name),
+            'expected_count_rate': None, 'nd_filter': 'nd_0',
+            'pulsed_readout_dur': 200, 'magnet_angle': 44,
+            'resonance_LOW': 2.7502, 'rabi_LOW': 121.0, 'uwave_power_LOW': 5.0, 
+            'resonance_HIGH': 3.0021, 'rabi_HIGH': 78.7, 'uwave_power_HIGH': 6.0}
+    
+    ensemble_85 = { 'coords': [0.366, 0.085, 5.00], 
+            'name': '{}-ensemble'.format(sample_name),
+            'expected_count_rate': None, 'nd_filter': 'nd_0',
+            'pulsed_readout_dur': 200, 'magnet_angle': 90, # 85 degrees
+            'resonance_LOW': 2.8710, 'rabi_LOW': 66.5, 'uwave_power_LOW': 9.0, 
+            'resonance_HIGH': 2.8991, 'rabi_HIGH': 80.2, 'uwave_power_HIGH': 10.0}
     
 #    ensemble_35 = { 'coords': [0.366, 0.085, 5.00],
 #            'name': '{}-ensemble'.format(sample_name),
@@ -454,7 +469,8 @@ if __name__ == '__main__':
 #            'resonance_HIGH': 2.8961, 'rabi_HIGH': 76.8, 'uwave_power_HIGH': 10.0}
     
     
-    nv_sig_list = [ensemble]
+    nv_sig_list = [ensemble_0, ensemble_26, ensemble_85]
+#    nv_sig_list = [ensemble_45]
     
     # %% Functions to run
 
@@ -478,6 +494,8 @@ if __name__ == '__main__':
 #        do_sample_nvs(nv_sig_list, apd_indices)
 #        do_g2_measurement(nv_sig_list, apd_indices[0], apd_indices[1])
 
+        do_spin_echo(ensemble_85, apd_indices)
+        
         # Routines that expect single NVs
         for ind in range(len(nv_sig_list)):
             nv_sig = nv_sig_list[ind]                
@@ -496,8 +514,8 @@ if __name__ == '__main__':
 #            do_resonance(nv_sig, apd_indices)
 #            do_resonance(nv_sig, apd_indices, freq_center=2.870, freq_range=0.260)
 #            do_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.4)
-            do_resonance_state(nv_sig, apd_indices, States.LOW)
-            do_resonance_state(nv_sig, apd_indices, States.HIGH)
+#            do_resonance_state(nv_sig, apd_indices, States.LOW)
+#            do_resonance_state(nv_sig, apd_indices, States.HIGH)
 #            do_pulsed_resonance(nv_sig, apd_indices)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.4542, freq_range=0.1)
 #            do_pulsed_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.150)
@@ -517,12 +535,12 @@ if __name__ == '__main__':
 #            do_lifetime(nv_sig, apd_indices)
 #            find_resonance_and_rabi(nv_sig, apd_indices)
             
-#            fail_bool = find_resonance_and_rabi(nv_sig, apd_indices)
-#            if fail_bool == True:
-#                print('Failed to record pESR and Rabi')
-#                break
-#            else:
-#                do_t1_interleave(nv_sig, apd_indices)
+            fail_bool = find_resonance_and_rabi(nv_sig, apd_indices)
+            if fail_bool == True:
+                print('Failed to record pESR and Rabi')
+                break
+            else:
+                do_t1_interleave(nv_sig, apd_indices)
             
 #            do_ramsey(nv_sig, apd_indices)
 #            do_spin_echo(nv_sig, apd_indices)

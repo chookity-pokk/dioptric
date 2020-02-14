@@ -242,7 +242,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, t1_exp_array, num_runs):
             
             print(' \nOptimizing...\n')
             # Optimize
-            opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+            opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices, disable = True)
             opti_coords_master_list[exp_ind].append(opti_coords)
             
             # Set up the microwaves for the low and high states
