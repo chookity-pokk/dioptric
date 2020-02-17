@@ -176,7 +176,7 @@ def get_data_lists(folder_name):
 
             # MCC
             if init_state_name == zero_state_name and \
-                                read_state_name == low_state_name:
+                                read_state_name == high_state_name:
                 if zero_plus_bool == False:
                     zero_plus_counts = norm_avg_sig
                     zero_plus_ste = norm_avg_sig_ste
@@ -501,7 +501,7 @@ def main(folder_name, omega = None, omega_ste = None, doPlot = False, offset = T
 if __name__ == '__main__':
 
     path = 't1_double_quantum/paper_data/bulk_dq/'
-    folder = 'johnson-nv3_2020_02_04-121MHz-1deg'
+    folder = 'hopper-ensemble-303MHz-49 deg'
     path += folder
 
     gamma, ste = main(path, omega=None, omega_ste=None,

@@ -117,49 +117,49 @@ def fit_resonance(freq_range, freq_center, num_steps,
     peak_inds = peak_inds.tolist()
     peak_heights = details['peak_heights'].tolist()
 
-    low_freq_guess = freq_center
-    high_freq_guess = None
-#    low_freq_guess = None
+#    low_freq_guess = freq_center
 #    high_freq_guess = None
-#    if len(peak_inds) > 1:
-#        # Find the location of the highest peak
-#        max_peak_height = max(peak_heights)
-#        max_peak_peak_inds = peak_heights.index(max_peak_height)
-#        max_peak_freqs = peak_inds[max_peak_peak_inds]
-#
-#        # Remove what we just found so we can find the second highest peak
-#        peak_inds.pop(max_peak_peak_inds)
-#        peak_heights.pop(max_peak_peak_inds)
-#
-#        # Find the location of the next highest peak
-#        next_max_peak_height = max(peak_heights)
-#        next_max_peak_peak_inds = peak_heights.index(next_max_peak_height)  # Index in peak_inds
-#        next_max_peak_freqs = peak_inds[next_max_peak_peak_inds]  # Index in freqs
-#
-#        # List of higest peak then next highest peak
-#        peaks = [max_peak_freqs, next_max_peak_freqs]
-#
-#        # Only keep the smaller peak if it's > 1/3 the height of the larger peak
-#        if next_max_peak_height > max_peak_height / 3:
-#            # Sort by frequency
-#            peaks.sort()
-#            low_freq_guess = freqs[peaks[0]]
-#            high_freq_guess = freqs[peaks[1]]
-#        else:
-#            low_freq_guess = freqs[peaks[0]]
-#            high_freq_guess = None
-#
-#    elif len(peak_inds) == 1:
-#        low_freq_guess = freqs[peak_inds[0]]
-#        high_freq_guess = None
-#    else:
-#        print('Could not locate peaks')
-#
-##    low_freq_guess = 2.8125
-##    high_freq_guess = None
-#    
-#    if low_freq_guess is None:
-#        return None, None
+    low_freq_guess = None
+    high_freq_guess = None
+    if len(peak_inds) > 1:
+        # Find the location of the highest peak
+        max_peak_height = max(peak_heights)
+        max_peak_peak_inds = peak_heights.index(max_peak_height)
+        max_peak_freqs = peak_inds[max_peak_peak_inds]
+
+        # Remove what we just found so we can find the second highest peak
+        peak_inds.pop(max_peak_peak_inds)
+        peak_heights.pop(max_peak_peak_inds)
+
+        # Find the location of the next highest peak
+        next_max_peak_height = max(peak_heights)
+        next_max_peak_peak_inds = peak_heights.index(next_max_peak_height)  # Index in peak_inds
+        next_max_peak_freqs = peak_inds[next_max_peak_peak_inds]  # Index in freqs
+
+        # List of higest peak then next highest peak
+        peaks = [max_peak_freqs, next_max_peak_freqs]
+
+        # Only keep the smaller peak if it's > 1/3 the height of the larger peak
+        if next_max_peak_height > max_peak_height / 3:
+            # Sort by frequency
+            peaks.sort()
+            low_freq_guess = freqs[peaks[0]]
+            high_freq_guess = freqs[peaks[1]]
+        else:
+            low_freq_guess = freqs[peaks[0]]
+            high_freq_guess = None
+
+    elif len(peak_inds) == 1:
+        low_freq_guess = freqs[peak_inds[0]]
+        high_freq_guess = None
+    else:
+        print('Could not locate peaks')
+
+#    low_freq_guess = 2.8125
+#    high_freq_guess = None
+    
+    if low_freq_guess is None:
+        return None, None
 
 #    low_freq_guess = 2.82
 #    high_freq_guess = 2.93

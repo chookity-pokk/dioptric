@@ -419,33 +419,40 @@ if __name__ == '__main__':
             'resonance_LOW': 2.8146, 'rabi_LOW': 77.0, 'uwave_power_LOW': 9.0, 
             'resonance_HIGH': 2.9511, 'rabi_HIGH': 69.2, 'uwave_power_HIGH': 10.0}
     
-    ensemble_0 = { 'coords': [0.366, 0.085, 5.00],
-            'name': '{}-ensemble'.format(sample_name),
-            'expected_count_rate': None, 'nd_filter': 'nd_0',
-            'pulsed_readout_dur': 200, 'magnet_angle': 5.8,
-            'resonance_LOW': 2.7088, 'rabi_LOW': 109.8, 'uwave_power_LOW': 9.0, 
-            'resonance_HIGH': 3.0329, 'rabi_HIGH': 80.2, 'uwave_power_HIGH': 10.0}
+#    ensemble_0 = { 'coords': [0.366, 0.085, 5.00],
+#            'name': '{}-ensemble'.format(sample_name),
+#            'expected_count_rate': None, 'nd_filter': 'nd_0',
+#            'pulsed_readout_dur': 200, 'magnet_angle': 5.8,
+#            'resonance_LOW': 2.7088, 'rabi_LOW': 109.8, 'uwave_power_LOW': 9.0, 
+#            'resonance_HIGH': 3.0329, 'rabi_HIGH': 80.2, 'uwave_power_HIGH': 10.0}
+#    
+#    ensemble_26 = { 'coords': [0.366, 0.085, 5.00],
+#            'name': '{}-ensemble'.format(sample_name),
+#            'expected_count_rate': None, 'nd_filter': 'nd_0',
+#            'pulsed_readout_dur': 200, 'magnet_angle': 30,
+#            'resonance_LOW': 2.7264, 'rabi_LOW': 98.7, 'uwave_power_LOW': 9.0, 
+#            'resonance_HIGH': 3.0201, 'rabi_HIGH': 72.4, 'uwave_power_HIGH': 10.0}
     
-    ensemble_26 = { 'coords': [0.366, 0.085, 5.00],
-            'name': '{}-ensemble'.format(sample_name),
-            'expected_count_rate': None, 'nd_filter': 'nd_0',
-            'pulsed_readout_dur': 200, 'magnet_angle': 30,
-            'resonance_LOW': 2.7264, 'rabi_LOW': 98.7, 'uwave_power_LOW': 9.0, 
-            'resonance_HIGH': 3.0201, 'rabi_HIGH': 72.4, 'uwave_power_HIGH': 10.0}
-    
-    ensemble_45 = { 'coords': [0.366, 0.085, 5.00],  # still need to take spin echo
+    ensemble_42 = { 'coords': [0.366, 0.085, 5.00],  # all good to go
             'name': '{}-ensemble'.format(sample_name),
             'expected_count_rate': None, 'nd_filter': 'nd_0',
             'pulsed_readout_dur': 200, 'magnet_angle': 44,
-            'resonance_LOW': 2.7502, 'rabi_LOW': 121.0, 'uwave_power_LOW': 5.0, 
-            'resonance_HIGH': 3.0021, 'rabi_HIGH': 78.7, 'uwave_power_HIGH': 6.0}
+            'resonance_LOW': 2.7502, 'rabi_LOW': 120.7, 'uwave_power_LOW': 5.0, 
+            'resonance_HIGH': 3.0021, 'rabi_HIGH': 79.9, 'uwave_power_HIGH': 6.0}
     
-    ensemble_85 = { 'coords': [0.366, 0.085, 5.00], 
+    ensemble_49 = { 'coords': [0.366, 0.085, 5.00],  
             'name': '{}-ensemble'.format(sample_name),
             'expected_count_rate': None, 'nd_filter': 'nd_0',
-            'pulsed_readout_dur': 200, 'magnet_angle': 90, # 85 degrees
-            'resonance_LOW': 2.8710, 'rabi_LOW': 66.5, 'uwave_power_LOW': 9.0, 
-            'resonance_HIGH': 2.8991, 'rabi_HIGH': 80.2, 'uwave_power_HIGH': 10.0}
+            'pulsed_readout_dur': 200, 'magnet_angle': 53,
+            'resonance_LOW': 2.7703, 'rabi_LOW': 105.6, 'uwave_power_LOW': 5.0, 
+            'resonance_HIGH': 2.9877, 'rabi_HIGH': 80.5, 'uwave_power_HIGH': 6.0}
+    
+    ensemble_83 = { 'coords': [0.366, 0.085, 5.00], 
+            'name': '{}-ensemble'.format(sample_name),
+            'expected_count_rate': None, 'nd_filter': 'nd_0',
+            'pulsed_readout_dur': 200, 'magnet_angle': 88, 
+            'resonance_LOW': 2.8650, 'rabi_LOW': 82.5, 'uwave_power_LOW': 5.0, 
+            'resonance_HIGH': 2.9053, 'rabi_HIGH': 86.1, 'uwave_power_HIGH': 6.0}
     
 #    ensemble_35 = { 'coords': [0.366, 0.085, 5.00],
 #            'name': '{}-ensemble'.format(sample_name),
@@ -469,8 +476,8 @@ if __name__ == '__main__':
 #            'resonance_HIGH': 2.8961, 'rabi_HIGH': 76.8, 'uwave_power_HIGH': 10.0}
     
     
-    nv_sig_list = [ensemble_0, ensemble_26, ensemble_85]
-#    nv_sig_list = [ensemble_45]
+    nv_sig_list = [ensemble]
+#    nv_sig_list = [ensemble_42, ensemble_49, ensemble_83]
     
     # %% Functions to run
 
@@ -493,8 +500,7 @@ if __name__ == '__main__':
 #        do_optimize_list(nv_sig_list, apd_indices)
 #        do_sample_nvs(nv_sig_list, apd_indices)
 #        do_g2_measurement(nv_sig_list, apd_indices[0], apd_indices[1])
-
-        do_spin_echo(ensemble_85, apd_indices)
+        
         
         # Routines that expect single NVs
         for ind in range(len(nv_sig_list)):
@@ -513,7 +519,7 @@ if __name__ == '__main__':
 #            do_optimize_magnet_angle(nv_sig, apd_indices)
 #            do_resonance(nv_sig, apd_indices)
 #            do_resonance(nv_sig, apd_indices, freq_center=2.870, freq_range=0.260)
-#            do_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.4)
+            do_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.08)
 #            do_resonance_state(nv_sig, apd_indices, States.LOW)
 #            do_resonance_state(nv_sig, apd_indices, States.HIGH)
 #            do_pulsed_resonance(nv_sig, apd_indices)
@@ -535,12 +541,12 @@ if __name__ == '__main__':
 #            do_lifetime(nv_sig, apd_indices)
 #            find_resonance_and_rabi(nv_sig, apd_indices)
             
-            fail_bool = find_resonance_and_rabi(nv_sig, apd_indices)
-            if fail_bool == True:
-                print('Failed to record pESR and Rabi')
-                break
-            else:
-                do_t1_interleave(nv_sig, apd_indices)
+#            fail_bool = find_resonance_and_rabi(nv_sig, apd_indices)
+#            if fail_bool == True:
+#                print('Failed to record pESR and Rabi')
+#                break
+#            else:
+#                do_t1_interleave(nv_sig, apd_indices)
             
 #            do_ramsey(nv_sig, apd_indices)
 #            do_spin_echo(nv_sig, apd_indices)
