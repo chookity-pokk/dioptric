@@ -665,7 +665,31 @@ def get_nv_sig_units():
     return {'coords': 'V', 'expected_count_rate': 'kcps', 
         'pulsed_readout_dur': 'ns', 'magnet_angle': 'deg', 'resonance': 'GHz',
         'rabi': 'ns', 'uwave_power': 'dBm'}
-
+    
+def combine_data_avg(folder_list, file_list, data_to_combine):
+    '''
+    Average specific data together. Say we had two measurements of rabi that 
+    we want to average together. This shoudl make it easier to do.
+    
+    Params:
+        folder_list: list of strings
+            The folders from the nv_data directory that the files are found. 
+            Must line up with each respective file
+        file_list: list of strings
+            The files to take the data from. Must line up with each respective 
+            folder.
+        data_to_combine: string
+            The data in the json directory to take out and average together
+    '''
+    data_to_combine_list = []
+    for f in range(len(file_list)):
+        data = get_raw_data(folder_list[f], file_list[f])
+        file_data = data[data_to_combine]
+        data_to_combine_list.append(file_data)
+    
+    averaged_data = numpy.average(data_to_combine_list, axis = 0)
+    
+    return averaged_data      
 
 # %% Safe stop (TM mccambria)
 

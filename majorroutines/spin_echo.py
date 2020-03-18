@@ -197,12 +197,12 @@ def fit_data_from_file(folder, file):
     rabi_period = nv_sig['rabi_{}'.format(state)]
 
     ret_vals = fit_data(precession_dur_range, rabi_period,
-                        num_steps, num_runs, sig_counts, ref_counts)
+                        num_steps, num_runs, sig_counts, ref_counts, file)
     return ret_vals
 
 
 def fit_data(precession_dur_range, rabi_period,
-             num_steps, num_runs, sig_counts, ref_counts):
+             num_steps, num_runs, sig_counts, ref_counts, file):
 
     # %% Set up
 
@@ -235,7 +235,7 @@ def fit_data(precession_dur_range, rabi_period,
     # us back to 1.0
     amplitude = 1.0 - numpy.average(norm_avg_sig)
     offset = 1.0 - amplitude
-    decay_time = 2000.0
+    decay_time = 20000.0
 
     # To estimate the revival frequency let's find the highest peak in the FFT
     transform = numpy.fft.rfft(norm_avg_sig)
@@ -281,13 +281,13 @@ def fit_data(precession_dur_range, rabi_period,
     if (fit_func is not None) and (popt is not None):
         fit_fig = create_fit_figure(precession_dur_range, rabi_period,
                                     num_steps, norm_avg_sig, norm_avg_sig_ste,
-                                    fit_func, popt)
+                                    fit_func, popt, file)
 
     return fit_func, popt, stes, fit_fig
 
 def create_fit_figure(precession_dur_range, rabi_period,
                       num_steps, norm_avg_sig, norm_avg_sig_ste,
-                      fit_func, popt):
+                      fit_func, popt, file):
 
     min_precession_dur = precession_dur_range[0]
     max_precession_dur = precession_dur_range[1]
@@ -684,10 +684,11 @@ if __name__ == '__main__':
 
     # zfs in GHz
 #    center_freq = 2.8702  # johnson-nv3_2020_02_04 
-    center_freq = 2.8707  # 2020_02_07-15_18_57-johnson-nv3_2020_02_04
+#    center_freq = 2.8707  # 2020_02_07-15_18_57-johnson-nv3_2020_02_04
+    center_freq = 2.8702  # johnson-nv0_2020_03_13
 
     # folder = 'spin_echo/2019_12'
-    folder = 'spin_echo/2020_02'
+    folder = 'spin_echo/branch_temperature_reading/2020_03'
 
     # 0 deg
     # file = '2019_12_31-10_26_07-goeppert_mayer-nv7_2019_11_27'
@@ -727,8 +728,18 @@ if __name__ == '__main__':
 #    file = '2020_01_27-16_48_32-goeppert_mayer-nv7_2019_11_27'
     
     # temp
-    file = '2020_02_07-17_48_31-johnson-nv3_2020_02_04'
+    file = '2020_03_14-13_23_38-johnson-nv0_2020_03_13'
+#    file1 = '2020_03_13-23_17_53-johnson-nv0_2020_03_13'
+#    file2 = '2020_03_13-23_42_13-johnson-nv0_2020_03_13'
+#    avg_data = tool_belt.combine_data_avg([folder, folder], [file1, file2], 'norm_avg_sig' )    
+#    print(avg_data)
+#    raw_data = {'avg': avg_data.tolist()
+#            }
+#    tool_belt.save_raw_data(raw_data, 'E:/Shared drives/Kolkowitz Lab Group/nvdata/spin_echo/branch_temperature_reading/2020_03/average_counts')
 
     # fit_func, popt, stes, fit_fig = fit_data_from_file(folder, file)
 
+#    file_avg = '2020_03_13-johnson-nv0_2020_03_1-average'
+
     plot_resonances_vs_theta_B(folder, file, center_freq)
+    

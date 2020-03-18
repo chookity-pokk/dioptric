@@ -499,7 +499,7 @@ def main(folder_name, omega = None, omega_ste = None, doPlot = False, offset = T
 if __name__ == '__main__':
 
     path = 't1_double_quantum/paper_data/bulk_dq/'
-    folder = 'johnson-nv3_2020_02_04-121MHz-1deg'
+    folder = 'johnson-nv0_2020_03_13-122MHz'
     path += folder
 
     gamma, ste = main(path, omega=None, omega_ste=None,
