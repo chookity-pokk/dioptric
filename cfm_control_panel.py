@@ -55,21 +55,21 @@ def set_xyz_zero():
 
 def do_image_sample(nv_sig, apd_indices):
     
-    scan_range = 1.0
+#    scan_range = 1.0
 #    scan_range = 0.5
 #    scan_range = 0.3
-#    scan_range = 0.2
+    scan_range = 0.2
 #    scan_range = 0.1
 #    scan_range = 0.05
 #    scan_range = 0.025
     
-    num_steps = 300
+#    num_steps = 300
 #    num_steps = 200
 #    num_steps = 150
 #    num_steps = 135
 #    num_steps = 120
 #    num_steps = 90
-#    num_steps = 60
+    num_steps = 60
 
     # For now we only support square scans so pass scan_range twice
     image_sample.main(nv_sig, scan_range, scan_range, num_steps, apd_indices)
@@ -105,7 +105,7 @@ def do_g2_measurement(nv_sig, apd_a_index, apd_b_index):
 def do_resonance(nv_sig, apd_indices, freq_center=2.87, freq_range=0.2):
 
     num_steps = 51
-    num_runs = 4
+    num_runs = 20
     uwave_power = -13.0
 #    uwave_power = -20.0
 
@@ -404,28 +404,28 @@ if __name__ == '__main__':
 #    apd_indices = [0, 1]
     
     sample_name = 'johnson'
-    search = { 'coords': [0.0, 0.0, 5.1],
+    search = { 'coords': [-0.5, 0.5, 5.0],
             'name': '{}-search'.format(sample_name),
             'expected_count_rate': None, 'nd_filter': 'nd_0.5',
             'pulsed_readout_dur': 375, 'magnet_angle': 45.0,
             'resonance_LOW': None, 'rabi_LOW': None, 'uwave_power_LOW': 9.0,
             'resonance_HIGH': None, 'rabi_HIGH': None, 'uwave_power_HIGH': 10.0}
-    nv0_2020_03_13 = { 'coords': [-0.117, 0.073, 5.04],
+    nv0_2020_03_18 = { 'coords': [-0.369, -0.335, 5.0],
             'name': '{}-nv0_2020_03_13'.format(sample_name),
-            'expected_count_rate': 27, 'nd_filter': 'nd_0',
+            'expected_count_rate': None, 'nd_filter': 'nd_0',
             'pulsed_readout_dur': 350, 'magnet_angle': 0.0,
             'resonance_LOW': 2.8199, 'rabi_LOW': 118.7, 'uwave_power_LOW': 9.0,
             'resonance_HIGH': 2.9242, 'rabi_HIGH': 91.6, 'uwave_power_HIGH': 10.0}
-    nv1_2020_03_13 = { 'coords': [-0.205, 0.088, 5.06],
-            'name': '{}-nv1_2020_03_13'.format(sample_name),
-            'expected_count_rate': 13, 'nd_filter': 'nd_0',
-            'pulsed_readout_dur': 375, 'magnet_angle': 0.5,
-            'resonance_LOW': 2.8205, 'rabi_LOW': None, 'uwave_power_LOW': 9.0,
-            'resonance_HIGH': 2.9240, 'rabi_HIGH': None, 'uwave_power_HIGH': 10.0}
-    nv2_2020_03_13 = { 'coords': [-0.144, -0.019, 5.10],
+#    nv1_2020_03_18 = { 'coords': [-0.864, 0.428, 5.0],
+#            'name': '{}-nv1_2020_03_13'.format(sample_name),
+#            'expected_count_rate': None, 'nd_filter': 'nd_0',
+#            'pulsed_readout_dur': 375, 'magnet_angle': 0.0,
+#            'resonance_LOW': 2.8205, 'rabi_LOW': None, 'uwave_power_LOW': 9.0,
+#            'resonance_HIGH': 2.9240, 'rabi_HIGH': None, 'uwave_power_HIGH': 10.0}
+    nv2_2020_03_18 = { 'coords': [-0.417, -0.420, 5.0],
             'name': '{}-nv2_2020_03_13'.format(sample_name),
-            'expected_count_rate': 19, 'nd_filter': 'nd_0.5',
-            'pulsed_readout_dur': 375, 'magnet_angle': 77.9,
+            'expected_count_rate': None, 'nd_filter': 'nd_0',
+            'pulsed_readout_dur': 375, 'magnet_angle': 0.0,
             'resonance_LOW': 2.8110, 'rabi_LOW': 174.6, 'uwave_power_LOW': 9.0,
             'resonance_HIGH': 2.9327, 'rabi_HIGH': 139.9, 'uwave_power_HIGH': 10.0}
     
@@ -444,8 +444,11 @@ if __name__ == '__main__':
 #        nv_sig_list.append(nv_sig_copy)
     
 #    nv_sig_list = [search]
-    nv_sig_list = [nv0_2020_03_13]
-#    nv_sig_list = [nv2_2020_03_13]
+    nv_sig_list = [nv0_2020_03_18]
+#    nv_sig_list = [nv1_2020_03_18]
+#    nv_sig_list = [nv2_2020_03_18]
+    
+
     
     # %% Functions to run
 
@@ -454,7 +457,7 @@ if __name__ == '__main__':
         # Operations that don't need an NV
         
 #        tool_belt.set_drift([0.0, 0.0, 0.0])  # Totally reset
-#        tool_belt.set_drift([0.0, 0.0, tool_belt.get_drift()[2]])  # Keep z
+        tool_belt.set_drift([0.0, 0.0, tool_belt.get_drift()[2]])  # Keep z
         
 #        set_xyz([0.0,0.0,5.0])
 #        set_xyz([-0.116, -0.073, 2.61])
@@ -478,7 +481,7 @@ if __name__ == '__main__':
 #                coords = nv_sig_copy['coords']
 #                nv_sig_copy['coords'] = [coords[0], coords[1], z]
 #                do_image_sample(nv_sig_copy, apd_indices)
-            do_image_sample(nv_sig, apd_indices)
+#            do_image_sample(nv_sig, apd_indices)
 #            tool_belt.set_drift([0.0, 0.0, 0.0])  # Totally reset
 #            do_optimize(nv_sig, apd_indices)
 #            do_opti_z(nv_sig, apd_indices)
@@ -486,7 +489,7 @@ if __name__ == '__main__':
 #            do_g2_measurement(nv_sig, apd_indices[0], apd_indices[1])
 #            do_optimize_magnet_angle(nv_sig, apd_indices)
 #            do_resonance(nv_sig, apd_indices)
-#            do_resonance(nv_sig, apd_indices, freq_center=2.870, freq_range=0.05)
+            do_resonance(nv_sig, apd_indices, freq_center=2.870, freq_range=0.2)
 #            do_resonance(nv_sig, apd_indices, freq_center=3.050, freq_range=0.1)
 #            do_resonance_state(nv_sig, apd_indices, States.LOW)
 #            do_resonance_state(nv_sig, apd_indices, States.HIGH)
