@@ -188,6 +188,7 @@ def fit_data_from_file(folder, file):
     precession_dur_range = data['precession_time_range']
     sig_counts = data['sig_counts']
     ref_counts = data['ref_counts']
+    norm_avg_sig = data['norm_avg_sig']
     num_steps = data['num_steps']
     num_runs = data['num_runs']
 
@@ -197,12 +198,12 @@ def fit_data_from_file(folder, file):
     rabi_period = nv_sig['rabi_{}'.format(state)]
 
     ret_vals = fit_data(precession_dur_range, rabi_period,
-                        num_steps, num_runs, sig_counts, ref_counts)
+                        num_steps, num_runs, sig_counts, ref_counts, norm_avg_sig)
     return ret_vals
 
 
 def fit_data(precession_dur_range, rabi_period,
-             num_steps, num_runs, sig_counts, ref_counts):
+             num_steps, num_runs, sig_counts, ref_counts, norm_avg_sig):
 
     # %% Set up
 
@@ -226,31 +227,38 @@ def fit_data(precession_dur_range, rabi_period,
     avg_ref = numpy.average(ref_counts[::])
 
     # Divide signal by reference to get normalized counts and st error
-    norm_avg_sig = avg_sig_counts / avg_ref
+#    try:
+#        norm_avg_sig = avg_sig_counts / avg_ref
+#    except RuntimeWarning as e:
+#        print(e)
+#        inf_mask = numpy.isinf(norm_avg_sig)
+#        # Assign to 0 based on the passed conditional array
+#        norm_avg_sig[inf_mask] = 0
+
     norm_avg_sig_ste = ste_sig_counts / avg_ref
 
     # %% Estimated fit parameters
 
     # Assume that the bulk of points are the floor and that revivals take
     # us back to 1.0
-    amplitude = 1.0 - numpy.average(norm_avg_sig)
-    offset = 1.0 - amplitude
-    decay_time = 1000.0
-
-    # To estimate the revival frequency let's find the highest peak in the FFT
-    transform = numpy.fft.rfft(norm_avg_sig)
-    freqs = numpy.fft.rfftfreq(num_steps, d=tau_step)
-    transform_mag = numpy.absolute(transform)
-    # [1:] excludes frequency 0 (DC component)
-    max_ind = numpy.argmax(transform_mag[1:])
-    frequency = freqs[max_ind+1]
-    revival_time = 1/frequency
+#    amplitude = 1.0 - numpy.average(norm_avg_sig)
+#    offset = 1.0 - amplitude
+#    decay_time = 20.0
+#
+#    # To estimate the revival frequency let's find the highest peak in the FFT
+#    transform = numpy.fft.rfft(norm_avg_sig)
+#    freqs = numpy.fft.rfftfreq(num_steps, d=tau_step)
+#    transform_mag = numpy.absolute(transform)
+#    # [1:] excludes frequency 0 (DC component)
+#    max_ind = numpy.argmax(transform_mag[1:])
+#    frequency = freqs[max_ind+1]
+#    revival_time = 1/frequency
 
     # Hard guess
     amplitude = 0.07
     offset = 0.93
     decay_time = 2000.0
-    revival_time = 17000
+    revival_time = 20000
 
     num_revivals = max_precession_dur / revival_time
     amplitudes = [amplitude for el in range(0, int(1.5*num_revivals))]
@@ -683,11 +691,10 @@ if __name__ == '__main__':
     # resonances from rotated experiments manually punched in
 
     # zfs in GHz
-#    center_freq = 2.8702  # johnson-nv3_2020_02_04
-    center_freq = 2.8709  # 2020_02_07-15_18_57-johnson-nv3_2020_02_04
+    center_freq = 2.8700
 
     # folder = 'spin_echo/2019_12'
-    folder = 'spin_echo/branch_hopper_disable_opt/2020_02'
+    folder = 'spin_echo/branch_hopper_disable_opt/2020_03'
 
     # 0 deg
     # file = '2019_12_31-10_26_07-goeppert_mayer-nv7_2019_11_27'
@@ -727,7 +734,7 @@ if __name__ == '__main__':
 #    file = '2020_01_27-16_48_32-goeppert_mayer-nv7_2019_11_27'
 
     # temp
-    file = '2020_02_16-15_39_34-hopper-ensemble'
+    file = '2020_03_18-13_04_29-hopper-ensemble'
 
     # fit_func, popt, stes, fit_fig = fit_data_from_file(folder, file)
 
