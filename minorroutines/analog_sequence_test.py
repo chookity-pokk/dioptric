@@ -62,7 +62,7 @@ if __name__ == '__main__':
             
             
 #            on_589(cxn)
-            cxn.pulse_streamer.constant([3],0.0, 0.2)
+            cxn.pulse_streamer.constant([],0.0, 0.0)
             
 #            on_638(cxn)
             

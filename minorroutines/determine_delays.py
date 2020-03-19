@@ -93,6 +93,7 @@ def measure_delay(cxn, nv_sig, readout, apd_indices,
     ax.set_title('Counts vs Delay Time')
     ax.set_xlabel('Delay time (ns)')
     ax.set_ylabel('Count rate (cps)')
+    ax.legend()
     ax = axes_pack[1]
     ax.plot(taus, norm_avg_sig, 'b-')
     ax.set_title('Contrast vs Delay Time')
@@ -164,33 +165,33 @@ def uwave_delay(cxn, nv_sig, apd_indices, state, aom_delay_time,
 if __name__ == '__main__':
 
     # Set up your parameters to be passed to main here 
-    sample_name = 'ayrton12'
+    sample_name = 'hopper'
     nd_filter = 'nd_1.0'
     expected_count_rate = {
             'nd_0': 95,
             'nd_0.5': 85,
-            'nd_1.0': 60,
+            'nd_1.0': 1000,
             'nd_1.5': 25,
             }
     pulsed_readout_dur = {
             'nd_0': 215,
             'nd_0.5': 280,
-            'nd_1.0': 420,
+            'nd_1.0': 350,
             'nd_1.5': 420,
             }
-    nv2_2019_04_30  = { 'coords': [-0.065, 0.087, 5.01],
-            'name': '{}-nv2_2019_04_30'.format(sample_name),
+    ensemble  = { 'coords': [-0.065, 0.087, 5.01],
+            'name': '{}-ensemble'.format(sample_name),
             'expected_count_rate': expected_count_rate[nd_filter], 'nd_filter': nd_filter,
-            'pulsed_readout_dur': pulsed_readout_dur[nd_filter], 'magnet_angle': 170.7,
-            'resonance_LOW': 2.8542, 'rabi_LOW': 191.5, 'uwave_power_LOW': 9.0,
-            'resonance_HIGH': 2.8849, 'rabi_HIGH': 199.5, 'uwave_power_HIGH': 10.0}
+            'pulsed_readout_dur': pulsed_readout_dur[nd_filter], 'magnet_angle': 0,
+            'resonance_LOW': 2.7637, 'rabi_LOW': 126.7, 'uwave_power_LOW': 9.0,
+            'resonance_HIGH': 2.9819, 'rabi_HIGH': 195.3, 'uwave_power_HIGH': 10.0}
     apd_indices = [0]
-    num_reps = 2*10**5
+    num_reps = 2*10**3
     readout = 2000
-    nv_sig = nv2_2019_04_30
+    nv_sig = ensemble
 
     # aom_delay
-    delay_range = [900, 1500]
+    delay_range = [0, 1500]
     num_steps = 51
     with labrad.connect() as cxn:
         aom_delay(cxn, nv_sig, readout, apd_indices,

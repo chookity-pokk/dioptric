@@ -261,7 +261,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
     reference_time = signal_wait_time  # not sure what this is
     background_wait_time = signal_wait_time  # not sure what this is
     reference_wait_time = 2 * signal_wait_time  # not sure what this is
-    aom_delay_time = shared_params['532_aom_delay']
+    aom_delay_time = shared_params['515_laser_delay']
     readout = nv_sig['pulsed_readout_dur']
     gate_time = readout
     readout_sec = readout / (10**9)

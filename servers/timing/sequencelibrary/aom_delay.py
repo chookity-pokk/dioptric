@@ -85,7 +85,7 @@ if __name__ == '__main__':
     pulser_wiring = {'do_apd_0_gate': 0, 'do_532_aom': 1, 'do_sample_clock': 2}
 
     # Set up a dummy args list
-    args = [0, 2000, 0]
+    args = [1000, 2000, 0]
 
     # get_seq returns the sequence and an arbitrary list to pass back to the
     # client. We just want the sequence.

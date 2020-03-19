@@ -258,7 +258,7 @@ def fit_data(precession_dur_range, rabi_period,
     amplitude = 0.07
     offset = 0.93
     decay_time = 2000.0
-    revival_time = 20000
+    revival_time = 40000
 
     num_revivals = max_precession_dur / revival_time
     amplitudes = [amplitude for el in range(0, int(1.5*num_revivals))]
@@ -376,7 +376,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices,
     post_uwave_exp_wait_time = shared_params['pre_readout_wait_dur']
     # time between signal and reference without illumination
     sig_to_ref_wait_time = pre_uwave_exp_wait_time + post_uwave_exp_wait_time
-    aom_delay_time = shared_params['532_aom_delay']
+    aom_delay_time = shared_params['515_laser_delay']
     rf_delay_time = shared_params['uwave_delay']
     gate_time = nv_sig['pulsed_readout_dur']
 
@@ -691,7 +691,7 @@ if __name__ == '__main__':
     # resonances from rotated experiments manually punched in
 
     # zfs in GHz
-    center_freq = 2.8700
+    center_freq = 2.8706 #hopper 03/19/20
 
     # folder = 'spin_echo/2019_12'
     folder = 'spin_echo/branch_hopper_disable_opt/2020_03'
@@ -734,7 +734,7 @@ if __name__ == '__main__':
 #    file = '2020_01_27-16_48_32-goeppert_mayer-nv7_2019_11_27'
 
     # temp
-    file = '2020_03_18-13_04_29-hopper-ensemble'
+    file = '2020_03_19-13_49_35-hopper-search'
 
     # fit_func, popt, stes, fit_fig = fit_data_from_file(folder, file)
 

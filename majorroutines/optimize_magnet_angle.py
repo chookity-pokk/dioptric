@@ -213,8 +213,8 @@ def main_with_cxn(cxn, nv_sig, apd_indices, angle_range, num_angle_steps,
 # the script that you set up here.
 if __name__ == '__main__':
 
-    path = 'optimize_magnet_angle/2020_02'
-    file = '2020_02_05-10_16_21-johnson-nv3_2020_02_04'
+    path = 'optimize_magnet_angle/branch_hopper_disable_opt/2020_03'
+    file = '2020_03_19-11_10_39-hopper-search'
     data = tool_belt.get_raw_data(path, file)
     splittings = data['splittings']
     
