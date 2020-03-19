@@ -455,7 +455,7 @@ if __name__ == '__main__':
 #                coords = nv_sig_copy['coords']
 #                nv_sig_copy['coords'] = [coords[0], coords[1], z]
 #                do_image_sample(nv_sig_copy, apd_indices)
-#            do_image_sample(nv_sig, apd_indices)
+            do_image_sample(nv_sig, apd_indices)
 #            tool_belt.set_drift([0.0, 0.0, 0.0])  # Totally reset
 #            do_optimize(nv_sig, apd_indices)
 #            do_opti_z(nv_sig, apd_indices)
@@ -494,7 +494,7 @@ if __name__ == '__main__':
 #                do_t1_interleave(nv_sig, apd_indices)
             
 #            do_ramsey(nv_sig, apd_indices)
-            do_spin_echo(nv_sig, apd_indices)
+#            do_spin_echo(nv_sig, apd_indices)
 #            do_set_drift_from_reference_image(nv_sig, apd_indices)
 #            do_test_major_routines(nv_sig, apd_indices)
 #            with labrad.connect() as cxn:
