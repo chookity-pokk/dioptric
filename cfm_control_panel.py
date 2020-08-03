@@ -240,8 +240,8 @@ def do_t1_interleave(nv_sig, apd_indices):
 def do_lifetime(nv_sig, apd_indices, filtr):
     
 #    num_reps = 10**6
-    num_reps = 0.5*10**2
-    num_runs = 100
+    num_reps = 10**2
+    num_runs = 50
     num_bins = 101
     readout_time_range = [0, 2 * 10**6] #ns
     
@@ -410,9 +410,10 @@ if __name__ == '__main__':
     apd_indices = [0]
 #    apd_indices = [0, 1]
     
-    sample_name = '5nmEr'
-    Er = { 'coords': [0.0, 0.0, 5.14],
-            'name': '{}-search'.format(sample_name),
+    sample_name = 'undoped_y2o3'
+    
+    Er = { 'coords': [0.0, 0.0, 5.45],
+            'name': '{}'.format(sample_name),
             'expected_count_rate': None, 'nd_filter': 'nd_0',
             'pulsed_readout_dur': 350, 'magnet_angle': 0,
             'resonance_LOW': 2.8058, 'rabi_LOW': 175.8, 'uwave_power_LOW': 9.0, 
@@ -456,8 +457,8 @@ if __name__ == '__main__':
 #            do_image_sample(nv_sig, apd_indices)
 #            tool_belt.set_drift([0.0, 0.0, 0.0])  # Totally reset
 #            do_optimize(nv_sig, apd_indices)
-#            do_opti_z(nv_sig, apd_indices)
-            do_stationary_count(nv_sig, apd_indices)
+            do_opti_z(nv_sig, apd_indices)
+#            do_stationary_count(nv_sig, apd_indices)
 #            do_g2_measurement(nv_sig, apd_indices[0], apd_indices[1])
 #            do_optimize_magnet_angle(nv_sig, apd_indices)
 #            do_resonance(nv_sig, apd_indices)

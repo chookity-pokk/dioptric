@@ -120,22 +120,19 @@ def plot_spectra(file,folder, wavelength_range, vertical_range, plot_title):
     
 # %%
 
+# blank y2o3
+folder_pre_MM = 'Blank_Y2O3'
+file_pre_anneal = '2020_08_03-blank_y2o3'
 
-
+# 5nm er
 folder_post = '2020_07_29 5 nm Er post anneal'
-# 7/29
 file_post_MM_729 = 'post_anneal_MM_2'
-# 7/30
-file_post_MM_730 = 'post_anneal_MM_7_30'
-# 7/31
-file_post_MM_731 = 'post_anneal_MM_7_31'
-# 8/3
-file_post_MM_803 = 'post_anneal_MM_8_3_focus'
+
 
 if __name__ == '__main__':
     
      # measurement 3/09
-    wvlngth_1, counts_1 = plot_spectra(file_post_MM_729, folder_post,  [None, None], [None, None],'7/29') 
+    wvlngth_1, counts_1 = plot_spectra(file_pre_anneal, folder_pre_MM,  [None, None], [None, None],'pre anneal 7/29') 
         
      # measurement 7/29
 #    wvlngth_2, counts_2 = plot_spectra(file_n_g_y_ig_550_5nm, folder_5,  [None, None], [-100, 300],'5 nm Er')
@@ -155,10 +152,10 @@ if __name__ == '__main__':
     ax.set_title('Spectra (compare 5nm Er from March)')
 #    ax.set_ylim([500,5000]) 
 #    ax.set_xlim([500,570]) 
-    ax.plot(wvlngth_1, numpy.array(counts_1), label ='7/29')
-    ax.plot(wvlngth_2, numpy.array(counts_2), label = '7/30')
-    ax.plot(wvlngth_3, numpy.array(counts_3), label = '7/31')
-    ax.plot(wvlngth_4, numpy.array(counts_4), label = '8/3')
+    ax.plot(wvlngth_1, numpy.array(counts_1), label ='pre anneal 7/29')
+#    ax.plot(wvlngth_2, numpy.array(counts_2), label = '7/30')
+#    ax.plot(wvlngth_3, numpy.array(counts_3), label = '7/31')
+    ax.plot(wvlngth_4, numpy.array(counts_4), label = 'post anneal 8/3')
     ax.legend()
 
     
