@@ -237,7 +237,7 @@ def do_t1_interleave(nv_sig, apd_indices):
 
     t1_interleave.main(nv_sig, apd_indices, t1_exp_array, num_runs)
 
-def do_lifetime(nv_sig, apd_indices):
+def do_lifetime(nv_sig, apd_indices, filtr):
     
 #    num_reps = 10**6
     num_reps = 2*10**5
@@ -247,7 +247,7 @@ def do_lifetime(nv_sig, apd_indices):
     readout_time = 1.5 * 10**6 #ns
     
     lifetime.main(nv_sig, apd_indices, readout_time,
-                  num_reps, num_runs, num_bins)
+                  num_reps, num_runs, num_bins, filtr)
     
 def do_ramsey(nv_sig, apd_indices):
 
@@ -411,18 +411,17 @@ if __name__ == '__main__':
     apd_indices = [0]
 #    apd_indices = [0, 1]
     
-    sample_name = 'hopper'
-    ensemble = { 'coords': [0.0, 0.0, 5.00],
+    sample_name = '5nmEr'
+    Er = { 'coords': [0.0, 0.0, 5.14],
             'name': '{}-search'.format(sample_name),
-            'expected_count_rate': 1000, 'nd_filter': 'nd_0',
+            'expected_count_rate': None, 'nd_filter': 'nd_0',
             'pulsed_readout_dur': 350, 'magnet_angle': 0,
             'resonance_LOW': 2.8058, 'rabi_LOW': 175.8, 'uwave_power_LOW': 9.0, 
             'resonance_HIGH': 2.9357, 'rabi_HIGH': 242.5, 'uwave_power_HIGH': 10.0}
     
     
     
-    nv_sig_list = [ensemble]
-#    nv_sig_list = [ensemble_42, ensemble_49, ensemble_83]
+    nv_sig_list = [Er]
     
     # %% Functions to run
 
@@ -455,10 +454,10 @@ if __name__ == '__main__':
 #                coords = nv_sig_copy['coords']
 #                nv_sig_copy['coords'] = [coords[0], coords[1], z]
 #                do_image_sample(nv_sig_copy, apd_indices)
-            do_image_sample(nv_sig, apd_indices)
+#            do_image_sample(nv_sig, apd_indices)
 #            tool_belt.set_drift([0.0, 0.0, 0.0])  # Totally reset
 #            do_optimize(nv_sig, apd_indices)
-#            do_opti_z(nv_sig, apd_indices)
+            do_opti_z(nv_sig, apd_indices)
 #            do_stationary_count(nv_sig, apd_indices)
 #            do_g2_measurement(nv_sig, apd_indices[0], apd_indices[1])
 #            do_optimize_magnet_angle(nv_sig, apd_indices)
@@ -483,7 +482,11 @@ if __name__ == '__main__':
 #            find_resonance_and_rabi(nv_sig, apd_indices)
 #            do_t1_battery(nv_sig, apd_indices)
 #            do_t1_interleave(nv_sig, apd_indices)
-#            do_lifetime(nv_sig, apd_indices)
+            
+            filtr = 'None'
+#            filtr = 'shortpass'
+#            filtr = 'longpass'
+            do_lifetime(nv_sig, apd_indicesm filtr)
 #            find_resonance_and_rabi(nv_sig, apd_indices)
             
 #            fail_bool = find_resonance_and_rabi(nv_sig, apd_indices)
