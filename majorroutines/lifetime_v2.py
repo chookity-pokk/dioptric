@@ -106,6 +106,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
     polarization_time = 600 * 10**3
     start_time = readout_time_range[0]
     end_time = readout_time_range[1]
+    calc_readout_time = end_time - start_time
 #    inter_exp_wait_time = 500  # time between experiments
 
     aom_delay_time = shared_params['532_aom_delay']
@@ -212,6 +213,8 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
                     'start_time-units': 'ns',
                     'end_time': end_time,
                     'end_time-units': 'ns',
+                    'calc_readout_time': calc_readout_time,
+                    'calc_readout_time-units': 'ns',
                     'num_reps': num_reps,
                     'num_runs': num_runs,
                     'run_ind': run_ind,
@@ -233,14 +236,14 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
 
     # %% Bin the data
     
-    readout_time_ps = 1000*readout_time
+    readout_time_ps = 1000*calc_readout_time
     binned_samples, bin_edges = numpy.histogram(processed_tags, num_bins,
                                                 (0, readout_time_ps))
     
     # Compute the centers of the bins
-    bin_size = readout_time / num_bins
+    bin_size = calc_readout_time / num_bins
     bin_center_offset = bin_size / 2
-    bin_centers = numpy.linspace(0, readout_time, num_bins) + bin_center_offset
+    bin_centers = numpy.linspace(0, calc_readout_time, num_bins) + bin_center_offset
 
     # %% Plot
 
@@ -267,8 +270,12 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
                 'nv_sig': nv_sig,
                 'nv_sig-units': tool_belt.get_nv_sig_units(),
                 'filter': filtr,
-                'readout_time': readout_time,
-                'readout_time-units': 'ns',
+                'start_time': start_time,
+                'start_time-units': 'ns',
+                'end_time': end_time,
+                'end_time-units': 'ns',
+                'calc_readout_time': calc_readout_time,
+                'calc_readout_time-units': 'ns',
                 'polarization_time': polarization_time,
                 'polarization_time-units': 'ns',
                 'num_bins': num_bins,
