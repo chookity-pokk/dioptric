@@ -2,6 +2,8 @@
 """
 Created on Sat May  4 08:34:08 2019
 
+2/24/2020 Setting the start of the readout_time at the beginning of the sequence.
+
 @author: Aedan
 """
 
@@ -20,14 +22,14 @@ def get_seq(pulser_wiring, args):
 
     # The first 3 args are ns durations and we need them as int64s
     durations = []
-    for ind in range(3):
+    for ind in range(4):
         durations.append(numpy.int64(args[ind]))
 
     # Unpack the durations
-    readout_time, polarization_time, aom_delay_time = durations
+    start_time, end_time, polarization_time, aom_delay_time = durations
 
     # Get the APD index
-    apd_index = args[3]
+    apd_index = args[4]
 
     pulser_do_apd_gate = pulser_wiring['do_apd_{}_gate'.format(apd_index)]
 
@@ -37,7 +39,7 @@ def get_seq(pulser_wiring, args):
 
     # The period is independent of the particular tau, but it must be long
     # enough to accomodate the longest tau
-    period = aom_delay_time + polarization_time +  readout_time
+    period = aom_delay_time + end_time
 
     # %% Define the sequence
 
@@ -45,13 +47,13 @@ def get_seq(pulser_wiring, args):
     
     # APD 
 
-    train = [(aom_delay_time + polarization_time, LOW),
-             (readout_time, HIGH)]
+    train = [(aom_delay_time + start_time, LOW),
+             (end_time - start_time, HIGH)]
     seq.setDigital(pulser_do_apd_gate, train)
 
     # Pulse the laser with the AOM for polarization and readout
     train = [(polarization_time, HIGH),
-             (readout_time + aom_delay_time, LOW)]
+             (end_time + aom_delay_time - polarization_time, LOW)]
     seq.setDigital(pulser_do_aom, train)
 
     final_digital = [pulser_wiring['do_532_aom']]
@@ -65,7 +67,7 @@ if __name__ == '__main__':
               'do_signal_generator_tsg4104a_gate': 2,
               'do_signal_generator_bnc835_gate': 3}
     
-    seq_args = [2000, 100, 0, 0]
+    seq_args = [50, 100, 100, 0, 0]
 
     seq, final, ret_vals = get_seq(wiring, seq_args)
     seq.plot()

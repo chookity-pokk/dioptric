@@ -242,11 +242,10 @@ def do_lifetime(nv_sig, apd_indices, filtr):
 #    num_reps = 10**6
     num_reps = 10**3
     num_runs = 5
-    num_bins = 100
-#    readout_time = 1.2 * 10**6
-    readout_time = 1.5 * 10**6 #ns
+    num_bins = 101
+    readout_time_range = [0, 1 * 10**6] #ns
     
-    lifetime.main(nv_sig, apd_indices, readout_time,
+    lifetime.main(nv_sig, apd_indices, readout_time_range,
                   num_reps, num_runs, num_bins, filtr)
     
 def do_ramsey(nv_sig, apd_indices):

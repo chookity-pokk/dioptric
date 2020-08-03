@@ -81,15 +81,15 @@ def process_raw_buffer(new_tags, new_channels,
 # %% Main
 
 
-def main(nv_sig, apd_indices, readout_time,
+def main(nv_sig, apd_indices, readout_time_range,
          num_reps, num_runs, num_bins, filtr):
 
     with labrad.connect() as cxn:
-        main_with_cxn(cxn, nv_sig, apd_indices, readout_time,
+        main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
                       num_reps, num_runs, num_bins, filtr)
 
 
-def main_with_cxn(cxn, nv_sig, apd_indices, readout_time,
+def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
                   num_reps, num_runs, num_bins, filtr):
     
     if len(apd_indices) > 1:
@@ -103,8 +103,9 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time,
     shared_params = tool_belt.get_shared_parameters_dict(cxn)
 
     # In ns
-    polarization_time = 30 * 10**3
-    readout_time = int(readout_time)
+    polarization_time = 600 * 10**3
+    start_time = readout_time_range[0]
+    end_time = readout_time_range[1]
 #    inter_exp_wait_time = 500  # time between experiments
 
     aom_delay_time = shared_params['532_aom_delay']
@@ -113,7 +114,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time,
 
     # pulls the file of the sequence from serves/timing/sequencelibrary
     file_name = os.path.basename(__file__)
-    seq_args = [readout_time, polarization_time, 
+    seq_args = [start_time, end_time, polarization_time, 
                 aom_delay_time, apd_indices[0]]
     seq_args = [int(el) for el in seq_args]
     seq_args_string = tool_belt.encode_seq_args(seq_args)
@@ -165,7 +166,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time,
         gate_close_channel = channel_mapping[2]
             
         # Stream the sequence
-        seq_args = [readout_time, polarization_time, 
+        seq_args = [start_time, end_time, polarization_time, 
                     aom_delay_time, apd_indices[0]]
         seq_args = [int(el) for el in seq_args]
         seq_args_string = tool_belt.encode_seq_args(seq_args)
@@ -207,8 +208,10 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time,
         raw_data = {'start_timestamp': start_timestamp,
                     'nv_sig': nv_sig,
                     'nv_sig-units': tool_belt.get_nv_sig_units(),
-                    'readout_time': readout_time,
-                    'readout_time-units': 'ns',
+                    'start_time': start_time,
+                    'start_time-units': 'ns',
+                    'end_time': end_time,
+                    'end_time-units': 'ns',
                     'num_reps': num_reps,
                     'num_runs': num_runs,
                     'run_ind': run_ind,
@@ -266,6 +269,8 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time,
                 'filter': filtr,
                 'readout_time': readout_time,
                 'readout_time-units': 'ns',
+                'polarization_time': polarization_time,
+                'polarization_time-units': 'ns',
                 'num_bins': num_bins,
                 'num_reps': num_reps,
                 'num_runs': num_runs,
