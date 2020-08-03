@@ -243,10 +243,11 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time,
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 8.5))
 
-    ax.plot(bin_centers, binned_samples, 'r-')
+    ax.plot(numpy.array(bin_centers)/10**6, binned_samples, 'r-')
     ax.set_title('Lifetime')
-    ax.set_xlabel('Time after illumination (ns)')
+    ax.set_xlabel('Time after illumination (ms)')
     ax.set_ylabel('Counts')
+    ax.set_yscale('log')
     
     fig.canvas.draw()
     fig.set_tight_layout(True)

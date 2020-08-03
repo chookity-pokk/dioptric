@@ -240,8 +240,8 @@ def do_t1_interleave(nv_sig, apd_indices):
 def do_lifetime(nv_sig, apd_indices, filtr):
     
 #    num_reps = 10**6
-    num_reps = 2*10**5
-    num_runs = 1
+    num_reps = 10**3
+    num_runs = 5
     num_bins = 100
 #    readout_time = 1.2 * 10**6
     readout_time = 1.5 * 10**6 #ns
@@ -457,7 +457,7 @@ if __name__ == '__main__':
 #            do_image_sample(nv_sig, apd_indices)
 #            tool_belt.set_drift([0.0, 0.0, 0.0])  # Totally reset
 #            do_optimize(nv_sig, apd_indices)
-            do_opti_z(nv_sig, apd_indices)
+#            do_opti_z(nv_sig, apd_indices)
 #            do_stationary_count(nv_sig, apd_indices)
 #            do_g2_measurement(nv_sig, apd_indices[0], apd_indices[1])
 #            do_optimize_magnet_angle(nv_sig, apd_indices)
@@ -483,10 +483,10 @@ if __name__ == '__main__':
 #            do_t1_battery(nv_sig, apd_indices)
 #            do_t1_interleave(nv_sig, apd_indices)
             
-            filtr = 'None'
+#            filtr = 'None'
 #            filtr = 'shortpass'
-#            filtr = 'longpass'
-            do_lifetime(nv_sig, apd_indicesm filtr)
+            filtr = 'longpass'
+            do_lifetime(nv_sig, apd_indices, filtr)
 #            find_resonance_and_rabi(nv_sig, apd_indices)
             
 #            fail_bool = find_resonance_and_rabi(nv_sig, apd_indices)
