@@ -121,27 +121,21 @@ def plot_spectra(file,folder, wavelength_range, vertical_range, plot_title):
 # %%
 
 # blank y2o3
-folder_pre_MM = 'Blank_Y2O3'
-file_pre_anneal = '2020_08_03-blank_y2o3'
+folder_blank = 'Blank Y2O3'
+file_blank = '2020_08_03-blank_y2o3'
 
 # 5nm er
-folder_post = '2020_07_29 5 nm Er post anneal'
-file_post_MM_729 = 'post_anneal_MM_2'
+folder_Er = '2020_07_29 5 nm Er post anneal'
+file_Er = 'post_anneal_MM_2'
+file_Er = 'post_anneal_MM_8_3'
 
 
 if __name__ == '__main__':
     
-     # measurement 3/09
-    wvlngth_1, counts_1 = plot_spectra(file_pre_anneal, folder_pre_MM,  [None, None], [None, None],'pre anneal 7/29') 
-        
-     # measurement 7/29
-#    wvlngth_2, counts_2 = plot_spectra(file_n_g_y_ig_550_5nm, folder_5,  [None, None], [-100, 300],'5 nm Er')
-#    wvlngth_2, counts_2 = plot_spectra(file_n_g_y_ig_550_10nm, folder_10, [None, None], [-100, 300],'10 nm Er')
-    # 660 nm, with ionic gel
-    wvlngth_2, counts_2 = plot_spectra(file_post_MM_730, folder_post,  [None, None], [None, None],'7/30')
-#    wvlngth_2, counts_2 = plot_spectra(file_n_g_y_ig_660_10nm, folder_10, [None, None], [-100, 300],'10 nm Er')
-    wvlngth_3, counts_3 = plot_spectra(file_post_MM_731, folder_post,  [None, None], [None, None],'7/31') 
-    wvlngth_4, counts_4 = plot_spectra(file_post_MM_803, folder_post,  [None, None], [None, None],'8/3') 
+    wvlngth_1, counts_1 = plot_spectra(file_Er, folder_Er,  [None, None], [None, None],'Y2O3 w/ Er implanted 5 nm') 
+
+    wvlngth_2, counts_2 = plot_spectra(file_blank, folder_blank,  [None, None], [None, None], 'Y2O3 w/out Er')
+ 
 
 
     fig, ax= plt.subplots(1, 1, figsize=(10, 8))
@@ -149,13 +143,11 @@ if __name__ == '__main__':
 #    print(counts_1)
     ax.set_xlabel('Wavelength (nm)')
     ax.set_ylabel('Counts')
-    ax.set_title('Spectra (compare 5nm Er from March)')
+    ax.set_title('Spectra, Y2O3 substrate comparison')
 #    ax.set_ylim([500,5000]) 
 #    ax.set_xlim([500,570]) 
-    ax.plot(wvlngth_1, numpy.array(counts_1), label ='pre anneal 7/29')
-#    ax.plot(wvlngth_2, numpy.array(counts_2), label = '7/30')
-#    ax.plot(wvlngth_3, numpy.array(counts_3), label = '7/31')
-    ax.plot(wvlngth_4, numpy.array(counts_4), label = 'post anneal 8/3')
+    ax.plot(wvlngth_1, numpy.array(counts_1), label ='Y2O3 w/ Er implanted (5 nm)')
+    ax.plot(wvlngth_2, numpy.array(counts_2), label = 'Y2O3 w/out Er')
     ax.legend()
 
     
