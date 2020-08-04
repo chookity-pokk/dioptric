@@ -26,12 +26,12 @@ def main():
 #    file_aug = '2020_08_03-13_41_11-5nmEr-search'
     
     # 550 Shortpass
-    file_mar = '2020_03_09-15_56_14-Y2O3_no_graphene_no_IG_2'
-    file_aug = '2020_08_03-14_36_05-5nmEr-search'
+#    file_mar = '2020_03_09-15_56_14-Y2O3_no_graphene_no_IG_2'
+#    file_aug = '2020_08_03-14_03_43-5nmEr-search'
     
     # 630 longpass
-#    file_mar = '2020_03_09-16_05_16-Y2O3_no_graphene_no_IG_2'
-#    file_aug = '2020_08_03-14_03_43-5nmEr-search'
+    file_mar = '2020_03_09-16_05_16-Y2O3_no_graphene_no_IG_2'
+    file_aug = '2020_08_03-14_36_05-5nmEr-search'
     
     dir_list = [directory_mar, directory_aug]
     file_list = [file_mar, file_aug]
@@ -66,13 +66,13 @@ def main():
         counts = numpy.array(counts_list[i])
         sub_counts = counts - background_counts
         
-        first_point = sub_counts[start_num[i]]
-        last_point = sub_counts[-1]
-        norm_counts = (sub_counts - last_point) / (first_point - last_point)
+        first_point = counts[start_num[i]]
+        last_point = counts[-1]
+        norm_counts = (counts - last_point) / (first_point - last_point)
         ax.plot(bin_centers_norm[start_num[i]:], norm_counts[start_num[i]:], data_fmt_list[i],label=label_list[i])
     ax.set_xlabel('Time (us)')
     ax.set_ylabel('Counts (arb.)')
-    ax.set_title('5 nm Er implanted Y2O3 lifetime, 550 shortpass filter')
+    ax.set_title('5 nm Er implanted Y2O3 lifetime, 660 longpass filter')
     ax.legend()
 #    ax.set_xlim([0,500])
     ax.set_yscale("log", nonposy='clip')
