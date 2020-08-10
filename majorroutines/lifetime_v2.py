@@ -139,16 +139,17 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
 
     # %% Set the color filter
     
-    cxn.filter_slider_ell9k_color.set_filter(filtr)
     if reference:
         # shutter the objective
         cxn.filter_slider_ell9k.set_filter('nd_0.5')
+        cxn.filter_slider_ell9k_color.set_filter(filtr)
     else:
         # Optimize
         opti_coords = optimize.opti_z_cxn(cxn, nv_sig, apd_indices)
         opti_coords_list.append(opti_coords)
         # do not shutter the objective
         cxn.filter_slider_ell9k.set_filter('nd_0')
+        cxn.filter_slider_ell9k_color.set_filter(filtr)
     
 
     # %% Collect the data

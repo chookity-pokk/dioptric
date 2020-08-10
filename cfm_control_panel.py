@@ -412,7 +412,7 @@ if __name__ == '__main__':
     
     sample_name = 'no_sample'
     
-    Er = { 'coords': [0.0, 0.0, 5.45],
+    Er = { 'coords': [0.0, 0.0, 5.14],
             'name': '{}'.format(sample_name),
             'expected_count_rate': None, 'nd_filter': 'nd_0',
             'pulsed_readout_dur': 350, 'magnet_angle': 0,
@@ -485,7 +485,7 @@ if __name__ == '__main__':
             
 
             do_lifetime(nv_sig, apd_indices, 'none', reference = False)
-            do_lifetime(nv_sig, apd_indices, 'none', reference = True)     
+#            do_lifetime(nv_sig, apd_indices, 'none', reference = True)     
 #            do_lifetime(nv_sig, apd_indices, 'shortpass', reference = False)            
 #            do_lifetime(nv_sig, apd_indices, 'shortpass', reference = True)
 #            do_lifetime(nv_sig, apd_indices, 'longpass', reference = False)
