@@ -237,7 +237,7 @@ def do_t1_interleave(nv_sig, apd_indices):
 
     t1_interleave.main(nv_sig, apd_indices, t1_exp_array, num_runs)
 
-def do_lifetime(nv_sig, apd_indices, filt,r reference = False):
+def do_lifetime(nv_sig, apd_indices, filtr, reference = False):
     
 #    num_reps = 10**6
     num_reps = 500
