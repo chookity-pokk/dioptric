@@ -82,15 +82,15 @@ def process_raw_buffer(new_tags, new_channels,
 
 
 def main(nv_sig, apd_indices, readout_time_range,
-         num_reps, num_runs, num_bins, filtr):
+         num_reps, num_runs, num_bins, filtr, reference = False):
 
     with labrad.connect() as cxn:
         main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
-                      num_reps, num_runs, num_bins, filtr)
+                      num_reps, num_runs, num_bins, filtr, reference)
 
 
 def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
-                  num_reps, num_runs, num_bins, filtr):
+                  num_reps, num_runs, num_bins, filtr, reference = False):
     
     if len(apd_indices) > 1:
         msg = 'Currently lifetime only supports single APDs!!'
@@ -140,6 +140,16 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
     # %% Set the color filter
     
     cxn.filter_slider_ell9k_color.set_filter(filtr)
+    if reference:
+        # shutter the objective
+        cxn.filter_slider_ell9k.set_filter('nd_0.5')
+    else:
+        # Optimize
+        opti_coords = optimize.opti_z_cxn(cxn, nv_sig, apd_indices)
+        opti_coords_list.append(opti_coords)
+        # do not shutter the objective
+        cxn.filter_slider_ell9k.set_filter('nd_0')
+    
 
     # %% Collect the data
     
@@ -212,7 +222,8 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
 
         raw_data = {'start_timestamp': start_timestamp,
                     'nv_sig': nv_sig,
-                    'filter': filtr,                    
+                    'filter': filtr,   
+                    'reference_measurement?': reference,
                     'nv_sig-units': tool_belt.get_nv_sig_units(),
                     'start_time': start_time,
                     'start_time-units': 'ns',
@@ -275,6 +286,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
                 'nv_sig': nv_sig,
                 'nv_sig-units': tool_belt.get_nv_sig_units(),
                 'filter': filtr,
+                'reference_measurement?': reference,
                 'start_time': start_time,
                 'start_time-units': 'ns',
                 'end_time': end_time,
