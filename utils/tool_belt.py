@@ -835,3 +835,4 @@ def reset_cfm_with_cxn(cxn):
     cxn.arbitrary_waveform_generator.reset()
     cxn.signal_generator_tsg4104a.reset()
     cxn.signal_generator_bnc835.reset()
+    cxn.filter_slider_ell9k_color.set_filter('longpass')

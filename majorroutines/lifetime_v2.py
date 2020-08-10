@@ -103,13 +103,13 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
     shared_params = tool_belt.get_shared_parameters_dict(cxn)
 
     # In ns
-    polarization_time = 600 * 10**3
+    polarization_time = 60 * 10**3
     start_time = readout_time_range[0]
     end_time = readout_time_range[1]
     calc_readout_time = end_time - start_time
 #    inter_exp_wait_time = 500  # time between experiments
 
-    aom_delay_time = shared_params['532_aom_delay']
+    aom_delay_time = shared_params['515_laser_delay']
 
     # %% Analyze the sequence
 
@@ -136,6 +136,10 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
     start_timestamp = tool_belt.get_time_stamp()
     
     opti_coords_list = []
+
+    # %% Set the color filter
+    
+    cxn.filter_slider_ell9k_color.set_filter(filtr)
 
     # %% Collect the data
     
@@ -208,6 +212,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, readout_time_range,
 
         raw_data = {'start_timestamp': start_timestamp,
                     'nv_sig': nv_sig,
+                    'filter': filtr,                    
                     'nv_sig-units': tool_belt.get_nv_sig_units(),
                     'start_time': start_time,
                     'start_time-units': 'ns',

@@ -237,16 +237,16 @@ def do_t1_interleave(nv_sig, apd_indices):
 
     t1_interleave.main(nv_sig, apd_indices, t1_exp_array, num_runs)
 
-def do_lifetime(nv_sig, apd_indices, filtr):
+def do_lifetime(nv_sig, apd_indices, filt,r reference = False):
     
 #    num_reps = 10**6
-    num_reps = 10**2
-    num_runs = 50
+    num_reps = 500
+    num_runs = 10
     num_bins = 101
-    readout_time_range = [0, 2 * 10**6] #ns
+    readout_time_range = [0, 1.5 * 10**6] #ns
     
     lifetime.main(nv_sig, apd_indices, readout_time_range,
-                  num_reps, num_runs, num_bins, filtr)
+                  num_reps, num_runs, num_bins, filtr, reference)
     
 def do_ramsey(nv_sig, apd_indices):
 
@@ -410,7 +410,7 @@ if __name__ == '__main__':
     apd_indices = [0]
 #    apd_indices = [0, 1]
     
-    sample_name = 'undoped_y2o3'
+    sample_name = 'no_sample'
     
     Er = { 'coords': [0.0, 0.0, 5.45],
             'name': '{}'.format(sample_name),
@@ -457,7 +457,7 @@ if __name__ == '__main__':
 #            do_image_sample(nv_sig, apd_indices)
 #            tool_belt.set_drift([0.0, 0.0, 0.0])  # Totally reset
 #            do_optimize(nv_sig, apd_indices)
-            do_opti_z(nv_sig, apd_indices)
+#            do_opti_z(nv_sig, apd_indices)
 #            do_stationary_count(nv_sig, apd_indices)
 #            do_g2_measurement(nv_sig, apd_indices[0], apd_indices[1])
 #            do_optimize_magnet_angle(nv_sig, apd_indices)
@@ -483,10 +483,14 @@ if __name__ == '__main__':
 #            do_t1_battery(nv_sig, apd_indices)
 #            do_t1_interleave(nv_sig, apd_indices)
             
-            filtr = 'None'
-#            filtr = 'shortpass'
-#            filtr = 'longpass'
-#            do_lifetime(nv_sig, apd_indices, filtr)
+
+            do_lifetime(nv_sig, apd_indices, 'none', reference = False)
+            do_lifetime(nv_sig, apd_indices, 'none', reference = True)     
+#            do_lifetime(nv_sig, apd_indices, 'shortpass', reference = False)            
+#            do_lifetime(nv_sig, apd_indices, 'shortpass', reference = True)
+#            do_lifetime(nv_sig, apd_indices, 'longpass', reference = False)
+#            do_lifetime(nv_sig, apd_indices, 'longpass', reference = True)
+            
 #            find_resonance_and_rabi(nv_sig, apd_indices)
             
 #            fail_bool = find_resonance_and_rabi(nv_sig, apd_indices)

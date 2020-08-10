@@ -13,22 +13,23 @@ import matplotlib.pyplot as plt
 
 def check_power():
     with labrad.connect() as cxn:
-        cxn.microwave_signal_generator.set_freq(2.88)
-        cxn.microwave_signal_generator.set_amp(9.0)
-        cxn.microwave_signal_generator.uwave_on()
-        # 2 is the tektronix sig gen, 3 is the HP sig gen
-        cxn.pulse_streamer.constant(3)
+        cxn.signal_generator_tsg4104a.set_freq(2.87)
+        cxn.signal_generator_tsg4104a.set_amp(-20.0)
+        cxn.signal_generator_tsg4104a.uwave_on()
+        # 4 is the tektronix sig gen, 
+        cxn.pulse_streamer.constant([3], 0.0, 0.0)
 
-        while True:
-            power = input('Enter a power or nothing to stop: ')
+#        while True:
+#            power = input('Enter a power or nothing to stop: ')
+#
+#            if power != '':
+#                cxn.signal_generator_tsg4104a.set_amp(power)
+#            else:
+#                break
+        input('Press enter to stop...')
 
-            if power != '':
-                cxn.microwave_signal_generator.set_amp(power)
-            else:
-                break
-
-        cxn.pulse_streamer.constant(0)
-        cxn.microwave_signal_generator.uwave_off()
+        cxn.pulse_streamer.constant([], 0.0, 0.0)
+        cxn.signal_generator_tsg4104a.uwave_off()
 
     # Setting / Measured / Accounting for attenuator / Switch loss
     # At 2.87 GHz after switch, with -20 dBm attenuator:
@@ -164,7 +165,7 @@ def plot_data():
     # fig, ax = plt.subplots(1, 1, figsize=(6, 6))
     fig, axes_pack = plt.subplots(1, 2, figsize=(12, 6))
     ax = axes_pack[0]
-    ax.plot(in_powers, out_powers)
+    ax.plot(in_powers, out_powers) 
     ax.set_title('Measured Power Versus Set Power At 2.87 GHz')
     ax.set_xlabel('Set Power (dBm)')
     ax.set_ylabel('Measured Power (dBm)')
@@ -180,3 +181,10 @@ if __name__ == '__main__':
      check_power()
 #     check_freq()
 #    plot_data()
+    
+    # Turn on the green
+#    with labrad.connect() as cxn:
+#        cxn.pulse_streamer.constant([3], 0.0, 0.0)
+#        input('Press enter to stop...')
+#        cxn.pulse_streamer.constant([], 0.0, 0.0)
+        
