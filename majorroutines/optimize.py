@@ -119,7 +119,8 @@ def optimize_on_axis(cxn, nv_sig, axis_ind, shared_params, aom_ao_589_pwr,
     num_steps = 31
     coords = nv_sig['coords']
     x_center, y_center, z_center = coords
-    scan_range_nm = 2*shared_params['airy_radius'] #32*10**3
+    scan_range_xy = shared_params['xy_optimize_range'] #32*10**3
+    scan_range_z = shared_params['z_optimize_range'] 
     readout = shared_params['continuous_readout_dur']
     
     ao_515_pwr = nv_sig['ao_515_pwr']
@@ -131,7 +132,7 @@ def optimize_on_axis(cxn, nv_sig, axis_ind, shared_params, aom_ao_589_pwr,
 
     # x/y
     if axis_ind in [0, 1]:
-        scan_range = scan_range_nm / shared_params['galvo_nm_per_volt']
+        scan_range = scan_range_xy #scan_range_nm / shared_params['galvo_nm_per_volt']
         seq_args = [shared_params['small_angle_galvo_delay'], readout, aom_ao_589_pwr, ao_515_pwr,
                     apd_indices[0], color_ind]
         seq_args_string = tool_belt.encode_seq_args(seq_args)
@@ -150,7 +151,8 @@ def optimize_on_axis(cxn, nv_sig, axis_ind, shared_params, aom_ao_589_pwr,
     # z
     elif axis_ind == 2:
         
-        scan_range = 3* scan_range_nm / shared_params['piezo_nm_per_volt']
+        scan_range = scan_range_z
+        print(scan_range)
         seq_args = [shared_params['objective_piezo_delay'],
                     readout, aom_ao_589_pwr, ao_515_pwr, apd_indices[0], color_ind]
         seq_args_string = tool_belt.encode_seq_args(seq_args)
