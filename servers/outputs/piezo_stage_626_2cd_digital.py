@@ -144,13 +144,13 @@ class PiezoStageDigital(LabradServer):
         # Disconnect axis from analog channels
         self.piezo.SPA(self.axis_0, 0x06000500, 0)  # Disconnect axis 0
         self.piezo.SPA(self.axis_1, 0x06000500, 0)  # Disconnect axis 1
-        logging.debug("Piezo axis {} disconnected from analog signal".format(self.axis_0))
-        logging.debug("Piezo axis {} disconnected from analog signal".format(self.axis_1))
+        # logging.debug("Piezo axis {} disconnected from analog signal".format(self.axis_0))
+        # logging.debug("Piezo axis {} disconnected from analog signal".format(self.axis_1))
         
         # self.daq_ao_piezo_stage_x = config[8]
         # self.daq_ao_piezo_stage_y = config[9]
         # self.daq_di_clock = config[10]
-        logging.debug("Init Complete")
+        # logging.debug("Init Complete")
 # %%
     # def load_stream_writer_xy(self, c, task_name, voltages, period):
 

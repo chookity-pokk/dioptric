@@ -19,7 +19,7 @@ import time
 import copy
 import labrad
 
-
+num_steps =61
 # %% Plotting functions
 
 
@@ -158,7 +158,6 @@ def stationary_count_lite(cxn, nv_sig, coords, config, apd_indices):
 def optimize_on_axis(cxn, nv_sig, axis_ind, config, apd_indices, fig=None):
 
     seq_file_name = "simple_readout.py"
-    num_steps = 61  # 31
     coords = nv_sig["coords"]
     x_center, y_center, z_center = coords
     readout = nv_sig["imaging_readout_dur"]
@@ -615,6 +614,7 @@ def main_with_cxn(
             "nv_sig": nv_sig,
             "nv_sig-units": tool_belt.get_nv_sig_units(),
             "opti_coords": opti_coords,
+            'num_steps': num_steps,
             "x_scan_vals": scan_vals_by_axis[0].tolist(),
             "y_scan_vals": scan_vals_by_axis[1].tolist(),
             "z_scan_vals": scan_vals_by_axis[2].tolist(),

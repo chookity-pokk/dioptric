@@ -103,6 +103,7 @@ def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
         raise RuntimeError('x and y resolutions must match for now.')
 
     xy_server = tool_belt.get_xy_server(cxn)
+    z_server = tool_belt.get_z_server(cxn)
     
     # Get a couple registry entries
     # See if this setup has finely specified delay times, else just get the 
@@ -180,9 +181,24 @@ def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
     
     dx_list = []
     dy_list = []
-    
-    for i in range(total_num_samples):
+    x_center1, y_center1, z_center1 = coords
+    #ret_vals = xy_scan_voltages(x_center1, y_center1,
+     #                                  x_range, y_range, num_steps)
+    #x_positions1, y_positions1, _, _ = ret_vals
+    time_start= time.time()
+    opti_interval=2
+    for i in range(total_num_samples): 
+        #time_now = time.time()
+        #if (time_now - time_start)/60 >= opti_interval:
+       #     optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+       #     drift = tool_belt.get_drift() 
+       #     time_start= time.time()
+       #     cur_z_pos = z_center1 +drift[2]
+       #     z_server.write_z(cur_z_pos)
+
         
+        
+        #cxn.apd_tagger.start_tag_stream(apd_indices)
         
         cur_x_pos = x_positions[i]
         cur_y_pos = y_positions[i]
@@ -192,25 +208,6 @@ def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
         
         
         flag = xy_server.write_xy(cur_x_pos, cur_y_pos)
-            
-    #check that we have made it to the target position
-                 
-        # x_diff = 500
-        # y_diff = 500
-        # flag = False
-        # # cur_time = time.time()
-        # time_start_check = time.time()
-        # while x_diff > 0.001 or y_diff > 0.001:
-            
-        #     actual_x_pos, actual_y_pos = xy_server.read_xy()
-        #     x_diff = abs(actual_x_pos - cur_x_pos)
-        #     y_diff = abs(actual_y_pos - cur_y_pos)
-        #     time_check = time.time()
-        #     if time_check - time_start_check > timeout:
-        #         print("target not reached!")
-        #         flag = True
-        #         break   
-            
             
             
             
@@ -233,36 +230,41 @@ def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
         populate_img_array([(actual_x_pos-cur_x_pos)*1e3], dx_img_array, dx_img_write_pos)
         populate_img_array([(actual_y_pos-cur_y_pos)*1e3], dy_img_array, dy_img_write_pos)
         
-        # This is a horribly inefficient way of getting kcps, but it
-        # is easy and readable and probably fine up to some resolution
-        if plot_data:
+        # Either include this in loop so it plots data as it takes it (takes about 2x as long)
+        # or put it ourside loop so it plots after data is complete
+    if plot_data: ###########################################################
             img_array_kcps[:] = (img_array[:] / 1000) / readout_sec
             update_image_figure(fig, img_array_kcps)
         
-    
-    tool_belt.create_image_figure(dx_img_array, img_extent,
+    do_analysis=False
+    if do_analysis:
+       tool_belt.create_image_figure(dx_img_array, img_extent,
                         clickHandler=image_sample.on_click_image, color_bar_label='nm',
                         title = "positional accuracy (dx)", um_scaled=um_scaled,
                         color_map = 'bwr')
-    tool_belt.create_image_figure(dy_img_array, img_extent,
+       tool_belt.create_image_figure(dy_img_array, img_extent,
                         clickHandler=image_sample.on_click_image, color_bar_label='nm',
                         title = "positional accuracy (dy)", um_scaled=um_scaled,
                         color_map = 'bwr')
         
         
-    print(numpy.std(abs(numpy.array(dx_list))))
-    print(numpy.std(abs(numpy.array(dy_list))))
-    fig_pos, axes = plt.subplots(1,2)
-    ax = axes[0]
-    ax.plot(dx_list)
-    ax.set_xlabel('data point')
-    ax.set_ylabel('Difference between set values and actual value (nm)')
-    ax.set_title('X')
-    ax = axes[1]
-    ax.plot(dy_list)
-    ax.set_xlabel('data point')
-    ax.set_ylabel('Difference between set values and actual value (nm)')
-    ax.set_title('Y')
+    
+    
+    
+    
+       print(numpy.std(abs(numpy.array(dx_list))))
+       print(numpy.std(abs(numpy.array(dy_list))))
+       fig_pos, axes = plt.subplots(1,2)
+       ax = axes[0]
+       ax.plot(dx_list)
+       ax.set_xlabel('data point')
+       ax.set_ylabel('Difference between set values and actual value (nm)')
+       ax.set_title('X')
+       ax = axes[1]
+       ax.plot(dy_list)
+       ax.set_xlabel('data point')
+       ax.set_ylabel('Difference between set values and actual value (nm)')
+       ax.set_title('Y')
 
     # %% Clean up
 
@@ -309,4 +311,45 @@ def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
 
     
     return img_array, x_positions_1d, y_positions_1d
+ 
+
+# %% Run the file
+
+
+if __name__ == '__main__':
+
+
+    path = 'pc_rabi/branch_CFMIII/image_sample_digital/2021_12'
+    file_name = '2021_12_21-10_24_48-johnson-nv0_2021_12_2021'
+
+    data = tool_belt.get_raw_data( file_name, path)
+    nv_sig = data['nv_sig']
+    timestamp = data['timestamp']
+    img_array = data['img_array']
+    x_range= data['x_range']
+    y_range= data['y_range']
+    x_voltages = data['x_positions_1d']
+    y_voltages = data['y_positions_1d']
     
+    
+    x_low = -x_range/2
+    x_high = x_range/2
+    y_low = -y_range/2
+    y_high = y_range/2
+    
+    pixel_size = x_voltages[1] - x_voltages[0]
+    half_pixel_size = pixel_size / 2
+    img_extent = [x_low - half_pixel_size,x_high + half_pixel_size,
+                  y_low - half_pixel_size, y_high + half_pixel_size]
+    
+    # csv_name = '{}_{}'.format(timestamp, nv_sig['name'])
+    
+    
+    tool_belt.create_image_figure(img_array, numpy.array(img_extent), 
+                                  clickHandler=image_sample.on_click_image,
+                        title=None, color_bar_label='Counts', 
+                        min_value=None, um_scaled=True)
+    
+    
+    # tool_belt.save_image_data_csv(img_array, x_voltages, y_voltages,  path, 
+    #                               csv_name)   

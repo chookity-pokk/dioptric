@@ -39,7 +39,7 @@ def get_seq(pulse_streamer, config, args):
     pulser_do_apd_gate = pulser_wiring['do_apd_{}_gate'.format(apd_index)]
     
     wait_time = config['CommonDurations']['cw_meas_buffer']
-    # wait_time = config['Positioning']['xy_small_response_delay']
+    galvo_move_time = config['Positioning']['xy_small_response_delay']
     readout_delay = config['Optics'][readout_laser_key]['delay']
     prep_delay = config['Optics'][prep_laser_key]['delay']
     test_delay = config['Optics'][test_laser_key]['delay']
@@ -49,39 +49,39 @@ def get_seq(pulse_streamer, config, args):
     else:
         total_laser_delay = readout_delay + prep_delay + test_delay
     # Test period
-    period =  total_laser_delay + (prep_time + test_time + readout_time + \
+    period =  galvo_move_time + total_laser_delay + (prep_time + test_time + readout_time + \
                            3 * wait_time)
     
     seq = Sequence()
 
 
     #collect photons for certain timewindow tR in APD
-    train = [(total_laser_delay + prep_time + test_time + 2*wait_time, LOW), 
+    train = [(galvo_move_time + total_laser_delay + prep_time + test_time + 2*wait_time, LOW), 
              (readout_time, HIGH), (100, LOW)]
     seq.setDigital(pulser_do_apd_gate, train)
 
 
-    train = [(total_laser_delay + prep_time + test_time + 2*wait_time +readout_time, LOW), 
+    train = [(galvo_move_time + total_laser_delay + prep_time + test_time + 2*wait_time +readout_time, LOW), 
              (100, HIGH),(100,LOW)]
     seq.setDigital(pulser_do_daq_clock, train)
     
     # laser pulses
-    readout_train = [(total_laser_delay - readout_delay + wait_time + prep_time + test_time + wait_time, LOW),
+    readout_train = [(galvo_move_time + total_laser_delay - readout_delay + wait_time + prep_time + test_time + wait_time, LOW),
                      (readout_time, HIGH),(100, LOW)]
     
     tool_belt.process_laser_seq(pulse_streamer, seq, config,
                         readout_laser_key, readout_laser_power, readout_train)
     
     if prep_laser_key == test_laser_key:
-        prep_test_train = [(total_laser_delay - prep_delay , LOW),
+        prep_test_train = [(galvo_move_time + total_laser_delay - prep_delay , LOW),
          (prep_time, HIGH), (wait_time, LOW), (test_time, HIGH), (wait_time + readout_time, LOW)]
     
         tool_belt.process_laser_seq(pulse_streamer, seq, config,
                             prep_laser_key, prep_laser_power, prep_test_train)
     else:
-        prep_train = [(total_laser_delay - prep_delay , LOW),
+        prep_train = [(galvo_move_time + total_laser_delay - prep_delay , LOW),
          (prep_time, HIGH), (wait_time + test_time + wait_time + readout_time, LOW)]
-        test_train = [(total_laser_delay - test_delay  + prep_time + wait_time, LOW),
+        test_train = [(galvo_move_time + total_laser_delay - test_delay  + prep_time + wait_time, LOW),
          (test_time, HIGH), (wait_time + readout_time, LOW)]
         
         tool_belt.process_laser_seq(pulse_streamer, seq, config,

@@ -23,10 +23,10 @@ import numpy
 from numpy import exp
 import json
 import time
-# import labrad
-# from tkinter import Tk
-# from tkinter import filedialog
-# from git import Repo
+import labrad
+from tkinter import Tk
+from tkinter import filedialog
+from git import Repo
 from pathlib import Path, PurePath
 from enum import Enum, auto
 import socket

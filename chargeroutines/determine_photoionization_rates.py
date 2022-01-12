@@ -61,8 +61,8 @@ def main_with_cxn(cxn, nv_sig, apd_index, num_reps):
     opti_coords_list = []
     
     # Optimize
-    # opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_index)
-    # opti_coords_list.append(opti_coords)
+    opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_index)
+    opti_coords_list.append(opti_coords)
     drift = tool_belt.get_drift()
     adjusted_nv_coords = coords + numpy.array(drift)
     tool_belt.set_xyz(cxn, adjusted_nv_coords)
@@ -97,18 +97,18 @@ def main_with_cxn(cxn, nv_sig, apd_index, num_reps):
     # print(len(ret_vals))
     # return
     
-    # Pulse sequence to do a single pulse followed by readout           
-    seq_file = 'photoionization_rates.py'
+    # Pulse sequence to do a single pulse followed by readout          
+    seq_file = 'simple_readout_three_pulse.py'
         
     ################## Load the measuremnt with green laser ##################
       
             
-    seq_args = [readout_pulse_time, reionization_time, test_laser_dur, 
-                yellow_laser_key, green_laser_key, test_laser_key,
-                yellow_laser_power, green_laser_power, test_laser_power,
+    seq_args = [reionization_time, test_laser_dur,readout_pulse_time, 
+                green_laser_key, test_laser_key,yellow_laser_key,  
+                green_laser_power ,test_laser_power, yellow_laser_power, 
                 apd_index[0]]
     seq_args_string = tool_belt.encode_seq_args(seq_args)
-    print(seq_args)
+    # print(seq_args)
     
     cxn.pulse_streamer.stream_load(seq_file, seq_args_string)
 
@@ -122,13 +122,13 @@ def main_with_cxn(cxn, nv_sig, apd_index, num_reps):
     green_counts = cxn.apd_tagger.read_counter_simple(num_reps)
     
     ################## Load the measuremnt with red laser ##################
-    seq_args = [readout_pulse_time, ionization_time, test_laser_dur, 
-                yellow_laser_key, red_laser_key, test_laser_key,
-                yellow_laser_power, red_laser_power, test_laser_power,
+    seq_args = [ionization_time, test_laser_dur,readout_pulse_time, 
+                red_laser_key, test_laser_key, yellow_laser_key, 
+                red_laser_power ,test_laser_power, yellow_laser_power, 
                 apd_index[0]]
     seq_args_string = tool_belt.encode_seq_args(seq_args)
     cxn.pulse_streamer.stream_load(seq_file, seq_args_string)
-    print(seq_args)
+    # print(seq_args)
     # Load the APD
     cxn.apd_tagger.start_tag_stream(apd_index)
     # Clear the buffer
@@ -145,7 +145,7 @@ def main_with_cxn(cxn, nv_sig, apd_index, num_reps):
 
 def sweep_test_pulse_length(nv_sig,  test_pulse_dur_list = None):
     apd_indices = [0]
-    num_reps = 100
+    num_reps = 250
     if not test_pulse_dur_list:
         test_pulse_dur_list = [0, 25, 50, 75, 100,  150 , 200, 250, 300, 400, 
                                    500, 750, 1000, 1500,
@@ -168,25 +168,25 @@ def sweep_test_pulse_length(nv_sig,  test_pulse_dur_list = None):
         nv_sig['test_laser_duration'] = test_time
         green_count, red_count = main(nv_sig, apd_indices, num_reps)
         
-        print(green_count)
-        print(red_count)
+        # print(green_count)
+        # print(red_count)
         green_count = [int(el) for el in green_count]
         red_count = [int(el) for el in red_count]
         
         green_count_raw.append(green_count)
         red_count_raw.append(red_count)
         
-        fig_hist, ax = plt.subplots(1, 1)
-        max_0 = max(red_count)
-        max_m = max(green_count)
-        occur_0, x_vals_0 = numpy.histogram(red_count, numpy.linspace(0,max_0, max_0+1))
-        occur_m, x_vals_m = numpy.histogram(green_count, numpy.linspace(0,max_m, max_m+1))
-        ax.plot(x_vals_0[:-1],occur_0,  'r-o', label = 'Initial red pulse' )
-        ax.plot(x_vals_m[:-1],occur_m,  'g-o', label = 'Initial green pulse' )
-        ax.set_xlabel('Counts')
-        ax.set_ylabel('Occur.')
-        # ax.set_title('{} ms readout, {}, {} V'.format(t/10**6, nd_filter, p))
-        ax.legend()
+        # fig_hist, ax = plt.subplots(1, 1)
+        # max_0 = max(red_count)
+        # max_m = max(green_count)
+        # occur_0, x_vals_0 = numpy.histogram(red_count, numpy.linspace(0,max_0, max_0+1))
+        # occur_m, x_vals_m = numpy.histogram(green_count, numpy.linspace(0,max_m, max_m+1))
+        # ax.plot(x_vals_0[:-1],occur_0,  'r-o', label = 'Initial red pulse' )
+        # ax.plot(x_vals_m[:-1],occur_m,  'g-o', label = 'Initial green pulse' )
+        # ax.set_xlabel('Counts')
+        # ax.set_ylabel('Occur.')
+        # # ax.set_title('{} ms readout, {}, {} V'.format(t/10**6, nd_filter, p))
+        # ax.legend()
             
     green_counts = numpy.average(green_count_raw, axis = 1)
     red_counts = numpy.average(red_count_raw, axis = 1)
@@ -209,6 +209,10 @@ def sweep_test_pulse_length(nv_sig,  test_pulse_dur_list = None):
             'green_count_raw-units': 'counts',
             'red_count_raw': red_count_raw,
             'red_count_raw-units': 'counts', 
+            'green_count':green_count,
+            'green_count-units': 'counts',
+            'red_count': red_count,
+            'red_count-units': 'counts', 
             }
 
     file_path = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
@@ -247,8 +251,10 @@ if __name__ == '__main__':
 
     try:
         
-        test_pulses = [0, ]
-        sweep_test_pulse_length(nv_sig,  test_pulse_dur_list = test_pulses)
+        # test_pulses = [0, 50, 100, 500, 1e3, 5e3, 1e4, 5e4, 1e5, 2e5, 3e5, 4e5, 5e5, 6e5, 7e5, 8e5, 9e5,
+        #                1e6, ]
+        test_pulses = numpy.linspace(0,500, 51)
+        sweep_test_pulse_length(nv_sig,  test_pulse_dur_list = test_pulses.tolist())
     finally:
         # Reset our hardware - this should be done in each routine, but
         # let's double check here
