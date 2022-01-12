@@ -15,18 +15,32 @@ import utils.tool_belt as tool_belt
 from scipy.optimize import curve_fit
 import numpy
 import matplotlib.pyplot as plt
+import analysis.file_conversion.spectra_csv_to_json as spectra_csv_to_json
 
 # %%
-
-data_path = 'C:/Users/Public/Documents/Jobin Yvon/SpectraData'
-
-folder = '5_nm_Er_graphene/2020_03_02'
-
-#folder = '5_nm_Er_NO_graphene_Y_ig'
+directory = 'E:/Shared drives/Kolkowitz Lab Group/nvdata'
 
 # %%
 
 def wavelength_range_calc(wavelength_range, wavelength_list):
+    '''
+    A function to input wavelengths and have pythion figure out what indexes 
+    of the data that corresponds to
+    Parameters
+    ----------
+    wavelength_range : TYPE
+        DESCRIPTION.
+    wavelength_list : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    plot_strt : TYPE
+        DESCRIPTION.
+    plot_end : TYPE
+        DESCRIPTION.
+
+    '''
     wvlngth_range_strt = wavelength_range[0]
     wvlngth_range_end = wavelength_range[1]
     
@@ -99,25 +113,39 @@ def wavelength_range_calc(wavelength_range, wavelength_list):
         
     return plot_strt, plot_end
 
-# %%
+#%%
+def read_csv(file, folder):
+    folder_path = directory + '/' + folder
+    file_path = directory + '/' + folder + '/' + file + '.csv'
     
-def plot_spectra(file, wavelength_range, vertical_range, plot_title):
-    data = tool_belt.get_raw_data(folder, file,
-                 nvdata_dir=data_path)
-    wavelengths = numpy.array(data['wavelengths'])
-    counts = numpy.array(data['counts'])
-    
-    background= counts[0]
-    
-    plot_strt_ind, plot_end_ind  = wavelength_range_calc(wavelength_range, wavelengths)
+    wavelength_list = []
+    counts_list = []
+    # try:
+    #     #see if there is a .txt file already
+    #     f = open(file_path, 'r')
+    # except Exception:
+    #     # if not, convert .csv file to .txt file
+    spectra_csv_to_json.convert_single_file(folder_path, file)
+    f = open(file_path, 'r')
+        
+    f_lines = f.readlines()
+    for line in f_lines:
+        wavelength, counts = line.split()
+        wavelength_list.append(float(wavelength))
+        counts_list.append(float(counts))
+        
+    return numpy.array(wavelength_list), numpy.array(counts_list)
     
 
+# %%
+    
+def plot_spectra(file, wavelengths, counts, plot_title):
+    
     fig, ax= plt.subplots(1, 1, figsize=(10, 8))
-    ax.plot(wavelengths[plot_strt_ind : plot_end_ind], counts[plot_strt_ind : plot_end_ind])
-    ax.set_xlabel('Wavelength')
+    ax.plot(wavelengths, counts)
+    ax.set_xlabel('Wavelength (nm)')
     ax.set_ylabel('Counts')
     ax.set_title(plot_title)
-    ax.set_ylim(vertical_range)
 
         
         
@@ -125,54 +153,16 @@ def plot_spectra(file, wavelength_range, vertical_range, plot_title):
     
 # %%
 
-# MEasurements 3/2
-    
-file_p03 = 'p0.2V'
-file_m10 = 'm1.0V' 
-file_m15 = 'm1.5V'
-file_m20 = 'm2.0V'
-file_m23 = 'm2.3V'
-
-file_shortpass = 'Shortpass_filter'
-file_longpass = 'Longpass filter'
-
-file_ionic_gel = 'Ionic_gel'
-file_er_surface = 'Erbium'
-file_in_oxide = 'In_oxide'
-
-file_no_graphene_no_IG = '550'
 
 if __name__ == '__main__':
     
     
-   
-#    plot_spectra(file_ionic_gel, [None, None], [0, 9350],'Focused on Ionic Gel')
-#    plot_spectra(file_in_oxide, [None, None], [0, 9350],'Focused on below Oxide Surface')
-    
- # %%
-    data_graphene = tool_belt.get_raw_data('5_nm_Er_graphene/2020_03_02', file_m10,
-                 nvdata_dir=data_path)
-    wavelengths_graphene = numpy.array(data_graphene['wavelengths'])
-    counts_graphene = numpy.array(data_graphene['counts'])
-    
-    data_no_graphene = tool_belt.get_raw_data('5_nm_Er_NO_graphene_NO_ig', file_no_graphene_no_IG,
-                 nvdata_dir=data_path)
-    counts_no_graphene = numpy.array(data_no_graphene['counts'])
-    wavelengths_no_graphene = numpy.array(data_no_graphene['wavelengths'])
-        
-    plot_strt_ind_g, plot_end_ind_g  = wavelength_range_calc([545,570], wavelengths_graphene)
-    plot_strt_ind_ng, plot_end_ind_ng  = wavelength_range_calc([545,570], wavelengths_no_graphene)
-    
+    folder = 'horiba_spectrometer/2022_01'
+    file = '2022_01_05-spot1_1'
+    wavelengths, counts = read_csv(file, folder)
 
-    fig, ax= plt.subplots(1, 1, figsize=(10, 8))    
-    ax.plot(wavelengths_no_graphene[plot_strt_ind_ng : plot_end_ind_ng], counts_no_graphene[plot_strt_ind_ng : plot_end_ind_ng], label = 'Er without graphene')
-
-    ax.plot(wavelengths_graphene[plot_strt_ind_g : plot_end_ind_g], counts_graphene[plot_strt_ind_g : plot_end_ind_g] - 750, label = 'Er with graphene (gate voltage = -1.0V)')
-    ax.set_xlabel('Wavelength (nm)')
-    ax.set_ylabel('Counts')
-    ax.set_title('Spectra around 550 nm with and without graphene')
-    ax.set_ylim([0, 2000])
-    ax.legend()
+    plot_title = 'Quantum dot, collecting from spot 1, 1/10/2022'
+    plot_spectra(file, wavelengths, counts, plot_title)
 
     
     

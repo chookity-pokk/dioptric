@@ -12,7 +12,30 @@ import os
 import utils.tool_belt as tool_belt
 import csv
 
-def convert(folder_name):
+def convert_single_file(folder, file):
+
+    with open('{}/{}.csv'.format(folder, file)) as csv_file:
+        wavelength_list = []
+        counts_list = []
+        
+        reader = csv.reader(csv_file)
+        data = list(reader)
+
+
+    for line in range(2, len(data)):
+        wavelength_list.append(float(data[line][0]))
+        counts_list.append(int(data[line][1]))
+
+    json_dict = {'wavelengths': wavelength_list,
+                 'wavelengths-units': 'nm',
+                 'counts': counts_list
+                    }
+
+    # Save as a json
+    file_path = folder + '/' + file
+    tool_belt.save_raw_data(json_dict, file_path)
+        
+def convert_folder_items(folder_name):
 
     folder_items = os.listdir(folder_name)
 
@@ -51,7 +74,7 @@ if __name__ == '__main__':
 
     top_folder_name = 'E:/Shared drives/Kolkowitz Lab Group/nvdata/horiba_spectrometer/2021_05'
 
-    convert(top_folder_name)
+    convert_folder_items(top_folder_name)
 
 #    top_folder_name = 'E:/Shared drives/Kolkowitz Lab Group/nvdata/spectra/Brar/2020_09_02 5 nm MM tests'
 #

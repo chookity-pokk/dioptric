@@ -93,7 +93,7 @@ def do_plot_drift(file, folder, x_unit, y_unit, z_unit):
 
 
 folder = 'pc_rabi/branch_CFMIII/SPaCE_digital/2021_11'
-file = '2021_11_16-09_49_09-johnson-nv3_2021_11_08'
+file = '2021_11_22-09_01_24-johnson-nv1_2021_11_17'
 do_plot_drift(file, folder, 'um', 'um', 'V')
 
 

@@ -12,9 +12,10 @@ import numpy
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-dx_max= 0.013 #um
-dy_max= 0.0116 #um
-dz_max= 0.11 #V
+m = 2
+dx_max= 0.00796*m #um
+dy_max= 0.006189*m #um
+dz_max= 0.0703*m #V
 
 def do_postselect(file, folder, scale = 1000):
     data = tool_belt.get_raw_data(file, folder)
@@ -55,7 +56,6 @@ def do_postselect(file, folder, scale = 1000):
         dy_drift.append(dy)
         dz = drift_z[i] - drift_z[i-1]
         dz_drift.append(dz)
-
     #now go throguh the lsit of drifts, keep track of what change in drift we are on,
     # and if the change in drift during a run is too large, exclude that data.
     #the change in drift corresponds to the current index, so if it is too large, we throw out that index
@@ -67,8 +67,15 @@ def do_postselect(file, folder, scale = 1000):
         #one of the change in drifts was too large. Could get more sophisticated in future.
         for i in range(num_opti):
             d = flattened_d_ind + i # the index we want to consider in the flattened change-in-drift lists
-            if dx_drift[d] > dx_max or dy_drift[d] > dy_max or dz_drift[d] > dz_max:
+            # print(n)
+            # print(dx_drift[d])
+            # print(dy_drift[d])
+            # print(dz_drift[d])
+            if abs(dz_drift[d]) > dz_max:
+            # if abs(dx_drift[d]) > dx_max:# or abs(dy_drift[d]) > dy_max:#or abs(dz_drift[d]) > dz_max:
                 drift_too_large = True #if the change in any axis is too large, flag it
+            # print(drift_too_large)
+        
         if not drift_too_large:
             ps_readout_counts_array.append(readout_counts_array[n]) #only keep the data if the changes were small
         flattened_d_ind = flattened_d_ind + num_opti
@@ -104,7 +111,7 @@ def do_postselect(file, folder, scale = 1000):
     lin_radii = numpy.linspace(rad_dist[0],
                     rad_dist[-1], 100)
     ax.plot(lin_radii,
-           fit_func(lin_radii, *opti_params), 'r-')
+            fit_func(lin_radii, *opti_params), 'r-')
     text = 'A={:.3f} sqrt(counts)\n$r_0$={:.3f} nm\n ' \
         '$\sigma$={:.3f}+/-{:.3f} nm\nC={:.3f} counts'.format(opti_params[0],
                     opti_params[1],opti_params[2],cov_arr[2][2],opti_params[3])
@@ -114,6 +121,6 @@ def do_postselect(file, folder, scale = 1000):
     print(cov_arr[2][2])
 # %%
 folder = 'pc_rabi/branch_CFMIII/SPaCE_digital/2021_11'
-file = '2021_11_16-09_49_09-johnson-nv3_2021_11_08'
+file = '2021_11_22-09_01_24-johnson-nv1_2021_11_17'
 do_postselect(file, folder)
 
