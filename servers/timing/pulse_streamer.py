@@ -32,6 +32,7 @@ import importlib
 import os
 import sys
 import utils.tool_belt as tool_belt
+import json
 import logging
 import socket
 from pathlib import Path
@@ -42,8 +43,8 @@ class PulseStreamer(LabradServer):
     pc_name = socket.gethostname()
 
     def initServer(self):
-        filename = 'E:/Shared drives/Kolkowitz Lab Group/nvdata/pc_{}/labrad_logging/{}.log'
-        filename = filename.format(self.pc_name, self.name)
+        filename = 'C:/Users/student/Documents/labrad_logging/{}.log' 
+        filename = filename.format(self.name)
         logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s %(levelname)-8s %(message)s',
                     datefmt='%y-%m-%d_%H-%M-%S', filename=filename)
@@ -134,7 +135,14 @@ class PulseStreamer(LabradServer):
         file_name, file_ext = os.path.splitext(seq_file)
         if file_ext == '.py':  # py: import as a module
             seq_module = importlib.import_module(file_name)
+            
+            ########### labrad did not like trying to import utils.tool_belt. This is only place tool_belt is used. Let's just put in the function here? 4/1/22
+#            if seq_args_string == "":
+#                args = []
+#            else:
+#                args = json.loads(seq_args_string)
             args = tool_belt.decode_seq_args(seq_args_string)
+                
             seq, final, ret_vals = seq_module.get_seq(self, self.config_dict, 
                                                       args)
         return seq, final, ret_vals

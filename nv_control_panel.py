@@ -20,30 +20,18 @@ import time
 import copy
 import utils.tool_belt as tool_belt
 import majorroutines.image_sample as image_sample
-import majorroutines.image_sample_xz as image_sample_xz
-import chargeroutines.image_sample_charge_state_compare as image_sample_charge_state_compare
 import majorroutines.optimize as optimize
 import majorroutines.stationary_count as stationary_count
-import majorroutines.resonance as resonance
-import majorroutines.pulsed_resonance as pulsed_resonance
-import majorroutines.optimize_magnet_angle as optimize_magnet_angle
-import majorroutines.rabi as rabi
-import majorroutines.g2_measurement as g2_measurement
-import majorroutines.ramsey as ramsey
-import majorroutines.spin_echo as spin_echo
-import majorroutines.lifetime_v2 as lifetime_v2
-import chargeroutines.SPaCE as SPaCE
-import chargeroutines.scc_pulsed_resonance as scc_pulsed_resonance
-import chargeroutines.scc_spin_echo as scc_spin_echo
-import chargeroutines.super_resolution_pulsed_resonance as super_resolution_pulsed_resonance
-import chargeroutines.super_resolution_ramsey as super_resolution_ramsey
-import chargeroutines.super_resolution_spin_echo as super_resolution_spin_echo
-import chargeroutines.g2_measurement as g2_SCC_branch
+#import majorroutines.resonance as resonance
+#import majorroutines.pulsed_resonance as pulsed_resonance
+#import majorroutines.optimize_magnet_angle as optimize_magnet_angle
+#import majorroutines.rabi as rabi
+#import majorroutines.ramsey as ramsey
+#import majorroutines.spin_echo as spin_echo
 
 # import majorroutines.set_drift_from_reference_image as set_drift_from_reference_image
 import debug.test_major_routines as test_major_routines
 from utils.tool_belt import States
-import time
 
 
 # %% Major Routines
@@ -109,33 +97,6 @@ def do_image_sample(nv_sig, apd_indices):
     image_sample.main(nv_sig, scan_range, scan_range, num_steps, apd_indices)
 
 
-def do_image_sample_xz(nv_sig, apd_indices):
-
-    scan_range_x = .2
-# z code range 3 to 7 if centered at 5
-    scan_range_z =4
-    num_steps = 60
-
-    image_sample_xz.main(
-        nv_sig,
-        scan_range_x,
-        scan_range_z,
-        num_steps,
-        apd_indices,
-        um_scaled=False,
-    )
-
-
-def do_image_charge_states(nv_sig, apd_indices):
-
-    scan_range = 0.2
-
-    num_steps = 90
-
-    image_sample_charge_state_compare.main(
-        nv_sig, scan_range, scan_range, num_steps, apd_indices
-    )
-
 
 def do_optimize(nv_sig, apd_indices):
 
@@ -148,21 +109,6 @@ def do_optimize(nv_sig, apd_indices):
     )
 
 
-def do_optimize_list(nv_sig_list, apd_indices):
-
-    optimize.optimize_list(nv_sig_list, apd_indices)
-
-
-def do_opti_z(nv_sig_list, apd_indices):
-
-    optimize.opti_z(
-        nv_sig_list,
-        apd_indices,
-        set_to_opti_coords=False,
-        save_data=True,
-        plot_data=True,
-    )
-
 
 def do_stationary_count(nv_sig, apd_indices):
 
@@ -170,16 +116,6 @@ def do_stationary_count(nv_sig, apd_indices):
 
     stationary_count.main(nv_sig, run_time, apd_indices)
 
-
-def do_g2_measurement(nv_sig, apd_a_index, apd_b_index):
-
-    run_time = 5*60  # s
-    diff_window = 150  # ns
-
-    # g2_measurement.main(
-    g2_SCC_branch.main(
-        nv_sig, run_time, diff_window, apd_a_index, apd_b_index
-    )
 
 
 def do_resonance(nv_sig, opti_nv_sig,apd_indices, freq_center=2.87, freq_range=0.2):
@@ -339,29 +275,6 @@ def do_rabi(nv_sig, opti_nv_sig, apd_indices, state, uwave_time_range=[0, 200]):
 
 
 
-def do_lifetime(nv_sig, apd_indices, filter, voltage, reference=False):
-
-    #    num_reps = 100 #MM
-    num_reps = 500  # SM
-    num_bins = 101
-    num_runs = 5
-    readout_time_range = [0, 1.0 * 10 ** 6]  # ns
-    polarization_time = 60 * 10 ** 3  # ns
-
-    lifetime_v2.main(
-        nv_sig,
-        apd_indices,
-        readout_time_range,
-        num_reps,
-        num_runs,
-        num_bins,
-        filter,
-        voltage,
-        polarization_time,
-        reference,
-    )
-
-
 def do_ramsey(nv_sig, opti_nv_sig, apd_indices):
 
     detuning = 10  # MHz
@@ -418,145 +331,6 @@ def do_spin_echo(nv_sig, apd_indices):
     return angle
 
 
-def do_SPaCE(nv_sig, opti_nv_sig, num_runs, num_steps_a, num_steps_b,
-               img_range_1D, img_range_2D, offset, charge_state_threshold = None):
-    # dr = 0.025 / numpy.sqrt(2)
-    # img_range = [[-dr,-dr],[dr, dr]] #[[x1, y1], [x2, y2]]
-    # num_steps = 101
-    # num_runs = 50
-    # measurement_type = "1D"
-
-    # img_range = 0.075
-    # num_steps = 71
-    # num_runs = 1
-    # measurement_type = "2D"
-
-    # dz = 0
-    SPaCE.main(nv_sig, opti_nv_sig, num_runs, num_steps_a, num_steps_b,
-               charge_state_threshold, img_range_1D, img_range_2D, offset )
-
-def do_scc_resonance(nv_sig, opti_nv_sig, apd_indices, state=States.LOW):
-    freq_center = nv_sig['resonance_{}'.format(state.name)]
-    uwave_power = nv_sig['uwave_power_{}'.format(state.name)]
-    uwave_pulse_dur = nv_sig['rabi_{}'.format(state.name)]/2
-    
-    freq_range = 0.05
-    num_steps = 51
-    num_reps = int(10**3)
-    num_runs = 30
-    
-    scc_pulsed_resonance.main(nv_sig, opti_nv_sig, apd_indices, freq_center, freq_range,
-         num_steps, num_reps, num_runs, uwave_power, uwave_pulse_dur, state )
-    
-def do_scc_spin_echo(nv_sig, opti_nv_sig, apd_indices, tau_start, tau_stop, state=States.LOW):
-    step_size = 1 # us
-    num_steps = int((tau_stop - tau_start)/step_size + 1)
-    
-    precession_time_range = [tau_start *1e3, tau_stop *1e3]
-    
-    num_reps = int(10**3)
-    num_runs = 40
-    
-    scc_spin_echo.main(nv_sig, opti_nv_sig, apd_indices, precession_time_range,
-         num_steps, num_reps, num_runs,  
-         state )
-    
-    
-    
-def do_super_resolution_resonance(nv_sig, opti_nv_sig, apd_indices, state=States.LOW):
-    freq_center = nv_sig['resonance_{}'.format(state.name)]
-    uwave_power = nv_sig['uwave_power_{}'.format(state.name)]
-    uwave_pulse_dur = nv_sig['rabi_{}'.format(state.name)]/2
-    
-    freq_range = 0.05
-    num_steps = 51
-    num_reps = int(10**3)
-    num_runs = 30
-    
-    super_resolution_pulsed_resonance.main(nv_sig, opti_nv_sig, apd_indices, freq_center, freq_range,
-         num_steps, num_reps, num_runs, uwave_power, uwave_pulse_dur, state )
-    
-def do_super_resolution_ramsey(nv_sig, opti_nv_sig, apd_indices,
-                                  tau_start, tau_stop, state=States.LOW):
-    
-    detuning = 5  # MHz
-    
-    # step_size = 0.05 # us
-    # num_steps = int((tau_stop - tau_start)/step_size + 1)
-    num_steps = 101
-    precession_time_range = [tau_start *1e3, tau_stop *1e3]
-    
-    
-    num_reps = int(10**3)
-    num_runs = 30
-    
-    super_resolution_ramsey.main(nv_sig, opti_nv_sig, apd_indices, 
-                                    precession_time_range, detuning,
-         num_steps, num_reps, num_runs, state )
-    
-def do_super_resolution_spin_echo(nv_sig, opti_nv_sig, apd_indices,
-                                  tau_start, tau_stop, state=States.LOW):
-    step_size = 1 # us
-    num_steps = int((tau_stop - tau_start)/step_size + 1)
-    print(num_steps)
-    precession_time_range = [tau_start *1e3, tau_stop *1e3]
-    
-    
-    num_reps = int(10**3)
-    num_runs = 20
-    
-    super_resolution_spin_echo.main(nv_sig, opti_nv_sig, apd_indices, 
-                                    precession_time_range,
-         num_steps, num_reps, num_runs, state )
-
-def do_sample_nvs(nv_sig_list, apd_indices):
-
-    # g2 parameters
-    run_time = 60 * 5
-    diff_window = 150
-
-    # PESR parameters
-    num_steps = 101
-    num_reps = 10 ** 5
-    num_runs = 3
-    uwave_power = 9.0
-    uwave_pulse_dur = 100
-
-    g2 = g2_measurement.main_with_cxn
-    pesr = pulsed_resonance.main_with_cxn
-
-    with labrad.connect() as cxn:
-        for nv_sig in nv_sig_list:
-            g2_zero = g2(
-                cxn,
-                nv_sig,
-                run_time,
-                diff_window,
-                apd_indices[0],
-                apd_indices[1],
-            )
-            if g2_zero < 0.5:
-                pesr(
-                    cxn,
-                    nv_sig,
-                    apd_indices,
-                    2.87,
-                    0.1,
-                    num_steps,
-                    num_reps,
-                    num_runs,
-                    uwave_power,
-                    uwave_pulse_dur,
-                )
-
-
-def do_test_major_routines(nv_sig, apd_indices):
-    """Run this whenver you make a significant code change. It'll make sure
-    you didn't break anything in the major routines.
-    """
-
-    test_major_routines.main(nv_sig, apd_indices)
-
 
 # %% Run the file
 
@@ -568,9 +342,9 @@ if __name__ == "__main__":
 
     # %% Shared parameters
 
-    # apd_indices = [0]
+    apd_indices = [0]
     # apd_indices = [1]
-    apd_indices = [0,1]
+#    apd_indices = [0,1]
 
     nd_yellow = "nd_1.0"
     green_power =10
@@ -580,32 +354,11 @@ if __name__ == "__main__":
     yellow_laser = "laserglow_589"
     red_laser = "cobolt_638"
 
-    nv_sig_search = {
-        "coords":[-0.2, -0.763, 3.656],#-0.668, -0.117]
-        "name": "{}-search".format(sample_name),
-        "disable_opt": False,
-        "ramp_voltages": False,
-        "expected_count_rate": None,
-        "correction_collar": 0.17,
-        "imaging_laser": green_laser,
-        "imaging_laser_power": green_power,
-        "imaging_readout_dur": 1e7,
-        "collection_filter": "630_lp",
-        "magnet_angle": None,
-        "resonance_LOW": 2.8012,
-        "rabi_LOW": 141.5,
-        "uwave_power_LOW": 15.5,  # 15.5 max
-        "resonance_HIGH": 2.9445,
-        "rabi_HIGH": 191.9,
-        "uwave_power_HIGH": 13,
-    }  # 14.5 max
-
-    
     
     nv_sig = { 
           "coords":[-0.121, 0.691,  6.241], 
         "name": "{}-nv0_2022_03_28".format(sample_name,),
-        "disable_opt":False,
+        "disable_opt":True,
         "ramp_voltages": True,
         "expected_count_rate":None,
         
@@ -681,8 +434,8 @@ if __name__ == "__main__":
         #     nv_sig_copy['coords'] = new_coords
             # do_image_sample(nv_sig_copy, apd_indices)
         # do_optimize(nv_sig,apd_indices)
-        do_image_sample(nv_sig, apd_indices)
-        # do_stationary_count(nv_sig, apd_indices)
+#        do_image_sample(nv_sig, apd_indices)
+        do_stationary_count(nv_sig, apd_indices)
         # do_image_sample_xz(nv_sig, apd_indices)
         # do_image_charge_states(nv_sig, apd_indices)
         # 

@@ -1111,6 +1111,16 @@ def get_xyz_server(cxn):
     )
 
 
+
+def get_apd_server(cxn):
+    """Get an actual reference to the combined xyz server"""
+
+    return getattr(
+        cxn,
+        get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"]),
+    )
+
+
 def get_registry_entry(cxn, key, directory):
     """
     Return the value for the specified key. The directory is specified from

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Input server for the LASER COMPONENTS COUNT-100C APD. Communicates via the DAQ.
+Input server for Excelitas APD. Communicates via the DAQ.
 
 Created on Tue Apr  9 08:52:34 2019
 
@@ -8,7 +8,7 @@ Created on Tue Apr  9 08:52:34 2019
 
 ### BEGIN NODE INFO
 [info]
-name = apd_counter
+name = apd_daq
 version = 1.0
 description =
 
@@ -25,6 +25,7 @@ timeout = 5
 from labrad.server import LabradServer
 from labrad.server import setting
 from twisted.internet.defer import ensureDeferred
+import logging
 import numpy
 import nidaqmx
 import nidaqmx.stream_readers as stream_readers
@@ -32,19 +33,30 @@ from nidaqmx.constants import TriggerType
 from nidaqmx.constants import Level
 
 
-class ApdCounter(LabradServer):
-    name = 'apd_counter'
+class ApdDaq(LabradServer):
+    name = 'apd_daq'
 
-    def initServer(self):
+    def initServer(self):        
+        filename = ('C:/Users/student/Documents/labrad_logging/{}.log' )
+        filename = filename.format( self.name)
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)-8s %(message)s",
+            datefmt="%y-%m-%d_%H-%M-%S",
+            filename=filename,
+        )
         config = ensureDeferred(self.get_config())
         config.addCallback(self.on_get_config)
         self.tasks = {}
         self.stream_reader_state = {}
+        
 
     async def get_config(self):
         p = self.client.registry.packet()
-        p.cd(['Config', 'Wiring', 'Daq'])
+        p.cd(['', 'Config', 'Wiring', 'Daq'])
         p.get('di_clock')
+#        p.get('di_apd')
+#        p.get('di_gate')
         p.dir()
         result = await p.send()
         return result
@@ -63,6 +75,7 @@ class ApdCounter(LabradServer):
         if len(apd_sub_dirs) > 0:
             wiring = ensureDeferred(self.get_wiring(apd_sub_dirs))
             wiring.addCallback(self.on_get_wiring, apd_indices)
+        
 
     async def get_wiring(self, apd_sub_dirs):
         p = self.client.registry.packet()
@@ -85,6 +98,7 @@ class ApdCounter(LabradServer):
             self.daq_ctr_apd[apd_index] = wiring[wiring_index]
             self.daq_ci_apd[apd_index] = wiring[wiring_index+1]
             self.daq_di_apd_gate[apd_index] = wiring[wiring_index+2]
+        logging.info("init complete")
 
     def stopServer(self):
         for apd_index in self.tasks:
@@ -103,10 +117,14 @@ class ApdCounter(LabradServer):
         if apd_index in self.tasks:
             self.close_task_internal(apd_index)
 
-        task = nidaqmx.Task('ApdCounter-load_stream_reader_{}'.format(apd_index))
+        task = nidaqmx.Task('ApdDaq-load_stream_reader_{}'.format(apd_index))
         self.tasks[apd_index] = task
 
-        chan_name = self.daq_ctr_apd[apd_index]
+        chan_num = self.daq_ctr_apd[apd_index]
+        
+        chan_name = 'Dev1/' + chan_num
+        logging.info(chan_name)
+        
         chan = task.ci_channels.add_ci_count_edges_chan(chan_name)
         chan.ci_count_edges_term = self.daq_ci_apd[apd_index]
 
@@ -179,14 +197,13 @@ class ApdCounter(LabradServer):
             list(int)
                 The samples that were read
         """
-
         # Unpack the state dictionary
         state_dict = self.stream_reader_state[apd_index]
 
         reader = state_dict['reader']
         num_read_so_far = state_dict['num_read_so_far']
         total_num_to_read = state_dict['total_num_to_read']
-        buffer_size = state_dict['buffer_size']
+        buffer_size = state_dict['buffer_size'] 
 
         # Read the samples currently in the DAQ memory
         if num_to_read == None:
@@ -236,7 +253,7 @@ class ApdCounter(LabradServer):
         return new_samples_diff
 
 
-__server__ = ApdCounter()
+__server__ = ApdDaq()
 
 if __name__ == '__main__':
     from labrad import util
