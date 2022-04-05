@@ -117,13 +117,14 @@ class PulseStreamer(LabradServer):
         self.config_dict = config_dict
         self.pulser_wiring = self.config_dict['Wiring']['PulseStreamer']
         self.feedthrough_lasers = []
+        self.counter = self.config_dict['Counter']['apd_server']
         optics_dict = config_dict["Optics"]
         for key in optics_dict:
             optic = optics_dict[key]
             feedthrough_str = optic["feedthrough"]
             if eval(feedthrough_str):
                 self.feedthrough_lasers.append(key)
-        logging.info(self.feedthrough_lasers)
+#        logging.info(self.feedthrough_lasers)
         # Initialize state variables and reset
         self.seq = None
         self.loaded_seq_streamed = False
@@ -134,6 +135,11 @@ class PulseStreamer(LabradServer):
         seq = None
         file_name, file_ext = os.path.splitext(seq_file)
         if file_ext == '.py':  # py: import as a module
+            # if we are using the daq, we have modified sequence files. 
+            # This ensures that we use those files, without the need to modify the routine code
+            counter_name = self.counter
+            if counter_name == 'apd_daq':
+                file_name = file_name + '-daq'
             seq_module = importlib.import_module(file_name)
             
             ########### labrad did not like trying to import utils.tool_belt. This is only place tool_belt is used. Let's just put in the function here? 4/1/22

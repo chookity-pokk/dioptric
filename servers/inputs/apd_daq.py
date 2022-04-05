@@ -123,7 +123,7 @@ class ApdDaq(LabradServer):
         chan_num = self.daq_ctr_apd[apd_index]
         
         chan_name = 'Dev1/' + chan_num
-        logging.info(chan_name)
+#        logging.info(chan_name)
         
         chan = task.ci_channels.add_ci_count_edges_chan(chan_name)
         chan.ci_count_edges_term = self.daq_ci_apd[apd_index]
@@ -157,17 +157,20 @@ class ApdDaq(LabradServer):
         state_dict['total_num_to_read'] = total_num_to_read
         # Something funny is happening if we get more
         # than 1000 samples in one read
-        state_dict['buffer_size'] = min(total_num_to_read, 1000)
+        # 4/4/22 we saw that the buffer size was too small at 1000 and actually needed more. 
+        # We got rid of the min argument and now just set the buffer size to the number of samples
+        state_dict['buffer_size'] =total_num_to_read# min(total_num_to_read, 1000)
         state_dict['last_value'] = 0  # Last cumulative value we read
 
         # Start the task. It will start counting immediately so we'll have to
         # discard the first sample.
+        
         task.start()
 
     @setting(0, apd_index='i', period='i', total_num_to_read='i')
     def load_stream_reader(self, c, apd_index, period, total_num_to_read):
         """Open a stream to count clicks from the specified APD. The
-        stream can be read with read_stream.
+        stream can be read with read_counter_simple.
 
         Params
             apd_index: int
@@ -180,18 +183,18 @@ class ApdDaq(LabradServer):
         """
         self.try_load_stream_reader(c, apd_index, period, total_num_to_read)
 
-    @setting(1, apd_index='i', num_to_read='i', returns='*w')
-    def read_stream(self, c, apd_index, num_to_read=None):
+    @setting(1,  num_to_read='i', apd_index='i', returns='*w')
+    def read_counter_simple(self, c, num_to_read=None, apd_index=0):
         """Read the stream loaded by load_stream_reader.
 
         Params
-            apd_index: int
-                Index of the APD to use
             num_to_read: int
                 Number of samples to read. This will not return until there
                 are num_to_read samples available. Default is None, in which
                 case we simply read what is available. This is useful for
                 polling on a loop.
+            apd_index: int
+                Index of the APD to use. Default is 0
 
         Returns
             list(int)
@@ -251,6 +254,82 @@ class ApdDaq(LabradServer):
             state_dict['num_read_so_far'] = num_read_so_far
 
         return new_samples_diff
+    
+    @setting(2,  num_to_read='i', num_reps = 'i', apd_index='i', returns="?")#*2w")
+    def read_counter_separate_gates(self, c, num_to_read=None, num_reps = 1, apd_index=0):
+        """Read the stream loaded by load_stream_reader.
+
+        Params
+            num_to_read: int
+                Number of samples to read. This will not return until there
+                are num_to_read samples available. Default is None, in which
+                case we simply read what is available. This is useful for
+                polling on a loop.
+            apd_index: int
+                Index of the APD to use. Default is 0
+
+        Returns
+            2D list(int)
+                The samples that were read
+        """
+        # Unpack the state dictionary
+        state_dict = self.stream_reader_state[apd_index]
+
+        reader = state_dict['reader']
+        num_read_so_far = state_dict['num_read_so_far']
+        total_num_to_read = state_dict['total_num_to_read']
+        buffer_size = state_dict['buffer_size'] 
+
+        # Read the samples currently in the DAQ memory
+        if num_to_read == None:
+            # Read whatever is in the buffer
+            new_samples_cum = numpy.zeros(buffer_size, dtype=numpy.uint32)
+            read_all_available = nidaqmx.constants.READ_ALL_AVAILABLE
+            num_new_samples = reader.read_many_sample_uint32(new_samples_cum,
+                     number_of_samples_per_channel=read_all_available)
+        else:
+            # Read the specified number of samples
+            new_samples_cum = numpy.zeros(buffer_size, dtype=numpy.uint32)
+            wait_inf = nidaqmx.constants.WAIT_INFINITELY
+            num_new_samples = reader.read_many_sample_uint32(new_samples_cum,
+                                             num_to_read, timeout=wait_inf)
+            if num_new_samples != num_to_read:
+                raise Warning('Read more/less samples than specified.')
+
+        # Check if we collected more samples than we need, which may happen
+        # if the pulser runs longer than necessary. If so, just to throw out
+        # excess samples.
+        if num_read_so_far + num_new_samples > total_num_to_read:
+            num_new_samples = total_num_to_read - num_read_so_far
+        new_samples_cum = new_samples_cum[0: num_new_samples]
+
+        # The DAQ counter reader returns cumulative counts, which is not what
+        # we want. So we have to calculate the difference between samples
+        # n and n-1 in order to get the actual count for the nth sample.
+        new_samples_diff = numpy.zeros(num_new_samples)
+        for index in range(num_new_samples):
+            if index == 0:
+                last_value = state_dict['last_value']
+            else:
+                last_value = new_samples_cum[index-1]
+
+            new_samples_diff[index] = new_samples_cum[index] - last_value
+
+        if num_new_samples > 0:
+            state_dict['last_value'] = new_samples_cum[num_new_samples-1]
+
+        # Update the current count and check if we're done with the task
+        num_read_so_far += num_new_samples
+        if num_read_so_far == total_num_to_read:
+            self.close_task_internal(apd_index)
+        else:
+            state_dict['num_read_so_far'] = num_read_so_far
+        
+        new_samples_diff_array = numpy.array(new_samples_diff)
+        new_samples_diff_array = numpy.split(new_samples_diff_array, num_reps)
+        
+        return new_samples_diff_array
+
 
 
 __server__ = ApdDaq()

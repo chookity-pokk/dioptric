@@ -45,7 +45,8 @@ def main_with_cxn(cxn, nv_sig, readout,  run_time):
     ret_vals = cxn.pulse_streamer.stream_load('simple_readout.py',
                                               seq_args_string)
     period = ret_vals[0]
-    print(1/(period*1e-9))
+    print('freq: '+ str(1/(period*1e-9)))
+    
 
 
     # %% Set up the APD
@@ -53,7 +54,7 @@ def main_with_cxn(cxn, nv_sig, readout,  run_time):
     apd_server = tool_belt.get_apd_server(cxn)
     
 #    apd_server.start_tag_stream(apd_indices)
-    apd_server.load_stream_reader(apd_indices[0],period,  num_samples)
+    apd_server.load_stream_reader(apd_indices[0], period,  num_samples)
     
 
     # %% Initialize the figure
@@ -81,7 +82,7 @@ def main_with_cxn(cxn, nv_sig, readout,  run_time):
             break
 
 #        new_samples = apd_server.read_counter_simple()
-        new_samples = apd_server.read_stream(apd_indices[0], num_samples)
+        new_samples = apd_server.read_counter_simple( num_samples, apd_indices[0])
 
         # Read the samples and update the image
 #        print(new_samples)
@@ -119,7 +120,7 @@ nv_sig = {
         "uwave_power_HIGH": 14.5,
     }  # 14.5 max
 
-readout = 4e6 #timing issues if readout is too short. might need to impose some limit to the samplign frequency?
+readout = 1e4 #timing issues if readout is too short. might need to impose some limit to the samplign frequency?
 run_time = 100e7
 
 main(nv_sig, readout, run_time)

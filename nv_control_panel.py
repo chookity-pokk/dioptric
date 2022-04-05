@@ -22,7 +22,7 @@ import utils.tool_belt as tool_belt
 import majorroutines.image_sample as image_sample
 import majorroutines.optimize as optimize
 import majorroutines.stationary_count as stationary_count
-#import majorroutines.resonance as resonance
+import majorroutines.resonance as resonance
 #import majorroutines.pulsed_resonance as pulsed_resonance
 #import majorroutines.optimize_magnet_angle as optimize_magnet_angle
 #import majorroutines.rabi as rabi
@@ -120,8 +120,8 @@ def do_stationary_count(nv_sig, apd_indices):
 
 def do_resonance(nv_sig, opti_nv_sig,apd_indices, freq_center=2.87, freq_range=0.2):
 
-    num_steps = 101
-    num_runs = 15
+    num_steps = 10
+    num_runs = 1
     uwave_power = -10.0
 
     resonance.main(
@@ -413,7 +413,7 @@ if __name__ == "__main__":
 
     try:
 
-        tool_belt.init_safe_stop()
+#        tool_belt.init_safe_stop()
         # for dz in [0, 0.15,0.3, 0.45, 0.6, 0.75,0.9, 1.05, 1.2, 1.5, 1.7, 1.85, 2, 2.15, 2.3, 2.45]: #0.5,0.4, 0.3, 0.2, 0.1,0, -0.1,-0.2,-0.3, -0.4, -0.5
             # nv_sig_copy = copy.deepcopy(nv_sig)
             # coords = nv_sig["coords"]
@@ -435,15 +435,16 @@ if __name__ == "__main__":
             # do_image_sample(nv_sig_copy, apd_indices)
         # do_optimize(nv_sig,apd_indices)
 #        do_image_sample(nv_sig, apd_indices)
-        do_stationary_count(nv_sig, apd_indices)
+#        tool_belt.task_list_close_all()
+#        do_stationary_count(nv_sig, apd_indices)
         # do_image_sample_xz(nv_sig, apd_indices)
         # do_image_charge_states(nv_sig, apd_indices)
         # 
         # do_g2_measurement(nv_sig, 0, 1)
         # 
         # do_optimize_magnet_angle(nv_sig, apd_indices)
-        # do_resonance(nv_sig, nv_sig, apd_indices,  2.875, 0.2)
-        # do_resonance(nv_sig, nv_sig, apd_indices,  2.875, 0.1)
+         do_resonance(nv_sig, nv_sig, apd_indices,  2.875, 0.2)
+#         do_resonance(nv_sig, nv_sig, apd_indices,  2.875, 0.1)
         # do_resonance_state(nv_sig,nv_sig, apd_indices, States.LOW)
         
         # do_rabi(nv_sig, nv_sig, apd_indices, States.LOW, uwave_time_range=[0, 200])
@@ -499,7 +500,8 @@ if __name__ == "__main__":
     finally:
         # Reset our hardware - this should be done in each routine, but
         # let's double check here
-        tool_belt.reset_cfm()
+        
+#        tool_belt.reset_cfm()
         # Kill safe stop
         if tool_belt.check_safe_stop_alive():
             print("\n\nRoutine complete. Press enter to exit.")

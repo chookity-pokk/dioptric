@@ -1882,7 +1882,32 @@ def reset_drift():
 
 # %% Reset hardware
 
+def get_task_list():
+    """
+    Gets the task list. Returns None on failure.
+    Maintains a single instance of the daq on the kernel.
+    Returns:
+        list(Task): The global list of nidaqmx tasks
+    """
+    global TASKLIST
+    try:
+        return TASKLIST
+    except Exception:
+        TASKLIST = []
+        return TASKLIST
+    
+def task_list_close_all():
+    """
+    Closes and removes all tasks in the task list.
+    """
 
+    taskList = get_task_list()
+    print(taskList)
+    for task in taskList:
+        task.stop()
+        task.close()
+    taskList.clear()
+    
 def reset_cfm(cxn=None):
     """Reset our cfm so that it's ready to go for a new experiment. Avoids
     unnecessarily resetting components that may suffer hysteresis (ie the

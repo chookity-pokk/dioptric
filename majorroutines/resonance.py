@@ -37,7 +37,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
 
     # %% Initial calculations and setup
 
-    tool_belt.reset_cfm(cxn)
+#    tool_belt.reset_cfm(cxn)
     
     # Set up the laser
     laser_key = 'spin_laser'
@@ -97,14 +97,14 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
             break
 
         # Optimize and save the coords we found
-        if opti_nv_sig:
-            opti_coords = optimize.main_with_cxn(cxn, opti_nv_sig, apd_indices)
-            drift = tool_belt.get_drift()
-            adj_coords = nv_sig['coords'] + numpy.array(drift)
-            tool_belt.set_xyz(cxn, adj_coords)
-        else:
-            opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
-        opti_coords_list.append(opti_coords)
+#        if opti_nv_sig:
+#            opti_coords = optimize.main_with_cxn(cxn, opti_nv_sig, apd_indices)
+#            drift = tool_belt.get_drift()
+#            adj_coords = nv_sig['coords'] + numpy.array(drift)
+#            tool_belt.set_xyz(cxn, adj_coords)
+#        else:
+#            opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+#        opti_coords_list.append(opti_coords)
         
         # Laser setup
         tool_belt.set_filter(cxn, nv_sig, laser_key)
@@ -112,13 +112,21 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
         # Start the laser now to get rid of transient effects
         tool_belt.laser_on(cxn, laser_name, laser_power)
     
-        sig_gen_cxn = tool_belt.get_signal_generator_cxn(cxn, state)
-        sig_gen_cxn.set_amp(uwave_power)
-        sig_gen_cxn.uwave_on()
-
+#        sig_gen_cxn = tool_belt.get_signal_generator_cxn(cxn, state)
+#        sig_gen_cxn.set_amp(uwave_power)
+#        sig_gen_cxn.uwave_on()
+        
+        #load the pulse streamer
+        ret_vals= cxn.pulse_streamer.stream_load(file_name, seq_args_string)
+        period = ret_vals[0]
+        
         # Load the APD task with two samples for each frequency step
-        cxn.pulse_streamer.stream_load(file_name, seq_args_string)
-        cxn.apd_tagger.start_tag_stream(apd_indices)
+        apd_server = tool_belt.get_apd_server(cxn)
+        apd_server_name = tool_belt.get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"])
+        if apd_server_name == 'apd_tagger':
+            apd_server.start_tag_stream(apd_indices)
+        elif apd_server_name == 'apd_daq':
+            apd_server.load_stream_reader(apd_indices[0], period,  2*num_steps)#put the total number of samples you expect for this run
         
         # Shuffle the list of frequency indices so that we step through
         # them randomly
@@ -131,28 +139,29 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
             # Break out of the while if the user says stop
             if tool_belt.safe_stop():
                 break
-
             freq_ind = freq_ind_list[step_ind]
             # print(freqs[freq_ind])
-            sig_gen_cxn.set_freq(freqs[freq_ind])
+#            sig_gen_cxn.set_freq(freqs[freq_ind])
 
             # Start the timing stream
-            cxn.apd_tagger.clear_buffer()
+#            cxn.apd_tagger.clear_buffer()
             cxn.pulse_streamer.stream_start() 
 
             # Read the counts using parity to distinguish signal vs ref
-            new_counts = cxn.apd_tagger.read_counter_separate_gates(1)
+#            new_counts = apd_server.read_counter_simple(2)
+#            print(new_counts)
+            
+            new_counts = apd_server.read_counter_separate_gates(2) #originally 1
+            print(new_counts)
             sample_counts = new_counts[0]
             ref_gate_counts = sample_counts[0::2]
             ref_counts[run_ind, freq_ind]  = sum(ref_gate_counts)
 
             sig_gate_counts = sample_counts[1::2]
             sig_counts[run_ind, freq_ind] = sum(sig_gate_counts)
-            # break
-            # norm= sum(sig_gate_counts) / sum(ref_gate_counts)
-            # print(norm)
 
-        cxn.apd_tagger.stop_tag_stream()
+
+#        cxn.apd_tagger.stop_tag_stream()
 
         # %% Save the data we have incrementally for long measurements
 
@@ -179,9 +188,9 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
 
         # This will continuously be the same file path so we will overwrite
         # the existing file with the latest version
-        file_path = tool_belt.get_file_path(__file__, start_timestamp,
-                                            nv_sig['name'], 'incremental')
-        tool_belt.save_raw_data(rawData, file_path)
+#        file_path = tool_belt.get_file_path(__file__, start_timestamp,
+#                                            nv_sig['name'], 'incremental')
+#        tool_belt.save_raw_data(rawData, file_path)
 
     # %% Process and plot the data
 
@@ -217,7 +226,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
 
     # %% Clean up and save the data
 
-    tool_belt.reset_cfm(cxn)
+#    tool_belt.reset_cfm(cxn)
 
     timestamp = tool_belt.get_time_stamp()
 
@@ -248,34 +257,34 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
                }
 
     name = nv_sig['name']
-    filePath = tool_belt.get_file_path(__file__, timestamp, name)
-    tool_belt.save_figure(fig, filePath)
-    tool_belt.save_raw_data(rawData, filePath)
+#    filePath = tool_belt.get_file_path(__file__, timestamp, name)
+#    tool_belt.save_figure(fig, filePath)
+#    tool_belt.save_raw_data(rawData, filePath)
 
     # Use the pulsed_resonance fitting functions
-    fit_func, popt, pcov = pulsed_resonance.fit_resonance(freq_range, freq_center,
-                                  num_steps, norm_avg_sig, norm_avg_sig_ste, ref_counts)
-    fit_fig = None
-    if (fit_func is not None) and (popt is not None):
-        fit_fig = pulsed_resonance.create_fit_figure(freq_range, freq_center,
-                                     num_steps, norm_avg_sig, fit_func, popt)
-    filePath = tool_belt.get_file_path(__file__, timestamp, name + '-fit')
-    if fit_fig is not None:
-        tool_belt.save_figure(fit_fig, filePath)
-
-    if fit_func == pulsed_resonance.single_gaussian_dip:
-        print('Single resonance at {:.4f} GHz'.format(popt[2]))
-        print('\n')
-        return popt[2], None
-    elif fit_func == pulsed_resonance.double_gaussian_dip:
-        print('Resonances at {:.4f} GHz and {:.4f} GHz'.format(popt[2], popt[5]))
-        print('Splitting of {:d} MHz'.format(int((popt[5] - popt[2]) * 1000)))
-        print('\n')
-        return popt[2], popt[5]
-    else:
-        print('No resonances found')
-        print('\n')
-        return None, None
+#    fit_func, popt, pcov = pulsed_resonance.fit_resonance(freq_range, freq_center,
+#                                  num_steps, norm_avg_sig, norm_avg_sig_ste, ref_counts)
+#    fit_fig = None
+#    if (fit_func is not None) and (popt is not None):
+#        fit_fig = pulsed_resonance.create_fit_figure(freq_range, freq_center,
+#                                     num_steps, norm_avg_sig, fit_func, popt)
+#    filePath = tool_belt.get_file_path(__file__, timestamp, name + '-fit')
+#    if fit_fig is not None:
+#        tool_belt.save_figure(fit_fig, filePath)
+#
+#    if fit_func == pulsed_resonance.single_gaussian_dip:
+#        print('Single resonance at {:.4f} GHz'.format(popt[2]))
+#        print('\n')
+#        return popt[2], None
+#    elif fit_func == pulsed_resonance.double_gaussian_dip:
+#        print('Resonances at {:.4f} GHz and {:.4f} GHz'.format(popt[2], popt[5]))
+#        print('Splitting of {:d} MHz'.format(int((popt[5] - popt[2]) * 1000)))
+#        print('\n')
+#        return popt[2], popt[5]
+#    else:
+#        print('No resonances found')
+#        print('\n')
+#        return None, None
 
 # %%
 
