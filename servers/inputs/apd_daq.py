@@ -117,6 +117,7 @@ class ApdDaq(LabradServer):
         if apd_index in self.tasks:
             self.close_task_internal(apd_index)
 
+#        logging.info('tasks closed')
         task = nidaqmx.Task('ApdDaq-load_stream_reader_{}'.format(apd_index))
         self.tasks[apd_index] = task
 
@@ -255,8 +256,8 @@ class ApdDaq(LabradServer):
 
         return new_samples_diff
     
-    @setting(2,  num_to_read='i', num_reps = 'i', apd_index='i', returns="?")#*2w")
-    def read_counter_separate_gates(self, c, num_to_read=None, num_reps = 1, apd_index=0):
+    @setting(2,  num_to_read='i',  apd_index='i', returns="*2w")#*2w")
+    def read_counter_separate_gates(self, c, num_to_read=None, apd_index=0):
         """Read the stream loaded by load_stream_reader.
 
         Params
@@ -272,6 +273,7 @@ class ApdDaq(LabradServer):
             2D list(int)
                 The samples that were read
         """
+#        num_to_read += 1 #apd_tagger starts counting from 0, so we have to add 1 to match what the daq is expecting
         # Unpack the state dictionary
         state_dict = self.stream_reader_state[apd_index]
 
@@ -279,7 +281,7 @@ class ApdDaq(LabradServer):
         num_read_so_far = state_dict['num_read_so_far']
         total_num_to_read = state_dict['total_num_to_read']
         buffer_size = state_dict['buffer_size'] 
-
+#        logging.info(buffer_size)
         # Read the samples currently in the DAQ memory
         if num_to_read == None:
             # Read whatever is in the buffer
@@ -324,14 +326,27 @@ class ApdDaq(LabradServer):
             self.close_task_internal(apd_index)
         else:
             state_dict['num_read_so_far'] = num_read_so_far
+            
+         
+        new_samples_diff = [[int(el) for el in new_samples_diff]]
+#        new_samples_diff_array = numpy.array(new_samples_diff)
+#        new_samples_diff_array = numpy.split(new_samples_diff, num_reps)
+#        logging.info(type(new_samples_diff_array))
+#        logging.info(new_samples_diff_array)
+        return new_samples_diff
+
+    @setting(3)
+    def clear_buffer(self, c):
+        """
+        Dummy setting to match apd_tagger
+        """
+
+    @setting(4)
+    def stop_tag_stream(self, c):
+        """
+        Dummy setting to match apd_tagger
+        """
         
-        new_samples_diff_array = numpy.array(new_samples_diff)
-        new_samples_diff_array = numpy.split(new_samples_diff_array, num_reps)
-        
-        return new_samples_diff_array
-
-
-
 __server__ = ApdDaq()
 
 if __name__ == '__main__':

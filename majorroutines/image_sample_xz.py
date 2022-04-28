@@ -237,9 +237,16 @@ def main_with_cxn(cxn, nv_sig, x_range, z_range, num_steps,
     pixel_size_x = x_voltages[1] - x_voltages[0]
     pixel_size_z = z_voltages[1] - z_voltages[0]
 
+
     # %% Set up the APD
 
-    cxn.apd_tagger.start_tag_stream(apd_indices)
+    apd_server = tool_belt.get_apd_server(cxn)
+    apd_server_name = tool_belt.get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"])
+    if apd_server_name == 'apd_tagger':
+        apd_server.start_tag_stream(apd_indices)
+    elif apd_server_name == 'apd_daq':
+        apd_server.load_stream_reader(apd_indices[0], period,  total_num_samples)
+
 
     # %% Set up our raw data objects
 
@@ -271,7 +278,7 @@ def main_with_cxn(cxn, nv_sig, x_range, z_range, num_steps,
                         title=title, um_scaled=um_scaled, aspect_ratio = "auto")
 
     # %% Collect the data
-    cxn.apd_tagger.clear_buffer()
+#    cxn.apd_tagger.clear_buffer()
     cxn.pulse_streamer.stream_start(total_num_samples)
 
     timeout_duration = ((period*(10**-9)) * total_num_samples) + 10
@@ -290,7 +297,7 @@ def main_with_cxn(cxn, nv_sig, x_range, z_range, num_steps,
             break
 
         # Read the samples and update the image
-        new_samples = cxn.apd_tagger.read_counter_simple()
+        new_samples = apd_server.read_counter_simple()
 #        print(new_samples)
         num_new_samples = len(new_samples)
         if num_new_samples > 0:
@@ -332,14 +339,14 @@ def main_with_cxn(cxn, nv_sig, x_range, z_range, num_steps,
                'img_array': img_array.astype(int).tolist(),
                'img_array-units': 'counts'}
 
-    if save_data:
-
-        filePath = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
-        tool_belt.save_raw_data(rawData, filePath)
-
-        if plot_data:
-
-            tool_belt.save_figure(fig, filePath)
+#    if save_data:
+#
+#        filePath = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
+#        tool_belt.save_raw_data(rawData, filePath)
+#
+#        if plot_data:
+#
+#            tool_belt.save_figure(fig, filePath)
 
     return img_array, x_voltages, z_voltages
 

@@ -74,7 +74,7 @@ def main_with_cxn(cxn, nv_sig, run_time, apd_indices, disable_opt=None):
 
     # %% Optimize and set the coordinates
 
-#    optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+    optimize.main_with_cxn(cxn, nv_sig, apd_indices)
 #    coords = nv_sig['coords']
 #    drift = tool_belt.get_drift()
 #    adj_coords = []

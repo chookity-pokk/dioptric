@@ -63,7 +63,14 @@ def update_figure(fig, axis_ind, voltages, count_rates, text=None):
 
 def read_timed_counts(cxn, num_steps, period, apd_indices):
 
-    cxn.apd_tagger.start_tag_stream(apd_indices)
+
+    apd_server = tool_belt.get_apd_server(cxn)
+    apd_server_name = tool_belt.get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"])
+    if apd_server_name == 'apd_tagger':
+        apd_server.start_tag_stream(apd_indices)
+    elif apd_server_name == 'apd_daq':
+        apd_server.load_stream_reader(apd_indices[0], period,  num_steps)
+        
     num_read_so_far = 0
     counts = []
 
@@ -78,20 +85,26 @@ def read_timed_counts(cxn, num_steps, period, apd_indices):
             break
 
         # Read the samples and update the image
-        new_samples = cxn.apd_tagger.read_counter_simple()
+        new_samples = apd_server.read_counter_simple()
         num_new_samples = len(new_samples)
         if num_new_samples > 0:
             counts.extend(new_samples)
             num_read_so_far += num_new_samples
-
-    cxn.apd_tagger.stop_tag_stream()
+            
+    if apd_server_name == 'apd_tagger':
+        apd_server.stop_tag_stream()
 
     return numpy.array(counts, dtype=int)
 
 
 def read_manual_counts(cxn, period, apd_indices, axis_write_func, scan_vals):
 
-    cxn.apd_tagger.start_tag_stream(apd_indices)
+    apd_server = tool_belt.get_apd_server(cxn)
+    apd_server_name = tool_belt.get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"])
+    if apd_server_name == 'apd_tagger':
+        apd_server.start_tag_stream(apd_indices)
+    elif apd_server_name == 'apd_daq':
+        apd_server.load_stream_reader(apd_indices[0], period,  scan_vals)
     counts = []
 
     for ind in range(len(scan_vals)):
@@ -105,10 +118,12 @@ def read_manual_counts(cxn, period, apd_indices, axis_write_func, scan_vals):
         cxn.pulse_streamer.stream_start(1)
 
         # Read the samples and update the image
-        new_samples = cxn.apd_tagger.read_counter_simple(1)
+        new_samples = apd_server.read_counter_simple(1)
         counts.extend(new_samples)
 
-    cxn.apd_tagger.stop_tag_stream()
+    if apd_server_name == 'apd_tagger':
+        apd_server.stop_tag_stream()
+
 
     return numpy.array(counts, dtype=int)
 
@@ -137,14 +152,24 @@ def stationary_count_lite(cxn, nv_sig, coords, config, apd_indices):
         delay = config["Positioning"]["xy_delay"]
     seq_args = [delay, readout, apd_indices[0], laser_name, laser_power]
     seq_args_string = tool_belt.encode_seq_args(seq_args)
-    cxn.pulse_streamer.stream_load(seq_file_name, seq_args_string)
+    ret_vals = cxn.pulse_streamer.stream_load(seq_file_name, seq_args_string)
+    period = ret_vals[0]
 
     # Collect the data
-    cxn.apd_tagger.start_tag_stream(apd_indices)
+    apd_server = tool_belt.get_apd_server(cxn)
+    apd_server_name = tool_belt.get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"])
+    if apd_server_name == 'apd_tagger':
+        apd_server.start_tag_stream(apd_indices)
+    elif apd_server_name == 'apd_daq':
+        apd_server.load_stream_reader(apd_indices[0], period,  total_num_samples)
+        
     cxn.pulse_streamer.stream_start(total_num_samples)
-    new_samples = cxn.apd_tagger.read_counter_simple(total_num_samples)
+    new_samples = apd_server.read_counter_simple(total_num_samples)
     new_samples_avg = numpy.average(new_samples)
-    cxn.apd_tagger.stop_tag_stream()
+    
+    if apd_server_name == 'apd_tagger':
+        apd_server.stop_tag_stream()
+
     counts_kcps = (new_samples_avg / 1000) / (readout / 10 ** 9)
 
     return counts_kcps
@@ -214,6 +239,7 @@ def optimize_on_axis(cxn, nv_sig, axis_ind, config, apd_indices, fig=None):
         if hasattr(z_server, "load_scan_z"):
             scan_vals = z_server.load_scan_z(z_center, scan_range, num_steps, period)
             auto_scan = True
+            
         else:
             manual_write_func = z_server.write_z
 
@@ -636,11 +662,11 @@ def main_with_cxn(
             "z_counts-units": "number",
         }
 
-        filePath = tool_belt.get_file_path(__file__, timestamp, nv_sig["name"])
-        tool_belt.save_raw_data(rawData, filePath)
-
-        if fig is not None:
-            tool_belt.save_figure(fig, filePath)
+#        filePath = tool_belt.get_file_path(__file__, timestamp, nv_sig["name"])
+#        tool_belt.save_raw_data(rawData, filePath)
+#
+#        if fig is not None:
+#            tool_belt.save_figure(fig, filePath)
 
     # %% Return the optimized coordinates we found
 

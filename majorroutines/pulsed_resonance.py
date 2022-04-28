@@ -458,7 +458,7 @@ def main_with_cxn(
 
     # %% Initial calculations and setup
 
-    tool_belt.reset_cfm(cxn)
+#    tool_belt.reset_cfm(cxn)
 
     # Calculate the frequencies we need to set
     half_freq_range = freq_range / 2
@@ -482,35 +482,18 @@ def main_with_cxn(
     polarization_time = nv_sig["spin_pol_dur"]
     readout = nv_sig["spin_readout_dur"]
     readout_sec = readout / (10 ** 9)
-    if composite:
-        uwave_pi_pulse = round(nv_sig["rabi_{}".format(state.name)] / 2)
-        uwave_pi_on_2_pulse = round(nv_sig["rabi_{}".format(state.name)] / 4)
-        seq_args = [
-            polarization_time,
-            readout,
-            uwave_pi_pulse,
-            uwave_pi_on_2_pulse,
-            1,
-            1,
-            apd_indices[0],
-            state.value,
-            laser_name,
-            laser_power,
-        ]
-        seq_args = [int(el) for el in seq_args]
-    else:
-        seq_args = [
-            uwave_pulse_dur,
-            polarization_time,
-            readout,
-            uwave_pulse_dur,
-            apd_indices[0],
-            state.value,
-            laser_name,
-            laser_power,
-        ]
-    # print(seq_args)
-    # return
+
+    seq_args = [
+        uwave_pulse_dur,
+        polarization_time,
+        readout,
+        uwave_pulse_dur,
+        apd_indices[0],
+        state.value,
+        laser_name,
+        laser_power,
+    ]
+    
     seq_args_string = tool_belt.encode_seq_args(seq_args)
 
     opti_coords_list = []
@@ -546,26 +529,30 @@ def main_with_cxn(
         # own sequences)
         sig_gen_cxn = tool_belt.get_signal_generator_cxn(cxn, state)
         sig_gen_cxn.set_amp(uwave_power)
-        if composite:
-            sig_gen_cxn.load_iq()
-            cxn.arbitrary_waveform_generator.load_knill()
+
         tool_belt.set_filter(cxn, nv_sig, laser_key)
         laser_power = tool_belt.set_laser_power(cxn, nv_sig, laser_key)
-        if composite:
-            ret_vals = cxn.pulse_streamer.stream_load(
-                "discrete_rabi2.py", seq_args_string
-            )
-        else:
-            ret_vals = cxn.pulse_streamer.stream_load(
-                "rabi.py", seq_args_string
-            )
 
-        # Start the tagger stream
-        cxn.apd_tagger.start_tag_stream(apd_indices)
+        ret_vals = cxn.pulse_streamer.stream_load(
+            "rabi.py", seq_args_string
+        )
+
+        period = ret_vals[0]
+        
+        # Start the tagger stream        # Load the APD task with two samples for each frequency step
+        apd_server = tool_belt.get_apd_server(cxn)
+        apd_server_name = tool_belt.get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"])
+
+        if apd_server_name == 'apd_tagger':
+            apd_server.start_tag_stream(apd_indices)
+            n_apd_samples = 1
+        elif apd_server_name == 'apd_daq':
+            apd_server.load_stream_reader(apd_indices[0], period,  int(2*num_reps*num_steps))#put the total number of samples you expect for this run
+            n_apd_samples = int(2*num_reps)
+        
 
         # Take a sample and increment the frequency
         for step_ind in range(num_steps):
-
             # Break out of the while if the user says stop
             if tool_belt.safe_stop():
                 break
@@ -577,12 +564,14 @@ def main_with_cxn(
             # switch frequencies so allow 1 ms total
             #            time.sleep(0.001)
             # Clear the tagger buffer of any excess counts
-            cxn.apd_tagger.clear_buffer()
+            
+            apd_server.clear_buffer()
+            
             # Start the timing stream
             cxn.pulse_streamer.stream_start(int(num_reps))
 
             # Get the counts
-            new_counts = cxn.apd_tagger.read_counter_separate_gates(1)
+            new_counts = apd_server.read_counter_separate_gates(n_apd_samples)
 
             sample_counts = new_counts[0]
 
@@ -590,12 +579,14 @@ def main_with_cxn(
             sig_gate_counts = sample_counts[0::2]
             sig_counts[run_ind, step_ind] = sum(sig_gate_counts)
 
+
             # ref counts are odd - sample_counts every second element starting from 1
             ref_gate_counts = sample_counts[1::2]
             ref_counts[run_ind, step_ind] = sum(ref_gate_counts)
 
-        cxn.apd_tagger.stop_tag_stream()
 
+        apd_server.stop_tag_stream()
+        sig_gen_cxn.uwave_off()
         # %% Save the data we have incrementally for long measurements
 
         rawData = {
@@ -625,10 +616,10 @@ def main_with_cxn(
 
         # This will continuously be the same file path so we will overwrite
         # the existing file with the latest version
-        file_path = tool_belt.get_file_path(
-            __file__, start_timestamp, nv_sig["name"], "incremental"
-        )
-        tool_belt.save_raw_data(rawData, file_path)
+#        file_path = tool_belt.get_file_path(
+#            __file__, start_timestamp, nv_sig["name"], "incremental"
+#        )
+#        tool_belt.save_raw_data(rawData, file_path)
 
     # %% Process and plot the data
 
@@ -683,7 +674,7 @@ def main_with_cxn(
 
     # %% Clean up and save the data
 
-    tool_belt.reset_cfm(cxn)
+#    tool_belt.reset_cfm(cxn)
 
     timestamp = tool_belt.get_time_stamp()
 
@@ -718,12 +709,12 @@ def main_with_cxn(
     }
 
     name = nv_sig["name"]
-    filePath = tool_belt.get_file_path(__file__, timestamp, name)
-    tool_belt.save_figure(fig, filePath)
-    tool_belt.save_raw_data(rawData, filePath)
-    filePath = tool_belt.get_file_path(__file__, timestamp, name + "-fit")
-    if fit_fig is not None:
-        tool_belt.save_figure(fit_fig, filePath)
+#    filePath = tool_belt.get_file_path(__file__, timestamp, name)
+#    tool_belt.save_figure(fig, filePath)
+#    tool_belt.save_raw_data(rawData, filePath)
+#    filePath = tool_belt.get_file_path(__file__, timestamp, name + "-fit")
+#    if fit_fig is not None:
+#        tool_belt.save_figure(fit_fig, filePath)
 
     # %% Return
 

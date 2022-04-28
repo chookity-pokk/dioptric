@@ -250,7 +250,12 @@ def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
 
     # %% Set up the APD
 
-    cxn.apd_tagger.start_tag_stream(apd_indices)
+    apd_server = tool_belt.get_apd_server(cxn)
+    apd_server_name = tool_belt.get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"])
+    if apd_server_name == 'apd_tagger':
+        apd_server.start_tag_stream(apd_indices)
+    elif apd_server_name == 'apd_daq':
+        apd_server.load_stream_reader(apd_indices[0], period,  total_num_samples)
 
     # %% Set up our raw data objects
 
@@ -281,7 +286,7 @@ def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
                         title=title, um_scaled=um_scaled)
 
     # %% Collect the data
-    cxn.apd_tagger.clear_buffer()
+#    cxn.apd_tagger.clear_buffer()
     cxn.pulse_streamer.stream_start(total_num_samples)
 
     timeout_duration = ((period*(10**-9)) * total_num_samples) + 10
@@ -301,11 +306,7 @@ def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
         if tool_belt.safe_stop():
             break
 
-        # Read the samples and update the image
-        if charge_initialization:
-            new_samples = cxn.apd_tagger.read_counter_modulo_gates(2)
-        else:
-            new_samples = cxn.apd_tagger.read_counter_simple()
+        new_samples = apd_server.read_counter_simple()
 
 #        print(new_samples)
         num_new_samples = len(new_samples)

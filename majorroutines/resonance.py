@@ -97,14 +97,14 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
             break
 
         # Optimize and save the coords we found
-#        if opti_nv_sig:
-#            opti_coords = optimize.main_with_cxn(cxn, opti_nv_sig, apd_indices)
-#            drift = tool_belt.get_drift()
-#            adj_coords = nv_sig['coords'] + numpy.array(drift)
-#            tool_belt.set_xyz(cxn, adj_coords)
-#        else:
-#            opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
-#        opti_coords_list.append(opti_coords)
+        if opti_nv_sig:
+            opti_coords = optimize.main_with_cxn(cxn, opti_nv_sig, apd_indices)
+            drift = tool_belt.get_drift()
+            adj_coords = nv_sig['coords'] + numpy.array(drift)
+            tool_belt.set_xyz(cxn, adj_coords)
+        else:
+            opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+        opti_coords_list.append(opti_coords)
         
         # Laser setup
         tool_belt.set_filter(cxn, nv_sig, laser_key)
@@ -112,9 +112,9 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
         # Start the laser now to get rid of transient effects
         tool_belt.laser_on(cxn, laser_name, laser_power)
     
-#        sig_gen_cxn = tool_belt.get_signal_generator_cxn(cxn, state)
-#        sig_gen_cxn.set_amp(uwave_power)
-#        sig_gen_cxn.uwave_on()
+        sig_gen_cxn = tool_belt.get_signal_generator_cxn(cxn, state)
+        sig_gen_cxn.set_amp(uwave_power)
+        sig_gen_cxn.uwave_on()
         
         #load the pulse streamer
         ret_vals= cxn.pulse_streamer.stream_load(file_name, seq_args_string)
@@ -141,10 +141,10 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
                 break
             freq_ind = freq_ind_list[step_ind]
             # print(freqs[freq_ind])
-#            sig_gen_cxn.set_freq(freqs[freq_ind])
+            sig_gen_cxn.set_freq(freqs[freq_ind])
 
             # Start the timing stream
-#            cxn.apd_tagger.clear_buffer()
+            apd_server.clear_buffer()
             cxn.pulse_streamer.stream_start() 
 
             # Read the counts using parity to distinguish signal vs ref
@@ -152,7 +152,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
 #            print(new_counts)
             
             new_counts = apd_server.read_counter_separate_gates(2) #originally 1
-            print(new_counts)
+#            print(new_counts)
             sample_counts = new_counts[0]
             ref_gate_counts = sample_counts[0::2]
             ref_counts[run_ind, freq_ind]  = sum(ref_gate_counts)
@@ -161,8 +161,8 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
             sig_counts[run_ind, freq_ind] = sum(sig_gate_counts)
 
 
-#        cxn.apd_tagger.stop_tag_stream()
-
+        apd_server.stop_tag_stream()
+        sig_gen_cxn.uwave_off()
         # %% Save the data we have incrementally for long measurements
 
         rawData = {'start_timestamp': start_timestamp,
