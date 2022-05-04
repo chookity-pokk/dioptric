@@ -281,7 +281,7 @@ class ApdDaq(LabradServer):
         num_read_so_far = state_dict['num_read_so_far']
         total_num_to_read = state_dict['total_num_to_read']
         buffer_size = state_dict['buffer_size'] 
-#        logging.info(buffer_size)
+        
         # Read the samples currently in the DAQ memory
         if num_to_read == None:
             # Read whatever is in the buffer
@@ -329,10 +329,9 @@ class ApdDaq(LabradServer):
             
          
         new_samples_diff = [[int(el) for el in new_samples_diff]]
-#        new_samples_diff_array = numpy.array(new_samples_diff)
-#        new_samples_diff_array = numpy.split(new_samples_diff, num_reps)
-#        logging.info(type(new_samples_diff_array))
-#        logging.info(new_samples_diff_array)
+        
+#        logging.info(new_samples_cum)
+#        logging.info(new_samples_diff)
         return new_samples_diff
 
     @setting(3)

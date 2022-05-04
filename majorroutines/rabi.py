@@ -271,9 +271,28 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 #        sig_gen_cxn.set_freq(uwave_freq + 0.008)
 #        sig_gen_cxn.set_amp(uwave_power)
 #        sig_gen_cxn.uwave_on()
+        
+    
+        seq_args = [taus[0], polarization_time,
+                    readout, max_uwave_time, apd_indices[0], 
+                    state.value, laser_name, laser_power]
+        seq_args_string = tool_belt.encode_seq_args(seq_args)
+        ret_vals = cxn.pulse_streamer.stream_load(
+            "rabi.py", seq_args_string
+        )
+        period = ret_vals[0]
+                
+        # Start the tagger stream 
+        apd_server = tool_belt.get_apd_server(cxn)
+        apd_server_name = tool_belt.get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"])
 
-        # Load the APD
-        cxn.apd_tagger.start_tag_stream(apd_indices)
+        if apd_server_name == 'apd_tagger':
+            apd_server.start_tag_stream(apd_indices)
+            n_apd_samples = 1
+        elif apd_server_name == 'apd_daq':
+            apd_server.load_stream_reader(apd_indices[0], period,  int(2*num_reps*num_steps))#put the total number of samples you expect for this run
+            n_apd_samples = int(2*num_reps)
+        
 
         # Shuffle the list of indices to use for stepping through the taus
         shuffle(tau_ind_list)
@@ -294,12 +313,12 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
                         state.value, laser_name, laser_power]
             seq_args_string = tool_belt.encode_seq_args(seq_args)
             # Clear the tagger buffer of any excess counts
-            cxn.apd_tagger.clear_buffer()
+            apd_server.clear_buffer()
             cxn.pulse_streamer.stream_immediate(file_name, num_reps,
                                                 seq_args_string)
 
             # Get the counts
-            new_counts = cxn.apd_tagger.read_counter_separate_gates(1)
+            new_counts = apd_server.read_counter_separate_gates(n_apd_samples)
 #            print(new_counts)
 
             sample_counts = new_counts[0]
@@ -319,7 +338,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 #            start_time = run_time
 #            print('Tau: {} ns'.format(taus[tau_ind]))
 #            print('Elapsed time {}'.format(run_elapsed_time))
-        cxn.apd_tagger.stop_tag_stream()
+        apd_server.stop_tag_stream()
 
         # %% Save the data we have incrementally for long measurements
 
@@ -346,9 +365,9 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 
         # This will continuously be the same file path so we will overwrite
         # the existing file with the latest version
-        file_path = tool_belt.get_file_path(__file__, start_timestamp,
-                                            nv_sig['name'], 'incremental')
-        tool_belt.save_raw_data(raw_data, file_path)
+#        file_path = tool_belt.get_file_path(__file__, start_timestamp,
+#                                            nv_sig['name'], 'incremental')
+#        tool_belt.save_raw_data(raw_data, file_path)
 
     # %% Average the counts over the iterations
 
@@ -429,11 +448,11 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
                 'norm_avg_sig': norm_avg_sig.astype(float).tolist(),
                 'norm_avg_sig-units': 'arb'}
 
-    file_path = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
-    tool_belt.save_figure(raw_fig, file_path)
-    if fit_fig is not None:
-        tool_belt.save_figure(fit_fig, file_path + '-fit')
-    tool_belt.save_raw_data(raw_data, file_path)
+#    file_path = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
+#    tool_belt.save_figure(raw_fig, file_path)
+#    if fit_fig is not None:
+#        tool_belt.save_figure(fit_fig, file_path + '-fit')
+#    tool_belt.save_raw_data(raw_data, file_path)
 
     if (fit_func is not None) and (popt is not None):
         return rabi_period, sig_counts, ref_counts

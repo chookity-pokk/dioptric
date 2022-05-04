@@ -21,6 +21,7 @@ from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 import labrad
 from utils.tool_belt import States
+from random import shuffle
 
 
 # %% Figure functions
@@ -495,7 +496,7 @@ def main_with_cxn(
     ]
     
     seq_args_string = tool_belt.encode_seq_args(seq_args)
-
+    
     opti_coords_list = []
 
     # %% Get the starting time of the function
@@ -506,6 +507,9 @@ def main_with_cxn(
 
     # Start 'Press enter to stop...'
     tool_belt.init_safe_stop()
+
+    freq_ind_list = list(range(0, num_steps))
+
 
     for run_ind in range(num_runs):
         print("Run index: {}".format(run_ind))
@@ -550,9 +554,11 @@ def main_with_cxn(
             apd_server.load_stream_reader(apd_indices[0], period,  int(2*num_reps*num_steps))#put the total number of samples you expect for this run
             n_apd_samples = int(2*num_reps)
         
-
+        
+        #shuffle freqs
+        shuffle(freq_ind_list)
         # Take a sample and increment the frequency
-        for step_ind in range(num_steps):
+        for step_ind in freq_ind_list:
             # Break out of the while if the user says stop
             if tool_belt.safe_stop():
                 break

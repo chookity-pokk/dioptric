@@ -50,8 +50,8 @@ def get_seq(pulse_streamer, config, args):
 
     # %% Couple calculated values
     
-    aom_delay_time = 0#config['Optics'][laser_name]['delay']
-    uwave_delay_time = 0#config['Microwaves'][sig_gen_name]['delay']
+    aom_delay_time = config['Optics'][laser_name]['delay']
+    uwave_delay_time = config['Microwaves'][sig_gen_name]['delay']
     signal_wait_time = config['CommonDurations']['uwave_buffer']
     background_wait_time = signal_wait_time
     reference_wait_time = 2 * signal_wait_time
@@ -79,18 +79,18 @@ def get_seq(pulse_streamer, config, args):
     mid_duration = polarization_time + reference_wait_time - gate_time
     train = [(pre_duration, LOW),
              (gate_time, HIGH),
-             (100, LOW),
+             (200, LOW),
              (mid_duration, LOW),
              (gate_time, HIGH),
-             (100, LOW),
+             (200, LOW),
              (post_duration, LOW)]
     seq.setDigital(pulser_do_apd_gate, train)
 
     train = [(pre_duration, LOW),
-             (gate_time, LOW),
+             (gate_time + 100, LOW),
              (100, HIGH),
              (mid_duration, LOW),
-             (gate_time, LOW),
+             (gate_time + 100, LOW),
              (100, HIGH),
              (post_duration, LOW)]
     seq.setDigital(pulser_do_apd_clock, train)
@@ -103,18 +103,18 @@ def get_seq(pulse_streamer, config, args):
     train = [(polarization_time, HIGH),
              (signal_wait_time + tau + signal_wait_time, LOW),
              (polarization_time, HIGH),
-             (100, LOW),
+             (200, LOW),
              (reference_wait_time, LOW),
              (reference_time, HIGH),
-             (100, LOW),
+             (200, LOW),
              (background_wait_time + end_rest_time + aom_delay_time, LOW)]
     tool_belt.process_laser_seq(pulse_streamer, seq, config,
                                 laser_name, laser_power, train)
 
     # Pulse the microwave for tau
     pre_duration = aom_delay_time + polarization_time + signal_wait_time - uwave_delay_time
-    post_duration = signal_wait_time + polarization_time + 100 + \
-        reference_wait_time + reference_time + 100 + \
+    post_duration = signal_wait_time + polarization_time + 200 + \
+        reference_wait_time + reference_time + 200 + \
         background_wait_time + end_rest_time + uwave_delay_time
     train = [(pre_duration, LOW), (tau, HIGH), (post_duration, LOW)]
     seq.setDigital(pulser_do_sig_gen_gate, train)

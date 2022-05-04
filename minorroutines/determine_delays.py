@@ -110,7 +110,6 @@ def measure_delay(
                 laser_power,
             ]
 
-
         seq_args_string = tool_belt.encode_seq_args(seq_args)
         
         ret_vals = cxn.pulse_streamer.stream_load(
@@ -134,6 +133,7 @@ def measure_delay(
         )
 
         new_counts = apd_server.read_counter_separate_gates(n_apd_samples)
+
         sample_counts = new_counts[0]
         if len(sample_counts) != 2 * num_reps:
             print("Error!")
@@ -295,15 +295,15 @@ if __name__ == "__main__":
     green_laser = 'cobolt_515'
      # green_laser = "laserglow_532"
     nv_sig = { 
-          "coords":[4.813, 4.803, 3.569], 
+          "coords":[4.817, 4.608, 3.490], 
         "name": "{}-search".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": True,
-        "expected_count_rate":None,
+        "expected_count_rate":35,
         
         "spin_laser": green_laser,
         "spin_laser_power": green_power,
-        "spin_pol_dur": 1e5,
+        "spin_pol_dur": 1e3,
         "spin_readout_laser_power": green_power,
         "spin_readout_dur": 350,
         
@@ -313,7 +313,7 @@ if __name__ == "__main__":
         
         "collection_filter": "630_lp",
         "magnet_angle": None,
-        "resonance_LOW":2.87,"rabi_LOW": 150,
+        "resonance_LOW":2.87,"rabi_LOW": 100,
         "uwave_power_LOW": 15.5,  # 15.5 max
         "resonance_HIGH": 2.932,
         "rabi_HIGH": 59.6,
@@ -326,39 +326,39 @@ if __name__ == "__main__":
     try:
 
         # laser delay
-        num_steps = 101
-        # num_reps = int(1e4)
-        # laser_name = 'laserglow_532'
-        # delay_range = [600, 1400]
-        # num_reps = int(1e5)
-        # laser_name = 'laserglow_589'
-        # delay_range = [800, 1700]
-        num_reps = int(1e4)
-        laser_name = 'cobolt_515'
-        delay_range = [0, 1000]
-        laser_power = None
-        with labrad.connect() as cxn:
-            aom_delay(cxn, nv_sig, apd_indices,
-                      delay_range, num_steps, num_reps, laser_name, laser_power)
+#        num_steps = 101
+#        # num_reps = int(1e4)
+#        # laser_name = 'laserglow_532'
+#        # delay_range = [600, 1400]
+#        # num_reps = int(1e5)
+#        # laser_name = 'laserglow_589'
+#        # delay_range = [800, 1700]
+#        num_reps = int(1e5)
+#        laser_name = 'cobolt_515'
+#        delay_range = [0, 2000]
+#        laser_power = None
+#        with labrad.connect() as cxn:
+#            aom_delay(cxn, nv_sig, apd_indices,
+#                      delay_range, num_steps, num_reps, laser_name, laser_power)
 
         # uwave_delay
-        # num_reps = int(1e4)
-        # delay_range = [-200, 200]
-        # num_steps = 101
-        # # sg394
-        # state = States.LOW
-        # # tsg4104a
-        # # state = States.HIGH
-        # with labrad.connect() as cxn:
-        #     uwave_delay(
-        #         cxn,
-        #         nv_sig,
-        #         apd_indices,
-        #         state,
-        #         delay_range,
-        #         num_steps,
-        #         num_reps,
-        #     )
+         num_reps = int(1e5)
+         delay_range = [-200, 400]
+         num_steps = 101
+         # sg394
+         state = States.LOW
+         # tsg4104a
+         # state = States.HIGH
+         with labrad.connect() as cxn:
+             uwave_delay(
+                 cxn,
+                 nv_sig,
+                 apd_indices,
+                 state,
+                 delay_range,
+                 num_steps,
+                 num_reps,
+             )
 
     finally:
         # Reset our hardware - this should be done in each routine, but

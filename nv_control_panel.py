@@ -26,7 +26,7 @@ import majorroutines.stationary_count as stationary_count
 import majorroutines.resonance as resonance
 import majorroutines.pulsed_resonance as pulsed_resonance
 #import majorroutines.optimize_magnet_angle as optimize_magnet_angle
-#import majorroutines.rabi as rabi
+import majorroutines.rabi as rabi
 #import majorroutines.ramsey as ramsey
 #import majorroutines.spin_echo as spin_echo
 
@@ -69,10 +69,10 @@ def do_image_sample(nv_sig, apd_indices):
 #    scan_range =4
 #    scan_range = 1
 #    scan_range = 0.5
-#    scan_range = 0.35
+    scan_range = 0.35
 #    scan_range = 0.25
 #    scan_range = 0.2
-    scan_range = 0.15
+#    scan_range = 0.15
 #    scan_range = 0.1
 #    scan_range = 0.05
     # scan_range = 0.025
@@ -84,8 +84,8 @@ def do_image_sample(nv_sig, apd_indices):
     # num_steps = 135
     # num_steps =120
 #    num_steps = 90
-#    num_steps = 60
-    num_steps = 31
+    num_steps = 60
+#    num_steps = 31
     # num_steps = 15
     
     #individual line pairs:
@@ -177,7 +177,7 @@ def do_pulsed_resonance(nv_sig, opti_nv_sig, apd_indices, freq_center=2.87, freq
 
     num_steps =101
     num_reps = 0.3e4
-    num_runs = 50
+    num_runs = 15
     uwave_power = 14.5
     uwave_pulse_dur = int(100/2)
 
@@ -267,8 +267,8 @@ def do_optimize_magnet_angle(nv_sig, apd_indices):
 def do_rabi(nv_sig, opti_nv_sig, apd_indices, state, uwave_time_range=[0, 200]):
 
     num_steps = 51
-    num_reps = int(1e4)
-    num_runs = 5
+    num_reps = int(0.3e4)
+    num_runs = 20
 
     period = rabi.main(
         nv_sig,
@@ -351,6 +351,7 @@ if __name__ == "__main__":
     debug_mode = True
 
     # %% Shared parameters
+    
 
     green_power =10
     sample_name = "johnson"
@@ -358,15 +359,15 @@ if __name__ == "__main__":
 
     
     nv_sig = { 
-          "coords":[4.813, 4.803, 3.569], 
+          "coords":[4.847, 4.379, 3.196], 
         "name": "{}-search".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": True,
-        "expected_count_rate":None,
+        "expected_count_rate":40,
         
         "spin_laser": green_laser,
         "spin_laser_power": green_power,
-        "spin_pol_dur": 1e5,
+        "spin_pol_dur": 1e4,
         "spin_readout_laser_power": green_power,
         "spin_readout_dur": 350,
         
@@ -376,7 +377,7 @@ if __name__ == "__main__":
         
         "collection_filter": "630_lp",
         "magnet_angle": None,
-        "resonance_LOW":2.87,"rabi_LOW": 150,
+        "resonance_LOW":2.87,"rabi_LOW": 109.2,
         "uwave_power_LOW": 15.5,  # 15.5 max
         "resonance_HIGH": 2.932,
         "rabi_HIGH": 59.6,
@@ -395,14 +396,18 @@ if __name__ == "__main__":
 
     try:
 
-        tool_belt.init_safe_stop()
+#        tool_belt.init_safe_stop()
 
 #         tool_belt.set_drift([0.0, 0.0, tool_belt.get_drift()[2]])  # Keep z
-#         tool_belt.set_drift([0.0, 0.0, 0.0])  
-#         tool_belt.set_xyz(labrad.connect(), [5,5,5])  
-        
-        do_optimize(nv_sig,apd_indices)
-        do_image_sample(nv_sig, apd_indices)
+#        tool_belt.set_drift([0.0, 0.0, 0.0])  
+#         tool_belt.set_xyz(labrad.connect(), [5,5,5]) 
+#        tool_belt.set_xyz(labrad.connect(), [0,0,0])   
+
+
+#         do_optimize(nv_sig,apd_indices)
+#        do_image_sample(nv_sig, apd_indices)
+#        time.sleep(30)
+#        do_image_sample(nv_sig, apd_indices)
 #        do_stationary_count(nv_sig, apd_indices)
 #        do_image_sample_xz(nv_sig, apd_indices)
         
@@ -411,10 +416,10 @@ if __name__ == "__main__":
 #         do_resonance(nv_sig, nv_sig, apd_indices,  2.875, 0.1)
         # do_resonance_state(nv_sig,nv_sig, apd_indices, States.LOW)
         
-        # do_rabi(nv_sig, nv_sig, apd_indices, States.LOW, uwave_time_range=[0, 200])
+#         do_rabi(nv_sig, nv_sig, apd_indices, States.LOW, uwave_time_range=[0, 200])
         # do_rabi(nv_sig, nv_sig,apd_indices, States.HIGH, uwave_time_range=[0, 200])
         
-#         do_pulsed_resonance(nv_sig, nv_sig, apd_indices, 2.875, 0.1)
+         do_pulsed_resonance(nv_sig, nv_sig, apd_indices, 2.875, 0.1)
         # do_pulsed_resonance_state(nv_sig, nv_sig,apd_indices, States.LOW)
         # do_ramsey(nv_sig, opti_nv_sig,apd_indices)
         # do_spin_echo(nv_sig, apd_indices)
@@ -422,6 +427,7 @@ if __name__ == "__main__":
         # do_spin_echo(nv_sig, apd_indices)
 
     except Exception as exc:
+        
         # Intercept the exception so we can email it out and re-raise it
         if not debug_mode:
             tool_belt.send_exception_email()
