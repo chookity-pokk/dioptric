@@ -179,7 +179,7 @@ def do_pulsed_resonance(nv_sig, opti_nv_sig, apd_indices, freq_center=2.87, freq
 
     num_steps =101
     num_reps = 0.3e4
-    num_runs = 15
+    num_runs = 10
     uwave_power = 14.5
     uwave_pulse_dur = int(100/2)
 
@@ -361,11 +361,11 @@ if __name__ == "__main__":
 
     
     nv_sig = { 
-          "coords":[4.847, 4.379, 3.196], 
+          "coords":[4.891, 4.350, 3.196], 
         "name": "{}-search".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": True,
-        "expected_count_rate":40,
+        "expected_count_rate":35,
         
         "spin_laser": green_laser,
         "spin_laser_power": green_power,
@@ -407,7 +407,7 @@ if __name__ == "__main__":
 
 
 #         do_optimize(nv_sig,apd_indices)
-#        do_image_sample(nv_sig, apd_indices)
+        do_image_sample(nv_sig, apd_indices)
 #        time.sleep(30)
 #        do_image_sample(nv_sig, apd_indices)
 #        do_stationary_count(nv_sig, apd_indices)
@@ -421,7 +421,7 @@ if __name__ == "__main__":
 #         do_rabi(nv_sig, nv_sig, apd_indices, States.LOW, uwave_time_range=[0, 200])
         # do_rabi(nv_sig, nv_sig,apd_indices, States.HIGH, uwave_time_range=[0, 200])
         
-         do_pulsed_resonance(nv_sig, nv_sig, apd_indices, 2.875, 0.1)
+         # do_pulsed_resonance(nv_sig, nv_sig, apd_indices, 2.875, 0.1)
         # do_pulsed_resonance_state(nv_sig, nv_sig,apd_indices, States.LOW)
         # do_ramsey(nv_sig, opti_nv_sig,apd_indices)
         # do_spin_echo(nv_sig, apd_indices)
