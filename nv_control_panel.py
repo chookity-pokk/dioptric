@@ -8,6 +8,8 @@ parameters are in the function definitions.
 Created on Sun Nov 25 14:00:28 2018
 
 @author: mccambria
+
+use file 5/5/2022
 """
 
 
@@ -268,7 +270,7 @@ def do_rabi(nv_sig, opti_nv_sig, apd_indices, state, uwave_time_range=[0, 200]):
 
     num_steps = 51
     num_reps = int(0.3e4)
-    num_runs = 20
+    num_runs = 50
 
     period = rabi.main(
         nv_sig,
@@ -377,9 +379,9 @@ if __name__ == "__main__":
         
         "collection_filter": "630_lp",
         "magnet_angle": None,
-        "resonance_LOW":2.87,"rabi_LOW": 109.2,
+        "resonance_LOW":2.8459,"rabi_LOW": 109.2,
         "uwave_power_LOW": 15.5,  # 15.5 max
-        "resonance_HIGH": 2.932,
+        "resonance_HIGH": 2.8992,
         "rabi_HIGH": 59.6,
         "uwave_power_HIGH": 14.5,
     }  # 14.5 max

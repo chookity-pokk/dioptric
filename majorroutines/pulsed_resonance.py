@@ -496,9 +496,22 @@ def main_with_cxn(
     ]
     
     seq_args_string = tool_belt.encode_seq_args(seq_args)
+    ret_vals = cxn.pulse_streamer.stream_load("rabi.py", seq_args_string)
+    seq_time = ret_vals[0]
     
     opti_coords_list = []
 
+    # %% Let the user know how long this will take
+
+    seq_time_s = seq_time / (10 ** 9)  # to seconds
+    expected_run_time_s = (
+        num_steps * num_reps * num_runs * seq_time_s
+    )  # s
+    expected_run_time_m = expected_run_time_s / 60  # to minutes
+
+#    print(" \nExpected run time: {:.1f} minutes. ".format(expected_run_time_m))
+    #    return
+    
     # %% Get the starting time of the function
 
     start_timestamp = tool_belt.get_time_stamp()
@@ -550,9 +563,6 @@ def main_with_cxn(
         if apd_server_name == 'apd_tagger':
             apd_server.start_tag_stream(apd_indices)
             n_apd_samples = 1
-        elif apd_server_name == 'apd_daq':
-            apd_server.load_stream_reader(apd_indices[0], period,  int(2*num_reps*num_steps))#put the total number of samples you expect for this run
-            n_apd_samples = int(2*num_reps)
         
         
         #shuffle freqs
@@ -571,6 +581,9 @@ def main_with_cxn(
             #            time.sleep(0.001)
             # Clear the tagger buffer of any excess counts
             
+            if apd_server_name == 'apd_daq':
+                apd_server.load_stream_reader(apd_indices[0], period,  int(2*num_reps))
+                n_apd_samples = int(2*num_reps)
             apd_server.clear_buffer()
             
             # Start the timing stream

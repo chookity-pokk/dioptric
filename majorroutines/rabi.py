@@ -213,7 +213,8 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 #    print(seq_args)
 #    return
     seq_args_string = tool_belt.encode_seq_args(seq_args)
-    cxn.pulse_streamer.stream_load(file_name, seq_args_string)
+    ret_vals = cxn.pulse_streamer.stream_load(file_name, seq_args_string)
+    seq_time = ret_vals[0]
 
     # Set up our data structure, an array of NaNs that we'll fill
     # incrementally. NaNs are ignored by matplotlib, which is why they're
@@ -225,6 +226,18 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
     ref_counts = numpy.copy(sig_counts)
     # norm_avg_sig = numpy.empty([num_runs, num_steps])
 
+
+    # %% Let the user know how long this will take
+
+    seq_time_s = seq_time / (10 ** 9)  # to seconds
+    expected_run_time_s = (
+        num_steps * num_reps * num_runs * seq_time_s
+    )  # s
+    expected_run_time_m = expected_run_time_s / 60  # to minutes
+
+#    print(" \nExpected run time: {:.1f} minutes. ".format(expected_run_time_m))
+    #    return
+    
     # %% Make some lists and variables to save at the end
 
     opti_coords_list = []
@@ -289,9 +302,6 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
         if apd_server_name == 'apd_tagger':
             apd_server.start_tag_stream(apd_indices)
             n_apd_samples = 1
-        elif apd_server_name == 'apd_daq':
-            apd_server.load_stream_reader(apd_indices[0], period,  int(2*num_reps*num_steps))#put the total number of samples you expect for this run
-            n_apd_samples = int(2*num_reps)
         
 
         # Shuffle the list of indices to use for stepping through the taus
@@ -299,6 +309,11 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 
 #        start_time = time.time()
         for tau_ind in tau_ind_list:
+            
+            if apd_server_name == 'apd_daq':
+                apd_server.load_stream_reader(apd_indices[0], period,  int(2*num_reps))
+                n_apd_samples = int(2*num_reps)
+            
 #        for tau_ind in range(len(taus)):
 #            print('Tau: {} ns'. format(taus[tau_ind]))
             # Break out of the while if the user says stop

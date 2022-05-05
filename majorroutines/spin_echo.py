@@ -615,7 +615,12 @@ def main_with_cxn(
         laser_power = tool_belt.set_laser_power(cxn, nv_sig, laser_key)
 
         # Load the APD
-        cxn.apd_tagger.start_tag_stream(apd_indices)
+        apd_server = tool_belt.get_apd_server(cxn)
+        apd_server_name = tool_belt.get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"])
+        
+        if apd_server_name == 'apd_tagger':
+            apd_server.start_tag_stream(apd_indices)
+            n_apd_samples = 1
 
         # Shuffle the list of tau indices so that it steps thru them randomly
         shuffle(tau_ind_list)
@@ -657,15 +662,19 @@ def main_with_cxn(
             ]
             seq_args_string = tool_belt.encode_seq_args(seq_args)
             # Clear the tagger buffer of any excess counts
-            cxn.apd_tagger.clear_buffer()
+            apd_server.clear_buffer()
             cxn.pulse_streamer.stream_immediate(
                 seq_file_name, num_reps, seq_args_string
             )
+            
+            if apd_server_name == 'apd_daq':
+                apd_server.load_stream_reader(apd_indices[0], seq_time,  int(4*num_reps))
+                n_apd_samples = int(4*num_reps)
 
             # Each sample is of the form [*(<sig_shrt>, <ref_shrt>, <sig_long>, <ref_long>)]
             # So we can sum on the values for similar index modulus 4 to
             # parse the returned list into what we want.
-            new_counts = cxn.apd_tagger.read_counter_separate_gates(1)
+            new_counts = apd_server.read_counter_separate_gates(n_apd_samples)
             sample_counts = new_counts[0]
 
             count = sum(sample_counts[0::4])
@@ -684,7 +693,7 @@ def main_with_cxn(
             ref_counts[run_ind, tau_ind_second] = count
             print("Second Reference = " + str(count))
 
-        cxn.apd_tagger.stop_tag_stream()
+        apd_server.stop_tag_stream()
 
         # %% Save the data we have incrementally for long T1s
 
