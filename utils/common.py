@@ -18,7 +18,7 @@ def get_nvdata_dir():
     """
     os_name = platform.system()
     if os_name == "Windows":
-        nvdata_dir = Path("E:/Shared drives/Kolkowitz Lab Group/nvdata")
+        nvdata_dir = Path("C:/Users/student/Documents/LAB_DATA")
     elif os_name == "Linux":
         nvdata_dir = Path.home() / "E/nvdata"
 

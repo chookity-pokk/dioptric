@@ -16,10 +16,6 @@ use file 5/5/2022
 # %% Imports
 
 
-import labrad
-import numpy
-import time
-import copy
 import utils.tool_belt as tool_belt
 import majorroutines.image_sample as image_sample
 import majorroutines.image_sample_xz as image_sample_xz
@@ -27,13 +23,10 @@ import majorroutines.optimize as optimize
 import majorroutines.stationary_count as stationary_count
 import majorroutines.resonance as resonance
 import majorroutines.pulsed_resonance as pulsed_resonance
-#import majorroutines.optimize_magnet_angle as optimize_magnet_angle
+import majorroutines.optimize_magnet_angle as optimize_magnet_angle
 import majorroutines.rabi as rabi
-#import majorroutines.ramsey as ramsey
-#import majorroutines.spin_echo as spin_echo
-
-# import majorroutines.set_drift_from_reference_image as set_drift_from_reference_image
-import debug.test_major_routines as test_major_routines
+import majorroutines.ramsey as ramsey
+import majorroutines.spin_echo as spin_echo
 from utils.tool_belt import States
 
 
@@ -43,64 +36,20 @@ apd_indices = [0]
 # %% Major Routines
 
 
-def do_image_sample(nv_sig, apd_indices):
+def do_image_sample(nv_sig, apd_indices,scan_size='medium'):
 
-    # scan_range = 0.5
-    # num_steps = 90
-    # num_steps = 120
-    #
-    # scan_range = 0.15
-    # num_steps = 60
-    #
-    # scan_range = 0.75
-    # num_steps = 150
-    
-    # scan_range = 5
-    # num_steps = 160
-    # scan_range =.5
-    # num_steps = 90
-    # scan_range = 2
-    # num_steps = 120
-    # scan_range = 0.05
-    # num_steps = 60
-    # 80 um / V
-    # 
-    # scan_range = 5.0
-    # scan_range = 3
-    # scan_range = 1.5
-#    scan_range =4
-#    scan_range = 1
-#    scan_range = 0.5
-    scan_range = 0.35
-#    scan_range = 0.25
-#    scan_range = 0.2
-#    scan_range = 0.15
-#    scan_range = 0.1
-#    scan_range = 0.05
-    # scan_range = 0.025
-    
-    # num_steps = 400
-    # num_steps = 300
-    # num_steps = 200
-    # num_steps = 160
-    # num_steps = 135
-    # num_steps =120
-#    num_steps = 90
-    num_steps = 60
-#    num_steps = 31
-    # num_steps = 15
-    
-    #individual line pairs:
-    # scan_range = 0.16
-    # num_steps = 160
-    
-    #both line pair sets:
-    # scan_range = 0.35
-    # num_steps = 160
+    if scan_size == 'big':
+        scan_range = 0.6 # large scan
+        num_steps = 90
+    elif scan_size == 'medium':
+        scan_range = 0.35 # large scan
+        num_steps = 60
+    elif scan_size == 'small':
+        scan_range = 0.15 # large scan
+        num_steps = 5
         
-
     # For now we only support square scans so pass scan_range twice
-    image_sample.main(nv_sig, scan_range, scan_range, num_steps, apd_indices, save_data= False)
+    image_sample.main(nv_sig, scan_range, scan_range, num_steps, apd_indices, save_data= True)
 
 def do_image_sample_xz(nv_sig, apd_indices):
     
@@ -270,7 +219,7 @@ def do_rabi(nv_sig, opti_nv_sig, apd_indices, state, uwave_time_range=[0, 200]):
 
     num_steps = 51
     num_reps = int(0.3e4)
-    num_runs = 50
+    num_runs = 10
 
     period = rabi.main(
         nv_sig,
@@ -359,11 +308,11 @@ if __name__ == "__main__":
 
     
     nv_sig = { 
-          "coords":[5.052, 4.328, 3.196], 
+          "coords":[5.071, 4.457, 3.196], 
         "name": "{}-search".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": True,
-        "expected_count_rate":None,
+        "expected_count_rate":40,
         
         "spin_laser": green_laser,
         "spin_laser_power": green_power,
@@ -377,9 +326,9 @@ if __name__ == "__main__":
         
         "collection_filter": "630_lp",
         "magnet_angle": None,
-        "resonance_LOW":2.8459,"rabi_LOW": 109.2,
+        "resonance_LOW":2.8476,"rabi_LOW": 109.2,
         "uwave_power_LOW": 15.5,  # 15.5 max
-        "resonance_HIGH": 2.8992,
+        "resonance_HIGH": 2.8894,
         "rabi_HIGH": 59.6,
         "uwave_power_HIGH": 14.5,
     }  # 14.5 max
@@ -398,14 +347,14 @@ if __name__ == "__main__":
 
         # tool_belt.init_safe_stop()
 
-#         tool_belt.set_drift([0.0, 0.0, tool_belt.get_drift()[2]])  # Keep z
+        # tool_belt.set_drift([0.0, 0.0, tool_belt.get_drift()[2]])  # Keep z
         # tool_belt.set_drift([0.0, 0.0, 0.0])  
         # tool_belt.set_xyz(labrad.connect(), [5,5,5]) 
 #        tool_belt.set_xyz(labrad.connect(), [0,0,0])   
 
-
+# 
         # do_optimize(nv_sig,apd_indices)
-        do_image_sample(nv_sig, apd_indices)
+        do_image_sample(nv_sig, apd_indices, scan_size='small')
 #        time.sleep(30)
 #        do_image_sample(nv_sig, apd_indices)
 #        do_stationary_count(nv_sig, apd_indices)
@@ -416,10 +365,10 @@ if __name__ == "__main__":
 #         do_resonance(nv_sig, nv_sig, apd_indices,  2.875, 0.1)
         # do_resonance_state(nv_sig,nv_sig, apd_indices, States.LOW)
         
-#         do_rabi(nv_sig, nv_sig, apd_indices, States.LOW, uwave_time_range=[0, 200])
+        # do_rabi(nv_sig, nv_sig, apd_indices, States.LOW, uwave_time_range=[0, 200])
         # do_rabi(nv_sig, nv_sig,apd_indices, States.HIGH, uwave_time_range=[0, 200])
         
-         # do_pulsed_resonance(nv_sig, nv_sig, apd_indices, 2.875, 0.1)
+          # do_pulsed_resonance(nv_sig, nv_sig, apd_indices, 2.875, 0.1)
         # do_pulsed_resonance_state(nv_sig, nv_sig,apd_indices, States.LOW)
         # do_ramsey(nv_sig, opti_nv_sig,apd_indices)
         # do_spin_echo(nv_sig, apd_indices)
