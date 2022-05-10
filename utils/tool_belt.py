@@ -1757,8 +1757,8 @@ def check_safe_stop_alive():
     global SAFESTOPTHREAD
     try:
         SAFESTOPTHREAD
-        return SAFESTOPTHREAD.isAlive()
-    except NameError:
+        return SAFESTOPTHREAD.is_alive()
+    except NameError: 
         return False
 
 
@@ -1777,7 +1777,7 @@ def init_safe_stop():
     try:
         SAFESTOPEVENT
         SAFESTOPTHREAD
-        if not SAFESTOPTHREAD.isAlive():
+        if not SAFESTOPTHREAD.is_alive():
             # Safe stop has already run to completion so start it back up
             needNewSafeStop = True
     except NameError:

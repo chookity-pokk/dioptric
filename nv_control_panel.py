@@ -399,13 +399,13 @@ if __name__ == "__main__":
         # tool_belt.init_safe_stop()
 
 #         tool_belt.set_drift([0.0, 0.0, tool_belt.get_drift()[2]])  # Keep z
-#        tool_belt.set_drift([0.0, 0.0, 0.0])  
+        # tool_belt.set_drift([0.0, 0.0, 0.0])  
         # tool_belt.set_xyz(labrad.connect(), [5,5,5]) 
 #        tool_belt.set_xyz(labrad.connect(), [0,0,0])   
 
 
-        do_optimize(nv_sig,apd_indices)
-        # do_image_sample(nv_sig, apd_indices)
+        # do_optimize(nv_sig,apd_indices)
+        do_image_sample(nv_sig, apd_indices)
 #        time.sleep(30)
 #        do_image_sample(nv_sig, apd_indices)
 #        do_stationary_count(nv_sig, apd_indices)
@@ -431,7 +431,7 @@ if __name__ == "__main__":
         # Reset our hardware - this should be done in each routine, but
         # let's double check here
         
-#        tool_belt.reset_cfm()
+        tool_belt.reset_cfm()
         # Kill safe stop
         if tool_belt.check_safe_stop_alive():
             print("\n\nRoutine complete. Press enter to exit.")
