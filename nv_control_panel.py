@@ -349,8 +349,6 @@ def do_spin_echo(nv_sig, apd_indices):
 
 if __name__ == "__main__":
 
-    # In debug mode, don't bother sending email notifications about exceptions
-    debug_mode = True
 
     # %% Shared parameters
     
@@ -361,11 +359,11 @@ if __name__ == "__main__":
 
     
     nv_sig = { 
-          "coords":[4.891, 4.350, 3.196], 
+          "coords":[5.052, 4.328, 3.196], 
         "name": "{}-search".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": True,
-        "expected_count_rate":35,
+        "expected_count_rate":None,
         
         "spin_laser": green_laser,
         "spin_laser_power": green_power,
@@ -398,16 +396,16 @@ if __name__ == "__main__":
 
     try:
 
-#        tool_belt.init_safe_stop()
+        # tool_belt.init_safe_stop()
 
 #         tool_belt.set_drift([0.0, 0.0, tool_belt.get_drift()[2]])  # Keep z
 #        tool_belt.set_drift([0.0, 0.0, 0.0])  
-#         tool_belt.set_xyz(labrad.connect(), [5,5,5]) 
+        # tool_belt.set_xyz(labrad.connect(), [5,5,5]) 
 #        tool_belt.set_xyz(labrad.connect(), [0,0,0])   
 
 
-#         do_optimize(nv_sig,apd_indices)
-        do_image_sample(nv_sig, apd_indices)
+        do_optimize(nv_sig,apd_indices)
+        # do_image_sample(nv_sig, apd_indices)
 #        time.sleep(30)
 #        do_image_sample(nv_sig, apd_indices)
 #        do_stationary_count(nv_sig, apd_indices)
@@ -428,12 +426,6 @@ if __name__ == "__main__":
         
         # do_spin_echo(nv_sig, apd_indices)
 
-    except Exception as exc:
-        
-        # Intercept the exception so we can email it out and re-raise it
-        if not debug_mode:
-            tool_belt.send_exception_email()
-        raise exc
 
     finally:
         # Reset our hardware - this should be done in each routine, but
