@@ -29,7 +29,6 @@ import majorroutines.pulsed_resonance as pulsed_resonance
 import majorroutines.rabi as rabi
 import majorroutines.ramsey as ramsey
 import majorroutines.spin_echo as spin_echo
-import minorroutines.test_routine_opx as test_routine_opx
 import minorroutines.determine_delays as determine_delays
 import minorroutines.determine_standard_readout_params as determine_standard_readout_params
 import chargeroutines.determine_charge_readout_params as determine_charge_readout_params
@@ -46,12 +45,6 @@ import matplotlib.pyplot as plt
 
 
 # %% Major Routines
-
-def do_test_routine_opx(nv_sig, apd_indices, delay, readout_time, laser_name, laser_power, num_reps):
-    apd_index = apd_indices[0]
-    counts, times, channels = test_routine_opx.main(nv_sig, delay, readout_time, apd_index, laser_name, laser_power, num_reps)
-    
-    return counts, times, channels
     
     
 
@@ -482,7 +475,7 @@ if __name__ == "__main__":
         # do_determine_scc_pulse_params(nv_sig,apd_indices,int(1e6))
         #     for t in [250,2000]:
         #         nv_sig["nv-_reionization_dur"] = t
-        do_ramsey_SCC_one_tau_no_ref(nv_sig, apd_indices,num_reps=int(1e6))
+        # do_ramsey_SCC_one_tau_no_ref(nv_sig, apd_indices,num_reps=int(1e6))
         
         # do_ramsey_one_tau_no_ref(nv_sig, apd_indices)
         
@@ -494,7 +487,7 @@ if __name__ == "__main__":
         # nv_sig['coords'] = [87.944, 38.754,76.375]
         # do_image_sample(nv_sig, apd_indices,num_steps=20,scan_range=2)#,cmin=0,cmax=75)
         
-        # do_optimize(nv_sig, apd_indices)
+        do_optimize(nv_sig, apd_indices)
         # do_optimize_z(nv_sig, apd_indices)
         
         # do_stationary_count(nv_sig, apd_indices,disable_opt=True)
