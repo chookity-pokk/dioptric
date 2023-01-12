@@ -13,6 +13,7 @@ Created September 10th, 2021
 # region Imports and constants
 
 import utils.common as common
+import utils.tool_belt as tool_belt
 import os
 from pathlib import PurePath
 import sqlite3
@@ -40,7 +41,14 @@ def process_full_path(full_path):
     # Get the path to the file separated from the file name itself and nvdata
     path_to_file = full_path.parent
     path_to_file_parts = path_to_file.parts
-    nvdata_ind = path_to_file_parts.index("nvdata")
+    
+    instructional_lab_pc_name = tool_belt.check_if_instructional_lab()
+        
+    if instructional_lab_pc_name != None:
+        nvdata_ind = path_to_file_parts.index("LAB_DATA")
+    else:
+        nvdata_ind = path_to_file_parts.index("nvdata")
+    
     index_path_parts = path_to_file_parts[nvdata_ind + 1 :]
     index_path = PurePath(index_path_parts[0]).joinpath(*index_path_parts[1:])
     # Save the path string in the posix format

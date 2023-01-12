@@ -128,6 +128,7 @@ class PulseGenSwab82(PulseGen, LabradServer):
         self.pulse_streamer_wiring = self.config_dict["Wiring"]["PulseGen"]
         logging.info(self.pulse_streamer_wiring)
         self.feedthrough_lasers = []
+        self.counter = self.config_dict['Servers']['counter']
         optics_dict = config_dict["Optics"]
         for key in optics_dict:
             optic = optics_dict[key]
@@ -145,11 +146,16 @@ class PulseGenSwab82(PulseGen, LabradServer):
         seq = None
         file_name, file_ext = os.path.splitext(seq_file)
         if file_ext == ".py":  # py: import as a module
+            counter_name = self.counter
+            if 'daq' in counter_name:
+                file_name = file_name + '-daq'
+
             seq_module = importlib.import_module(file_name)
             args = tool_belt.decode_seq_args(seq_args_string)
             seq, final, ret_vals = seq_module.get_seq(
                 self, self.config_dict, args
             )
+            
         return seq, final, ret_vals
 
     @setting(2, seq_file="s", seq_args_string="s", returns="*?")

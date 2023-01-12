@@ -626,6 +626,16 @@ def process_counts(
 # region LabRAD registry utils
 # Core registry functions in Common
 
+def check_if_instructional_lab():
+    try:
+        with labrad.connect() as cxn:
+            instructional_lab_pc_name = common.get_registry_entry(
+                cxn, "instructional_lab_pc_name", ["", "Config"]
+            )
+    except:
+        instructional_lab_pc_name = None
+        
+    return instructional_lab_pc_name
 
 def get_config_dict(cxn=None):
     """Get the whole config from the registry as a dictionary"""
@@ -890,8 +900,12 @@ def save_figure(fig, file_path):
             The file path to save to including the file name, excluding the
             extension
     """
-
-    fig.savefig(str(file_path.with_suffix(".svg")), dpi=300)
+    instructional_lab_pc_name = check_if_instructional_lab()
+        
+    if instructional_lab_pc_name != None:
+        fig.savefig(str(file_path.with_suffix(".png")), dpi=300)
+    else:
+        fig.savefig(str(file_path.with_suffix(".svg")), dpi=300)
 
 
 def save_raw_data(rawData, filePath):
