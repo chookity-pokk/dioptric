@@ -56,7 +56,7 @@ def measure_delay(
     sig_counts[:] = numpy.nan
     ref_counts = numpy.copy(sig_counts)
 
-    # optimize.main_with_cxn(cxn, nv_sig, apd_indices)
+    optimize.main_with_cxn(cxn, nv_sig, apd_indices)
     if 'charge_readout_laser_filter' in nv_sig:
         tool_belt.set_filter(cxn, nv_sig, 'charge_readout_laser')
 
@@ -73,9 +73,21 @@ def measure_delay(
         
 
     tool_belt.init_safe_stop()
-
+    
+    
+    apd_server = tool_belt.get_apd_server(cxn)
+    apd_server_name = tool_belt.get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"])
+    if apd_server_name == 'apd_tagger':
+        apd_server.start_tag_stream(apd_indices)
+        cxn.apd_tagger.clear_buffer()
+        n_apd_samples = 1
+    
+    rolling = 0
+    
     for tau_ind in tau_ind_list:
-
+        rolling = rolling+1
+        if rolling in [10,20,30,40,50,60,70,80,90,100]:
+            optimize.main_with_cxn(cxn, nv_sig, apd_indices)
         # Break out of the while if the user says stop
         if tool_belt.safe_stop():
             break
@@ -117,14 +129,8 @@ def measure_delay(
         )
 
         period = ret_vals[0]
-        
-        apd_server = tool_belt.get_apd_server(cxn)
-        apd_server_name = tool_belt.get_registry_entry(cxn, "apd_server", ["", "Config", "Counter"])
-        if apd_server_name == 'apd_tagger':
-            apd_server.start_tag_stream(apd_indices)
-            cxn.apd_tagger.clear_buffer()
-            n_apd_samples = 1
-        elif apd_server_name == 'apd_daq':
+
+        if apd_server_name == 'apd_daq':
             apd_server.load_stream_reader(apd_indices[0], period,  int(2*num_reps))#put the total number of samples you expect for this run
             n_apd_samples = int(2*num_reps)
     
@@ -139,7 +145,6 @@ def measure_delay(
             print("Error!")
         ref_counts[tau_ind] = sum(sample_counts[0::2])
         sig_counts[tau_ind] = sum(sample_counts[1::2])
-
 
     if apd_server_name == 'apd_tagger':
         apd_server.stop_tag_stream()
@@ -290,30 +295,30 @@ if __name__ == "__main__":
 
     # Rabi parameters
     sample_name = "johnson"
-    green_power = 7
-    nd = "nd_0.5"
+    green_power = 10
+    # nd = "nd_0.5"
     green_laser = 'cobolt_515'
      # green_laser = "laserglow_532"
     nv_sig = { 
-          "coords":[4.817, 4.608, 3.490], 
+          "coords":[3.297, 2.425, 3.24], 
         "name": "{}-search".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": True,
-        "expected_count_rate":35,
+        "expected_count_rate":26,
         
         "spin_laser": green_laser,
         "spin_laser_power": green_power,
-        "spin_pol_dur": 1e3,
+        "spin_pol_dur": 1e4,
         "spin_readout_laser_power": green_power,
         "spin_readout_dur": 350,
         
         "imaging_laser":green_laser,
         "imaging_laser_power": green_power,
-        "imaging_readout_dur": 1e4,
+        "imaging_readout_dur": 1e7,
         
-        "collection_filter": "630_lp",
-        "magnet_angle": None,
-        "resonance_LOW":2.87,"rabi_LOW": 100,
+        # "collection_filter": "630_lp",
+        "magnet_angle": 102,
+        "resonance_LOW":2.8373 ,"rabi_LOW": 55.4,
         "uwave_power_LOW": 15.5,  # 15.5 max
         "resonance_HIGH": 2.932,
         "rabi_HIGH": 59.6,
@@ -342,8 +347,8 @@ if __name__ == "__main__":
 #                      delay_range, num_steps, num_reps, laser_name, laser_power)
 
         # uwave_delay
-         num_reps = int(1e5)
-         delay_range = [-200, 400]
+         num_reps = int(1e4)
+         delay_range = [-200, 600]
          num_steps = 101
          # sg394
          state = States.LOW

@@ -14,7 +14,7 @@ import utils.tool_belt as tool_belt
 import time
 import labrad
 import majorroutines.optimize as optimize
-
+import logging
 
 def populate_img_array_bottom_left(valsToAdd, imgArray, writePos):
     """
@@ -161,7 +161,7 @@ def main(nv_sig, x_range, y_range, num_steps, apd_indices,
 def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
                   apd_indices, save_data=True, plot_data=True,
                   um_scaled=False, nv_minus_initialization=False):
-
+    
     # %% Some initial setup
 
     tool_belt.reset_cfm(cxn)
@@ -332,7 +332,8 @@ def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
     xy_server.write_xy(x_center, y_center)
 
     # %% Save the data
-
+    # print(img_array)
+    # print(img_array.astype(int).tolist())
     timestamp = tool_belt.get_time_stamp()
     # print(nv_sig['coords'])
     rawData = {'timestamp': timestamp,
@@ -351,13 +352,14 @@ def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
                'y_voltages': y_voltages.tolist(),
                'y_voltages-units': 'V',
                'img_array': img_array.astype(int).tolist(),
-               'img_array-units': 'counts'}
+                'img_array-units': 'counts'}
 
     if save_data:
 
         filePath = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
         tool_belt.save_raw_data(rawData, filePath)
-
+        
+        
         if plot_data:
 
             tool_belt.save_figure(fig, filePath)
@@ -371,8 +373,8 @@ def main_with_cxn(cxn, nv_sig, x_range, y_range, num_steps,
 if __name__ == '__main__':
 
 
-    file_name = '2022_03_27-17_45_01-cannon_sc-nv0_2022_03_25'
-    scale = -1#83
+    file_name = '2022_06_04-14_04_00-ayrton-nv1'
+    scale = -1
 
     data = tool_belt.get_raw_data(file_name)
     nv_sig = data['nv_sig']
@@ -382,30 +384,26 @@ if __name__ == '__main__':
     y_range= data['y_range']
     x_voltages = data['x_voltages']
     y_voltages = data['y_voltages']
-
-    # x_low = x_voltages[0]
-    # x_high = x_voltages[-1]
-    # y_low = y_voltages[0]
-    # y_high = y_voltages[-1]
-
-
-    x_low = -x_range/2
-    x_high = x_range/2
-    y_low = -y_range/2
-    y_high = y_range/2
+    readout = data['readout']
+    img_array = numpy.array(img_array).reshape(-1,len(x_voltages))
+    img_array_kcps = numpy.copy(img_array)
+    readout_sec = readout/10**9
+    img_array_kcps[:] = (img_array[:] / 1000) / readout_sec
+    x_low = x_voltages[0]
+    x_high = x_voltages[-1]
+    y_low = y_voltages[0]
+    y_high = y_voltages[-1]
 
     pixel_size = x_voltages[1] - x_voltages[0]
     half_pixel_size = pixel_size / 2
-    img_extent = [x_low - half_pixel_size,x_high + half_pixel_size,
-                  y_low - half_pixel_size, y_high + half_pixel_size]
-
-    # csv_name = '{}_{}'.format(timestamp, nv_sig['name'])
-
-
-    tool_belt.create_image_figure(img_array, numpy.array(img_extent)*scale, clickHandler=on_click_image,
+    img_extent = [x_high + half_pixel_size, x_low - half_pixel_size,
+                      y_low - half_pixel_size, y_high + half_pixel_size]
+    
+    
+#### you can change the maximum value of the color bar by changing max_value in the function call below
+    tool_belt.create_image_figure(img_array_kcps, img_extent, clickHandler=on_click_image,
                         title=None, color_bar_label='Counts',
-                        min_value=None, um_scaled=True)
-
+                        min_value=0,max_value=40, um_scaled=False)
 
     # tool_belt.save_image_data_csv(img_array, x_voltages, y_voltages,  path,
     #                               csv_name)

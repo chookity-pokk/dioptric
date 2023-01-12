@@ -210,7 +210,7 @@ def main_with_cxn(cxn, nv_sig, x_range, z_range, num_steps,
 
     seq_args = [delay, readout, apd_indices[0], laser_name, laser_power]
     seq_args_string = tool_belt.encode_seq_args(seq_args)
-    # print(seq_args_string)
+    print(seq_args_string)
     # return
     ret_vals = cxn.pulse_streamer.stream_load('simple_readout.py',
                                               seq_args_string)
@@ -339,14 +339,14 @@ def main_with_cxn(cxn, nv_sig, x_range, z_range, num_steps,
                'img_array': img_array.astype(int).tolist(),
                'img_array-units': 'counts'}
 
-#    if save_data:
-#
-#        filePath = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
-#        tool_belt.save_raw_data(rawData, filePath)
-#
-#        if plot_data:
-#
-#            tool_belt.save_figure(fig, filePath)
+    if save_data:
+
+        filePath = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
+        tool_belt.save_raw_data(rawData, filePath)
+
+        if plot_data:
+
+            tool_belt.save_figure(fig, filePath)
 
     return img_array, x_voltages, z_voltages
 

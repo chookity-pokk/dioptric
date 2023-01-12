@@ -278,23 +278,23 @@ class PiezoMCL(LabradServer):
         """
         with nidaqmx.Task() as task:
             # Set up the internal channels - to do: actual parsing...
-            if self.daq_ao_piezo_x == "dev1/AO0":
-                chan_name = "dev1/_ao0_vs_aognd"
-            elif self.daq_ao_piezo_x == "dev1/AO1":
-                chan_name = "dev1/_ao1_vs_aognd"
-            elif self.daq_ao_piezo_x == "dev1/AO2":
-                chan_name = "dev1/_ao2_vs_aognd"
-            elif self.daq_ao_piezo_x == "dev1/AO3":
-                chan_name = "dev1/_ao3_vs_aognd"
+            if self.daq_ao_piezo_x == "PXI1Slot3_2/AO0":
+                chan_name = "PXI1Slot3_2/_ao0_vs_aognd"
+            elif self.daq_ao_piezo_x == "PXI1Slot3_2/AO1":
+                chan_name = "PXI1Slot3_2/_ao1_vs_aognd"
+            elif self.daq_ao_piezo_x == "PXI1Slot3_2/AO2":
+                chan_name = "PXI1Slot3_2/_ao2_vs_aognd"
+            elif self.daq_ao_piezo_x == "PXI1Slot3_2/AO3":
+                chan_name = "PXI1Slot3_2/_ao3_vs_aognd"
             task.ai_channels.add_ai_voltage_chan(chan_name, min_val=0.0, max_val=10.0)
-            if self.daq_ao_piezo_y == "dev1/AO0":
-                chan_name = "dev1/_ao0_vs_aognd"
-            elif self.daq_ao_piezo_y == "dev1/AO1":
-                chan_name = "dev1/_ao1_vs_aognd"
-            elif self.daq_ao_piezo_y == "dev1/AO2":
-                chan_name = "dev1/_ao2_vs_aognd"
-            elif self.daq_ao_piezo_y == "dev1/AO3":
-                chan_name = "dev1/_ao3_vs_aognd"
+            if self.daq_ao_piezo_y == "PXI1Slot3_2/AO0":
+                chan_name = "PXI1Slot3_2/_ao0_vs_aognd"
+            elif self.daq_ao_piezo_y == "PXI1Slot3_2/AO1":
+                chan_name = "PXI1Slot3_2/_ao1_vs_aognd"
+            elif self.daq_ao_piezo_y == "PXI1Slot3_2/AO2":
+                chan_name = "PXI1Slot3_2/_ao2_vs_aognd"
+            elif self.daq_ao_piezo_y == "PXI1Slot3_2/AO3":
+                chan_name = "PXI1Slot3_2/_ao3_vs_aognd"
             task.ai_channels.add_ai_voltage_chan(chan_name, min_val=0.0, max_val=10.0)
             voltages = task.read()
 
@@ -617,14 +617,14 @@ class PiezoMCL(LabradServer):
         """Return the current voltages on the piezo's DAQ channel"""
         with nidaqmx.Task() as task:
             # Set up the internal channels - to do: actual parsing...                
-            if self.daq_ao_piezo_z == "dev1/AO0":
-                chan_name = "dev1/_ao0_vs_aognd"
-            elif self.daq_ao_piezo_z == "dev1/AO1":
-                chan_name = "dev1/_ao1_vs_aognd"
-            elif self.daq_ao_piezo_z == "dev1/AO2":
-                chan_name = "dev1/_ao2_vs_aognd"
-            elif self.daq_ao_piezo_z == "dev1/AO3":
-                chan_name = "dev1/_ao3_vs_aognd"
+            if self.daq_ao_piezo_z == "PXI1Slot3_2/AO0":
+                chan_name = "PXI1Slot3_2/_ao0_vs_aognd"
+            elif self.daq_ao_piezo_z == "PXI1Slot3_2/AO1":
+                chan_name = "PXI1Slot3_2/_ao1_vs_aognd"
+            elif self.daq_ao_piezo_z == "PXI1Slot3_2/AO2":
+                chan_name = "PXI1Slot3_2/_ao2_vs_aognd"
+            elif self.daq_ao_piezo_z == "PXI1Slot3_2/AO3":
+                chan_name = "PXI1Slot3_2/_ao3_vs_aognd"
             task.ai_channels.add_ai_voltage_chan(chan_name, min_val=0.0, max_val=10.0)
             voltage = task.read()
         return voltage

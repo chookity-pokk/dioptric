@@ -217,6 +217,7 @@ class PulseStreamer(LabradServer):
         """
         
         # Make sure the lasers that require it are set to feedthrough
+
         for laser in self.feedthrough_lasers:
             self_client = self.client
             if hasattr(self_client, laser):

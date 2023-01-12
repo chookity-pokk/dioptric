@@ -137,6 +137,8 @@ def main_with_cxn(cxn, nv_sig, run_time, apd_indices, disable_opt=None):
     args = fig, samples, write_pos, readout_sec, total_num_samples
 
     # %% Collect the data
+    
+    # print('test',apd_server.read_counter_simple())
 
     cxn.pulse_streamer.stream_start(-1)
 
@@ -158,6 +160,7 @@ def main_with_cxn(cxn, nv_sig, run_time, apd_indices, disable_opt=None):
         # Read the samples and update the image
         try:
             new_samples = apd_server.read_counter_simple() #this function should work for using daq or timetagger
+            # print(new_samples)
         except Exception:
         #if using a daq for counting, the read_counter_simple stops after 
         #the set number of samples is read, and then the info about the 

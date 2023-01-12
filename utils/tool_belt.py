@@ -237,10 +237,19 @@ def set_xyz_on_nv(cxn, nv_sig):
 
 def laser_off(cxn, laser_name):
     laser_switch_sub(cxn, False, laser_name)
+    
+def laser_off_no_cxn(laser_name, laser_power=None):
+        with labrad.connect() as cxn:
+            laser_switch_sub(cxn, False, laser_name)
 
 
 def laser_on(cxn, laser_name, laser_power=None):
     laser_switch_sub(cxn, True, laser_name, laser_power)
+    
+def laser_on_no_cxn(laser_name, laser_power=None):
+        with labrad.connect() as cxn:
+            laser_switch_sub(cxn, True, laser_name, laser_power)
+        
 
 
 def laser_switch_sub(cxn, turn_on, laser_name, laser_power=None):
@@ -600,7 +609,10 @@ def init_matplotlib(font_size=11.25):
     plt.rcParams["font.family"] = "sans-serif"
     plt.rcParams["font.sans-serif"] = "Roboto"
 
-    plt.rc("text", usetex=True)
+    pc_name = socket.gethostname()
+    # Instructional lab check
+    if pc_name != "DESKTOP-OQNODDN":
+        plt.rc("text", usetex=True)
 
 
 def create_image_figure(
@@ -609,7 +621,7 @@ def create_image_figure(
     clickHandler=None,
     title=None,
     color_bar_label="Counts",
-    min_value=None,
+    min_value=None,max_value=None,
     um_scaled=False,
     aspect_ratio=None,
     color_map="inferno",
@@ -650,7 +662,7 @@ def create_image_figure(
         imgArray,
         cmap=color_map,
         extent=tuple(imgExtent),
-        vmin=min_value,
+        vmin=min_value,vmax=max_value,
         aspect=aspect_ratio,
     )
 
@@ -1414,7 +1426,12 @@ def save_figure(fig, file_path):
     """
 
     file_path = str(file_path)
-    fig.savefig(file_path + ".svg", dpi=300)
+    
+    pc_name = socket.gethostname()
+    if pc_name == 'DESKTOP-OQNODDN':
+        fig.savefig(file_path + ".png", dpi=300)
+    else:
+        fig.savefig(file_path + ".svg", dpi=300)
 
 
 def save_raw_data(rawData, filePath):
@@ -1447,11 +1464,16 @@ def save_raw_data(rawData, filePath):
     with open(file_path_ext, "w") as file:
         json.dump(rawData, file, indent=2)
 
-    # print(repr(search_index.search_index_regex))
-
     if file_path_ext.match(search_index.search_index_glob):
         search_index.add_to_search_index(file_path_ext)
 
+
+def save_to_csv(filePath,rows):
+    fp = open(filePath+'_dataonly.csv','w')
+    writer = csv.writer(fp, delimiter=',')
+    for row in rows:
+        writer.writerow(row)
+    fp.close()
 
 def get_nv_sig_units():
     return {
@@ -1875,7 +1897,9 @@ def set_drift(drift):
         cxn.registry.cd(["", "State"])
         return cxn.registry.set("DRIFT", drift)
 
-
+def reset_xy_drift():
+    set_drift([0.0, 0.0, get_drift()[2]])
+    
 def reset_drift():
     set_drift([0.0, 0.0, 0.0])
 

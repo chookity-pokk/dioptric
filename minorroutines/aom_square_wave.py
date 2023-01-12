@@ -71,7 +71,7 @@ def main(cxn, laser_name, laser_power=None):
     """Run a laser on on a square wave."""
     
     seq_file = 'square_wave.py'
-    period = int(2000)
+    period = int(20000)
     # period = int(0.25e6)
     # period = int(10000)
     seq_args = [period, laser_name, laser_power]
@@ -107,37 +107,37 @@ if __name__ == '__main__':
     # pos = [-0.025, -0.009, 4.89]
 
     # Hahn
-    # laser_names = ['cobolt_638']
+    laser_names = ['cobolt_515']
     # laser_names = ['laserglow_589']
-    laser_names = ['laserglow_532']
+    # laser_names = ['laserglow_532']
     # laser_names = ['cobolt_638', 'laserglow_532']
     # laser_names = ['laserglow_532', 'laserglow_589']
     # laser_powers = [None, 1.0]
     # laser_powers = [1.0]
     # laser_names = ['laserglow_589', 'cobolt_638', 'laserglow_532']
     # filter_name = 'nd_0.5'
-    pos = [0.0, 0.0, 5]
-    laser_powers = None
+    # pos = [0.0, 0.0, 5]
+    # laser_powers = None
 
     with labrad.connect() as cxn:
         # start = time.time()
         # tool_belt.set_filter(cxn, optics_name='laserglow_532', filter_name=filter_name)
         # finish = time.time()
         # print(finish - start)
-        tool_belt.set_xyz(cxn, pos)
+        # tool_belt.set_xyz(cxn, pos)
 #        for el in laser_names:
         # tool_belt.set_filter(cxn, optics_name=laser_name, filter_name=filter_name)
-        tool_belt.set_filter(cxn, optics_name='laserglow_532', filter_name="nd_0.5")
+        # tool_belt.set_filter(cxn, optics_name='laserglow_532', filter_name="nd_0.5")
         # tool_belt.set_filter(cxn, optics_name='collection', filter_name='630_lp')
         # constant(cxn, laser_names, laser_powers)
-        # main(cxn, laser_names[0])
+        main(cxn, laser_names[0])
     
         
     
         # cxn.pulse_streamer.constant([3], 1.0)
         # cxn.pulse_streamer.constant([], 1.0)
-        cxn.pulse_streamer.constant([3])
+        # cxn.pulse_streamer.constant([4])
     
         input('Press enter to stop...')
         
-        cxn.pulse_streamer.constant()
+        # cxn.pulse_streamer.constant()

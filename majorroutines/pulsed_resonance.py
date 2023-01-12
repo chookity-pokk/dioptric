@@ -22,13 +22,13 @@ from scipy.signal import find_peaks
 import labrad
 from utils.tool_belt import States
 from random import shuffle
-
+from pathlib import Path
 
 # %% Figure functions
 
 
 def create_fit_figure(
-    freq_range, freq_center, num_steps, norm_avg_sig, fit_func, popt
+    freq_range, freq_center, num_steps, norm_avg_sig, fit_func, popt, magnet_angle = None
 ):
 
     freqs = calculate_freqs(freq_range, freq_center, num_steps)
@@ -39,6 +39,8 @@ def create_fit_figure(
     ax.plot(smooth_freqs, fit_func(smooth_freqs, *popt), "r-", label="fit")
     ax.set_xlabel("Frequency (GHz)")
     ax.set_ylabel("Normalized fluorescence")
+    if magnet_angle:
+        ax.set_title('Magnet angle {} degrees'.format(magnet_angle))
     ax.legend(loc="lower right")
 
     text = "\n".join(
@@ -277,7 +279,6 @@ def fit_resonance(
     fit_func, guess_params = get_guess_params(
         freq_range, freq_center, num_steps, norm_avg_sig, ref_counts
     )
-
     try:
         if norm_avg_sig_ste is not None:
             popt, pcov = curve_fit(
@@ -420,6 +421,7 @@ def main(
     state=States.LOW,
     composite=False,
     opti_nv_sig=None,
+    angle_val = None,
 ):
 
     with labrad.connect() as cxn:
@@ -437,6 +439,7 @@ def main(
             state,
             composite,
             opti_nv_sig,
+            angle_val
         )
     return resonance_list
 
@@ -455,6 +458,7 @@ def main_with_cxn(
     state=States.LOW,
     composite=False,
     opti_nv_sig=None,
+    angle_val = None,
 ):
 
     # %% Initial calculations and setup
@@ -502,14 +506,14 @@ def main_with_cxn(
     opti_coords_list = []
 
     # %% Let the user know how long this will take
-
+    
     seq_time_s = seq_time / (10 ** 9)  # to seconds
-    expected_run_time_s = (
-        num_steps * num_reps * num_runs * seq_time_s
-    )  # s
+    optimize_dur = tool_belt.get_registry_entry(cxn, "optimize_dur_s", ["", "Config", "CommonDurations"])
+    #we'll add in half the time to optimize to each run, assuming that half of the time, it doesn't need to optimize
+    expected_run_time_s = (seq_time_s * num_steps * num_reps + optimize_dur/2) * num_runs
     expected_run_time_m = expected_run_time_s / 60  # to minutes
-
-#    print(" \nExpected run time: {:.1f} minutes. ".format(expected_run_time_m))
+    dur_scaling = tool_belt.get_registry_entry(cxn, "seq_dur_scale_pesr", ["", "Config", "CommonDurations"])
+    print(" \nExpected run time: {:.2f} minutes. ".format(expected_run_time_m * dur_scaling))
     #    return
     
     # %% Get the starting time of the function
@@ -526,7 +530,6 @@ def main_with_cxn(
 
     for run_ind in range(num_runs):
         print("Run index: {}".format(run_ind))
-
         # Break out of the while if the user says stop
         if tool_belt.safe_stop():
             break
@@ -580,10 +583,10 @@ def main_with_cxn(
             # switch frequencies so allow 1 ms total
             #            time.sleep(0.001)
             # Clear the tagger buffer of any excess counts
-            
             if apd_server_name == 'apd_daq':
                 apd_server.load_stream_reader(apd_indices[0], period,  int(2*num_reps))
                 n_apd_samples = int(2*num_reps)
+
             apd_server.clear_buffer()
             
             # Start the timing stream
@@ -632,13 +635,62 @@ def main_with_cxn(
             "ref_counts": ref_counts.astype(int).tolist(),
             "ref_counts-units": "counts",
         }
+        ####testbelow###
+        # print(ref_counts[0:run_ind+1,:])
+        # print('')
+        # print(sig_counts[0:run_ind+1,:])
+        ret_vals = process_counts(ref_counts[0:run_ind+1,:], sig_counts[0:run_ind+1,:], run_ind+1)
+        # ret_vals = process_counts(ref_counts, sig_counts, run_ind+1)
+        (
+            avg_ref_counts,
+            avg_sig_counts,
+            norm_avg_sig,
+            ste_ref_counts,
+            ste_sig_counts,
+            norm_avg_sig_ste,
+        ) = ret_vals
+
+        
+        rawData = {
+            "start_timestamp": start_timestamp,
+            "nv_sig": nv_sig,
+            "nv_sig-units": tool_belt.get_nv_sig_units(),
+            "freq_center": freq_center,
+            "freq_center-units": "GHz",
+            "freq_range": freq_range,
+            "freq_range-units": "GHz",
+            "uwave_pulse_dur": uwave_pulse_dur,
+            "uwave_pulse_dur-units": "ns",
+            "state": state.name,
+            "num_steps": num_steps,
+            "num_reps": num_reps,
+            "num_runs": num_runs,
+            "run_ind": run_ind,
+            "uwave_power": uwave_power,
+            "uwave_power-units": "dBm",
+            "readout": readout,
+            "readout-units": "ns",
+            "opti_coords_list": opti_coords_list,
+            "opti_coords_list-units": "V",
+            "sig_counts": sig_counts.astype(int).tolist(),
+            "sig_counts-units": "counts",
+            "ref_counts": ref_counts.astype(int).tolist(),
+            "ref_counts-units": "counts",
+            "norm_avg_sig": norm_avg_sig.astype(float).tolist(),
+            "norm_avg_sig-units": "arb",
+            "norm_avg_sig_ste": norm_avg_sig_ste.astype(float).tolist(),
+            "norm_avg_sig_ste-units": "arb",
+        }
+        
+        ###testabove###
+
 
         # This will continuously be the same file path so we will overwrite
         # the existing file with the latest version
-#        file_path = tool_belt.get_file_path(
-#            __file__, start_timestamp, nv_sig["name"], "incremental"
-#        )
-#        tool_belt.save_raw_data(rawData, file_path)
+        file_path = tool_belt.get_file_path(
+            __file__, start_timestamp, nv_sig["name"], "incremental"
+        )
+        tool_belt.save_raw_data(rawData, file_path)
 
     # %% Process and plot the data
 
@@ -674,6 +726,12 @@ def main_with_cxn(
     ax.set_title("Normalized Count Rate vs Frequency")
     ax.set_xlabel("Frequency (GHz)")
     ax.set_ylabel("Contrast (arb. units)")
+    if angle_val:
+        text = 'Magnet angle: {} deg'.format(angle_val)
+        props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
+    
+        ax.text(0.6, 0.25, text, transform=ax.transAxes, fontsize=12,
+                                verticalalignment="top", bbox=props)
 
     fig.canvas.draw()
     fig.tight_layout()
@@ -682,18 +740,18 @@ def main_with_cxn(
     # %% Fit the data
 
     fit_func, popt, pcov = fit_resonance(
-        freq_range, freq_center, num_steps, norm_avg_sig, norm_avg_sig_ste
+        freq_range, freq_center, num_steps, norm_avg_sig, ref_counts=ref_counts
     )
     if (fit_func is not None) and (popt is not None):
         fit_fig = create_fit_figure(
-            freq_range, freq_center, num_steps, norm_avg_sig, fit_func, popt
+            freq_range, freq_center, num_steps, norm_avg_sig, fit_func, popt, angle_val
         )
     else:
         fit_fig = None
 
     # %% Clean up and save the data
 
-#    tool_belt.reset_cfm(cxn)
+    tool_belt.reset_cfm(cxn)
 
     timestamp = tool_belt.get_time_stamp()
 
@@ -726,14 +784,15 @@ def main_with_cxn(
         "norm_avg_sig_ste": norm_avg_sig_ste.astype(float).tolist(),
         "norm_avg_sig_ste-units": "arb",
     }
+    
 
     name = nv_sig["name"]
-#    filePath = tool_belt.get_file_path(__file__, timestamp, name)
-#    tool_belt.save_figure(fig, filePath)
-#    tool_belt.save_raw_data(rawData, filePath)
-#    filePath = tool_belt.get_file_path(__file__, timestamp, name + "-fit")
-#    if fit_fig is not None:
-#        tool_belt.save_figure(fit_fig, filePath)
+    filePath = tool_belt.get_file_path(__file__, timestamp, name)
+    tool_belt.save_figure(fig, filePath)
+    tool_belt.save_raw_data(rawData, filePath)
+    filePath = tool_belt.get_file_path(__file__, timestamp, name + "-fit")
+    if fit_fig is not None:
+        tool_belt.save_figure(fit_fig, filePath)
 
     # %% Return
 
@@ -785,11 +844,15 @@ if __name__ == "__main__":
     # fit_func, popt, pcov = fit_resonance(freq_range, freq_center, num_steps,
     #                                       norm_avg_sig, norm_avg_sig_ste)
 
-    tool_belt.init_matplotlib()
+    # tool_belt.init_matplotlib()
     matplotlib.rcParams["axes.linewidth"] = 1.0
 
-    file = "2021_09_30-20_21_17-johnson-dnv5_2021_09_23"
-    data = tool_belt.get_raw_data(file)
+    file = "2022_06_21-15_02_07-johnson-nv1"
+    subfolder = Path("2022_06/incremental")
+    dir_ = Path("C:/Users/student/Documents/LAB_DATA/pc_fzx31065/branch_instructional-lab/pulsed_resonance")
+    subfolder, dir_ = None, None
+    data = tool_belt.get_raw_data(file,nvdata_dir=dir_,path_from_nvdata=subfolder)
+    # print(data)
     freq_center = data["freq_center"]
     freq_range = data["freq_range"]
     num_steps = data["num_steps"]
@@ -798,14 +861,14 @@ if __name__ == "__main__":
     ref_counts = numpy.array(data["ref_counts"])
 
     fit_func, popt, pcov = fit_resonance(
-        freq_range, freq_center, num_steps, norm_avg_sig, ref_counts
+        freq_range, freq_center, num_steps, norm_avg_sig, ref_counts=ref_counts
     )
-
+    
     create_fit_figure(
         freq_range, freq_center, num_steps, norm_avg_sig, fit_func, popt
     )
 
-    plt.show(block=True)
+    # plt.show(block=True)
 
     # res_freq, freq_range, contrast, rabi_period, uwave_pulse_dur
     # simulate(2.8351, 0.035, 0.02, 170, 170/2)

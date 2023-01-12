@@ -12,6 +12,7 @@ import utils.common as common
 import os
 from pathlib import PurePath
 import sqlite3
+import socket
 
 search_index_file_name = "search_index.db"
 nvdata_dir = common.get_nvdata_dir()
@@ -33,7 +34,14 @@ def process_full_path(full_path):
     # Get the path to the file separated from the file name itself and nvdata
     path_to_file = full_path.parent
     path_to_file_parts = path_to_file.parts
-    nvdata_ind = path_to_file_parts.index("nvdata")
+    
+    pc_name = socket.gethostname()
+    if pc_name == 'DESKTOP-OQNODDN':
+        nvdata_ind = path_to_file_parts.index("LAB_DATA")
+    else:
+        nvdata_ind = path_to_file_parts.index("nvdata")
+        
+    # nvdata_ind = path_to_file_parts.index("nvdata")
     index_path_parts = path_to_file_parts[nvdata_ind + 1 :]
     index_path = PurePath(index_path_parts[0]).joinpath(*index_path_parts[1:])
     # Save the path string in the posix format

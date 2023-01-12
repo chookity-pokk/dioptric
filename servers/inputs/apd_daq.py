@@ -123,7 +123,7 @@ class ApdDaq(LabradServer):
 
         chan_num = self.daq_ctr_apd[apd_index]
         
-        chan_name = 'Dev1/' + chan_num
+        chan_name = 'PXI1Slot3_2/' + chan_num
 #        logging.info(chan_name)
         
         chan = task.ci_channels.add_ci_count_edges_chan(chan_name)
@@ -281,7 +281,7 @@ class ApdDaq(LabradServer):
         num_read_so_far = state_dict['num_read_so_far']
         total_num_to_read = state_dict['total_num_to_read']
         buffer_size = state_dict['buffer_size'] 
-        
+
         # Read the samples currently in the DAQ memory
         if num_to_read == None:
             # Read whatever is in the buffer

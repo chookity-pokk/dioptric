@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 from random import shuffle
 from scipy.optimize import curve_fit
 import labrad
-
+import logging
 
 # %% Functions
 
@@ -180,6 +180,12 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 
     startFunctionTime = time.time()
     start_timestamp = tool_belt.get_time_stamp()
+    
+    # logging
+    filename =  'C:/Users/student/Documents/LAB_DATA/pc_fzx31065/branch_instructional-lab/counts_log.log'
+    logging.basicConfig(level=logging.INFO, 
+                format='%(asctime)s %(message)s',
+                datefmt='%y-%m-%d_%H-%M-%S', filename=filename)
 
     # %% Initial calculations and setup
 
@@ -228,15 +234,14 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 
 
     # %% Let the user know how long this will take
-
+    
     seq_time_s = seq_time / (10 ** 9)  # to seconds
-    expected_run_time_s = (
-        num_steps * num_reps * num_runs * seq_time_s
-    )  # s
+    optimize_dur = tool_belt.get_registry_entry(cxn, "optimize_dur_s", ["", "Config", "CommonDurations"])
+    #we'll add in half the time to optimize to each run, assuming that half of the time, it doesn't need to optimize
+    expected_run_time_s = (seq_time_s * num_steps * num_reps + optimize_dur/2) * num_runs
     expected_run_time_m = expected_run_time_s / 60  # to minutes
-
-#    print(" \nExpected run time: {:.1f} minutes. ".format(expected_run_time_m))
-    #    return
+    dur_scaling = tool_belt.get_registry_entry(cxn, "seq_dur_scale_rabi", ["", "Config", "CommonDurations"])
+    print(" \nExpected run time: {:.2f} minutes. ".format(expected_run_time_m * dur_scaling))
     
     # %% Make some lists and variables to save at the end
 
@@ -264,6 +269,11 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
             drift = tool_belt.get_drift()
             adj_coords = nv_sig['coords'] + numpy.array(drift)
             tool_belt.set_xyz(cxn, adj_coords)
+            
+            if run_ind==0:
+                check_count_rate = optimize.stationary_count_lite(cxn, nv_sig, opti_coords,  tool_belt.get_config_dict(cxn), apd_indices)
+                logging.info(str(adj_coords[0])+' '+str(adj_coords[1])+' '+str(adj_coords[2])+' '+str(check_count_rate))
+
         else:
             opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
         opti_coords_list.append(opti_coords)
@@ -380,9 +390,9 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 
         # This will continuously be the same file path so we will overwrite
         # the existing file with the latest version
-#        file_path = tool_belt.get_file_path(__file__, start_timestamp,
-#                                            nv_sig['name'], 'incremental')
-#        tool_belt.save_raw_data(raw_data, file_path)
+        file_path = tool_belt.get_file_path(__file__, start_timestamp,
+                                            nv_sig['name'], 'incremental')
+        tool_belt.save_raw_data(raw_data, file_path)
 
     # %% Average the counts over the iterations
 
@@ -430,6 +440,7 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
 
     # %% Clean up and save the data
 
+
     tool_belt.reset_cfm(cxn)
 
     endFunctionTime = time.time()
@@ -463,11 +474,22 @@ def main_with_cxn(cxn, nv_sig, apd_indices, uwave_time_range, state,
                 'norm_avg_sig': norm_avg_sig.astype(float).tolist(),
                 'norm_avg_sig-units': 'arb'}
 
-#    file_path = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
-#    tool_belt.save_figure(raw_fig, file_path)
-#    if fit_fig is not None:
-#        tool_belt.save_figure(fit_fig, file_path + '-fit')
-#    tool_belt.save_raw_data(raw_data, file_path)
+    file_path = tool_belt.get_file_path(__file__, timestamp, nv_sig['name'])
+    tool_belt.save_figure(raw_fig, file_path)
+    
+    header = ['taus','avg_ref_counts','avg_sig_counts','norm_avg_sig']
+    # print(numpy.shape(norm_avg_sig))
+    # print(norm_avg_sig)
+    rows = [header, taus,
+           avg_ref_counts,
+           avg_sig_counts,
+           norm_avg_sig]
+   
+    tool_belt.save_to_csv(file_path,rows)
+    
+    if fit_fig is not None:
+        tool_belt.save_figure(fit_fig, file_path + '-fit')
+    tool_belt.save_raw_data(raw_data, file_path)
 
     if (fit_func is not None) and (popt is not None):
         return rabi_period, sig_counts, ref_counts

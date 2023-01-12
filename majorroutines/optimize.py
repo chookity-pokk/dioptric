@@ -339,7 +339,7 @@ def fit_gaussian(nv_sig, scan_vals, count_rates, axis_ind, fig=None):
         # mu: mean, defines the center of the Gaussian
         # sigma: standard deviation, defines the width of the Gaussian
         # offset: constant y value to account for background
-        text = "a={:.3f}\n $\mu$={:.3f}\n $\sigma$={:.3f}\n offset={:.3f}".format(
+        text = "amplitude={:.3f} kcps\ncenter value={:.3f} V\n$\sigma$={:.3f} V\noffset={:.3f} kcps".format(
             *opti_params
         )
         update_figure(fig, axis_ind, linspace_voltages, fit_count_rates, text)
@@ -469,14 +469,14 @@ def main_with_cxn(
     print("Expected count rate: {}".format(expected_count_rate))
 
     if expected_count_rate is not None:
-        lower_threshold = expected_count_rate * 9 / 10
-        upper_threshold = expected_count_rate * 6 / 5
+        lower_threshold = expected_count_rate * 8.5/10 #9 / 10
+        upper_threshold = expected_count_rate * 6.5/5 #6 / 5
 
     # Check the count rate
     opti_count_rate = stationary_count_lite(cxn, nv_sig, adjusted_coords,
                                             config, apd_indices)
 
-    print("Count rate at optimized coordinates: {:.1f}".format(opti_count_rate))
+    print("Initial check of count rate at passed coords: {:.1f}".format(opti_count_rate))
 
     # If the count rate close to what we expect, we succeeded!
     if (expected_count_rate is not None) and (lower_threshold <= opti_count_rate <= upper_threshold):
@@ -484,8 +484,11 @@ def main_with_cxn(
         opti_unnecessary = True
         # opti_unnecessary = False
         opti_coords = adjusted_coords
+    elif expected_count_rate is  None:
+        print("Expected count rate not set. Optimizing...\n")
+        opti_unnecessary = False
     else:
-        print("Count rate at optimized coordinates out of bounds.")
+        print("Initial check of count rate out of bounds.\n")
         opti_unnecessary = False
 
 
@@ -662,11 +665,11 @@ def main_with_cxn(
             "z_counts-units": "number",
         }
 
-#        filePath = tool_belt.get_file_path(__file__, timestamp, nv_sig["name"])
-#        tool_belt.save_raw_data(rawData, filePath)
-#
-#        if fig is not None:
-#            tool_belt.save_figure(fig, filePath)
+        filePath = tool_belt.get_file_path(__file__, timestamp, nv_sig["name"])
+        tool_belt.save_raw_data(rawData, filePath)
+
+        if fig is not None:
+            tool_belt.save_figure(fig, filePath)
 
     # %% Return the optimized coordinates we found
 

@@ -60,8 +60,8 @@ class SignalGeneratorBnc835(LabradServer):
         self.sig_gen = resource_manager.open_resource(visa_address)
         self.sig_gen.write("*RST")
         # Set to the external frequency source
-        self.sig_gen.write("ROSC:EXT:FREQ 10MHZ")
-        self.sig_gen.write("ROSC:SOUR EXT")
+        # self.sig_gen.write("ROSC:EXT:FREQ 10MHZ")
+        self.sig_gen.write("ROSC:SOUR INT")
         self.reset(None)
         logging.info("init complete")
 

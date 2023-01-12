@@ -27,6 +27,7 @@ import labrad
 from utils.tool_belt import States
 from scipy.optimize import curve_fit
 from numpy.linalg import eigvals
+from pathlib import Path
 
 
 # %% Constants
@@ -248,11 +249,17 @@ def fit_data(data):
     )
 
     # Assume reference is constant and can be approximated to one value
-    avg_ref = numpy.average(ref_counts[::])
+    # avg_ref = numpy.average(ref_counts[::])
 
     # Divide signal by reference to get normalized counts and st error
+    # norm_avg_sig = avg_sig_counts / avg_ref
+    # norm_avg_sig_ste = ste_sig_counts / avg_ref
+    # print(norm_avg_sig)
+    # print('')
+    avg_ref = numpy.average(ref_counts, axis=0) # I added this to not make that assumption
     norm_avg_sig = avg_sig_counts / avg_ref
     norm_avg_sig_ste = ste_sig_counts / avg_ref
+    # print(norm_avg_sig)
 
     # %% Estimated fit parameters
 
@@ -398,6 +405,7 @@ def create_fit_figure(
 
     fit_fig, ax = plt.subplots(figsize=(8.5, 8.5))
     fit_fig.set_tight_layout(True)
+    # print(norm_avg_sig)
     ax.plot(tau_pis / 1000, norm_avg_sig, "bo", label="data")
     # ax.errorbar(taus, norm_avg_sig, yerr=norm_avg_sig_ste,\
     #             fmt='bo', label='data')
@@ -416,7 +424,7 @@ def create_fit_figure(
     text_popt = "\n".join(
         (
             r"$\tau_{r}=$%.3f $\mathrm{\mu s}$" % (revival_time / 1000),
-            r"$B=$%.3f G" % (mag_B_from_revival_time(revival_time)),
+            # r"$B=$%.3f G" % (mag_B_from_revival_time(revival_time)),
         )
     )
 
@@ -573,13 +581,18 @@ def main_with_cxn(
 
     # %% Let the user know how long this will take
 
+
     seq_time_s = seq_time / (10 ** 9)  # to seconds
+    optimize_dur = tool_belt.get_registry_entry(cxn, "optimize_dur_s", ["", "Config", "CommonDurations"])
+    #we'll add in half the time to optimize to each run, assuming that half of the time, it doesn't need to optimize
+    
     expected_run_time_s = (
-        (num_steps / 2) * num_reps * num_runs * seq_time_s
+        (seq_time_s * (num_steps / 2) * num_reps + optimize_dur/2 )* num_runs 
     )  # s
     expected_run_time_m = expected_run_time_s / 60  # to minutes
+    dur_scaling = tool_belt.get_registry_entry(cxn, "seq_dur_scale_echo", ["", "Config", "CommonDurations"])
 
-    print(" \nExpected run time: {:.1f} minutes. ".format(expected_run_time_m))
+    print(" \nExpected run time: {:.1f} minutes. ".format(expected_run_time_m * dur_scaling))
     #    return
 
     # %% Get the starting time of the function, to be used to calculate run time
@@ -645,8 +658,8 @@ def main_with_cxn(
             if tool_belt.safe_stop():
                 break
 
-            print(" \nFirst relaxation time: {}".format(taus[tau_ind_first]))
-            print("Second relaxation time: {}".format(taus[tau_ind_second]))
+            # print(" \nFirst relaxation time: {}".format(taus[tau_ind_first]))
+            # print("Second relaxation time: {}".format(taus[tau_ind_second]))
 
             seq_args = [
                 taus[tau_ind_first],
@@ -663,13 +676,14 @@ def main_with_cxn(
             seq_args_string = tool_belt.encode_seq_args(seq_args)
             # Clear the tagger buffer of any excess counts
             apd_server.clear_buffer()
-            cxn.pulse_streamer.stream_immediate(
-                seq_file_name, num_reps, seq_args_string
-            )
+
             
             if apd_server_name == 'apd_daq':
                 apd_server.load_stream_reader(apd_indices[0], seq_time,  int(4*num_reps))
                 n_apd_samples = int(4*num_reps)
+
+            cxn.pulse_streamer.stream_immediate(
+                seq_file_name, num_reps, seq_args_string) ###I put this here instead of before the previous line
 
             # Each sample is of the form [*(<sig_shrt>, <ref_shrt>, <sig_long>, <ref_long>)]
             # So we can sum on the values for similar index modulus 4 to
@@ -679,19 +693,19 @@ def main_with_cxn(
 
             count = sum(sample_counts[0::4])
             sig_counts[run_ind, tau_ind_first] = count
-            print("First signal = " + str(count))
+            # print("First signal = " + str(count))
 
             count = sum(sample_counts[1::4])
             ref_counts[run_ind, tau_ind_first] = count
-            print("First Reference = " + str(count))
+            # print("First Reference = " + str(count))
 
             count = sum(sample_counts[2::4])
             sig_counts[run_ind, tau_ind_second] = count
-            print("Second Signal = " + str(count))
+            # print("Second Signal = " + str(count))
 
             count = sum(sample_counts[3::4])
             ref_counts[run_ind, tau_ind_second] = count
-            print("Second Reference = " + str(count))
+            # print("Second Reference = " + str(count))
 
         apd_server.stop_tag_stream()
 
@@ -727,6 +741,54 @@ def main_with_cxn(
             "ref_counts": ref_counts.astype(int).tolist(),
             "ref_counts-units": "counts",
         }
+        
+        avg_sig_counts = numpy.average(sig_counts, axis=0)
+        avg_ref_counts = numpy.average(ref_counts, axis=0)
+
+        # %% Calculate the ramsey data, signal / reference over different
+        # relaxation times
+
+        # Replace x/0=inf with 0
+        try:
+            norm_avg_sig = avg_sig_counts / avg_ref_counts
+        except RuntimeWarning as e:
+            print(e)
+            inf_mask = numpy.isinf(norm_avg_sig)
+            # Assign to 0 based on the passed conditional array
+            norm_avg_sig[inf_mask] = 0
+            
+        raw_data = {
+            "star_timestamp": start_timestamp,
+            "nv_sig": nv_sig,
+            "nv_sig-units": tool_belt.get_nv_sig_units(),
+            "gate_time": gate_time,
+            "gate_time-units": "ns",
+            "uwave_freq": uwave_freq,
+            "uwave_freq-units": "GHz",
+            "uwave_power": uwave_power,
+            "uwave_power-units": "dBm",
+            "rabi_period": rabi_period,
+            "rabi_period-units": "ns",
+            "uwave_pi_pulse": uwave_pi_pulse,
+            "uwave_pi_pulse-units": "ns",
+            "uwave_pi_on_2_pulse": uwave_pi_on_2_pulse,
+            "uwave_pi_on_2_pulse-units": "ns",
+            "precession_time_range": precession_time_range,
+            "precession_time_range-units": "ns",
+            "state": state.name,
+            "num_steps": num_steps,
+            "num_reps": num_reps,
+            "num_runs": num_runs,
+            "tau_index_master_list": tau_index_master_list,
+            "opti_coords_list": opti_coords_list,
+            "opti_coords_list-units": "V",
+            "sig_counts": sig_counts.astype(int).tolist(),
+            "sig_counts-units": "counts",
+            "ref_counts": ref_counts.astype(int).tolist(),
+            "ref_counts-units": "counts",
+            "norm_avg_sig": norm_avg_sig.astype(float).tolist(),
+            "norm_avg_sig-units": "arb",}
+
 
         # This will continuously be the same file path so we will overwrite
         # the existing file with the latest version
@@ -770,6 +832,8 @@ def main_with_cxn(
     ax.legend()
 
     ax = axes_pack[1]
+    # print('')
+    # print(norm_avg_sig)
     ax.plot(plot_taus, norm_avg_sig, "b-")
     ax.set_title("Spin Echo Measurement")
     ax.set_xlabel(r"$\tau + \pi$ ($\mathrm{\mu s}$)")
@@ -824,15 +888,27 @@ def main_with_cxn(
     file_path = tool_belt.get_file_path(__file__, timestamp, nv_sig["name"])
     tool_belt.save_figure(raw_fig, file_path)
     tool_belt.save_raw_data(raw_data, file_path)
+    
+    header = ['taus','avg_ref_counts','avg_sig_counts','norm_avg_sig']
+    # print(numpy.shape(norm_avg_sig))
+    # print(norm_avg_sig)
+    rows = [header, taus,
+           avg_ref_counts,
+           avg_sig_counts,
+           norm_avg_sig]
+   
+    tool_belt.save_to_csv(file_path,rows)
 
     # %% Fit and save figs
 
-    ret_vals = plot_resonances_vs_theta_B(raw_data)
-    fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
+    # ret_vals = plot_resonances_vs_theta_B(raw_data)
+    fit_func, popt, stes, fit_fig = fit_data(raw_data)
+    # fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
 
     tool_belt.save_figure(fit_fig, file_path + "-fit")
-    tool_belt.save_figure(angle_fig, file_path + "-angle")
-
+    # tool_belt.save_figure(fit_fig, file_path + "-fit")
+    # tool_belt.save_figure(angle_fig, file_path + "-angle")
+    theta_B_deg = 0
     return theta_B_deg
 
 
@@ -866,9 +942,27 @@ if __name__ == "__main__":
     #     ret_vals = plot_resonances_vs_theta_B(data)
     #     fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
     #     # print(popt)
-    
-    file_name = "2022_03_15-23_32_13-wu-nv6_2022_03_14"
-    data = tool_belt.get_raw_data(file_name)
+
+    # file_name = "2022_03_15-23_32_13-wu-nv6_2022_03_14"
+    # data = tool_belt.get_raw_data(file_name)
+    file = '2023_01_12-08_-johnson-nv1'
+    subfolder = Path("2023_01")
+    dir_ = Path("C:/Users/student/Documents/LAB_DATA/pc_DESKTOP-OQNODDN/branch_instructional-lab/spin_echo")
+    # subfolder, dir_ = None, None
+    data = tool_belt.get_raw_data(file,nvdata_dir=dir_,path_from_nvdata=subfolder)
+    # import numpy as np
+    # taus = numpy.linspace(
+    #     data['precession_time_range'][0],
+    #     data['precession_time_range'][-1],
+    #     num=data['num_steps'],
+    #     dtype=numpy.int32,
+    # )
     ret_vals = plot_resonances_vs_theta_B(data)
+    # avg_ref_counts=np.average(np.array(data['ref_counts'][0:14]),0)
+    # avg_sig_counts=np.average(np.array(data['sig_counts'][0:14]),0)
+    # norm_avg_sig = avg_sig_counts / avg_ref_counts
+    # plt.figure()
+    # plt.plot(taus,norm_avg_sig)
+    # plt.show()
 
     # plt.show(block=True)

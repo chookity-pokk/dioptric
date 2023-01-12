@@ -20,22 +20,27 @@ import labrad
 from utils.tool_belt import States
 from majorroutines import pulsed_resonance 
 from random import shuffle
-
+import logging
 
 # %% Main
 
 
 def main(nv_sig, apd_indices, freq_center, freq_range,
-         num_steps, num_runs, uwave_power, state=States.LOW, opti_nv_sig = None):
+         num_steps, num_runs, uwave_power, state=States.LOW, opti_nv_sig = None, angle_val = None):
 
     with labrad.connect() as cxn:
         main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
-                      num_steps, num_runs, uwave_power, state, opti_nv_sig)
+                      num_steps, num_runs, uwave_power, state, opti_nv_sig, angle_val)
 
 def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
-                  num_steps, num_runs, uwave_power, state=States.LOW, opti_nv_sig = None):
+                  num_steps, num_runs, uwave_power, state=States.LOW, opti_nv_sig = None, angle_val = None):
 
     # %% Initial calculations and setup
+    # logging
+    filename =  'C:/Users/student/Documents/LAB_DATA/pc_fzx31065/branch_instructional-lab/counts_log.log'
+    logging.basicConfig(level=logging.INFO, 
+                format='%(asctime)s %(message)s',
+                datefmt='%y-%m-%d_%H-%M-%S', filename=filename)
 
 #    tool_belt.reset_cfm(cxn)
     
@@ -54,6 +59,17 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
     seq_args_string = tool_belt.encode_seq_args(seq_args)
     # print(seq_args)
     # return
+    
+    ret_vals= cxn.pulse_streamer.stream_load(file_name, seq_args_string)
+    seq_time = ret_vals[0]
+    
+    seq_time_s = seq_time / (10 ** 9)  # to seconds
+    optimize_dur = tool_belt.get_registry_entry(cxn, "optimize_dur_s", ["", "Config", "CommonDurations"])
+    #we'll add in half the time to optimize to each run, assuming that half of the time, it doesn't need to optimize
+    expected_run_time_s = (seq_time_s * num_steps  + optimize_dur/2) * num_runs
+    expected_run_time_m = expected_run_time_s / 60  # to minutes
+    dur_scaling = tool_belt.get_registry_entry(cxn, "seq_dur_scale_cwesr", ["", "Config", "CommonDurations"])
+    print(" \nExpected run time: {:.2f} minutes. ".format(expected_run_time_m * dur_scaling))
 
     # Calculate the frequencies we need to set
     half_freq_range = freq_range / 2
@@ -102,6 +118,10 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
             drift = tool_belt.get_drift()
             adj_coords = nv_sig['coords'] + numpy.array(drift)
             tool_belt.set_xyz(cxn, adj_coords)
+            
+            if run_ind==0:
+                check_count_rate = optimize.stationary_count_lite(cxn, nv_sig, opti_coords,  tool_belt.get_config_dict(cxn), apd_indices)
+                logging.info(str(adj_coords[0])+' '+str(adj_coords[1])+' '+str(adj_coords[2])+' '+str(check_count_rate))
         else:
             opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
         opti_coords_list.append(opti_coords)
@@ -188,9 +208,9 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
 
         # This will continuously be the same file path so we will overwrite
         # the existing file with the latest version
-#        file_path = tool_belt.get_file_path(__file__, start_timestamp,
-#                                            nv_sig['name'], 'incremental')
-#        tool_belt.save_raw_data(rawData, file_path)
+        file_path = tool_belt.get_file_path(__file__, start_timestamp,
+                                            nv_sig['name'], 'incremental')
+        tool_belt.save_raw_data(rawData, file_path)
 
     # %% Process and plot the data
 
@@ -209,6 +229,9 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
     ax = axes_pack[0]
     ax.plot(freqs, kcps_uwave_off_avg, 'r-', label = 'Reference')
     ax.plot(freqs, kcpsc_uwave_on_avg, 'g-', label = 'Signal')
+    # print(numpy.shape(freqs))
+    # print(numpy.shape(norm_avg_sig))
+
     ax.set_title('Non-normalized Count Rate Versus Frequency')
     ax.set_xlabel('Frequency (GHz)')
     ax.set_ylabel('Count rate (kcps)')
@@ -219,6 +242,12 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
     ax.set_title('Normalized Count Rate vs Frequency')
     ax.set_xlabel('Frequency (GHz)')
     ax.set_ylabel('Contrast (arb. units)')
+    if angle_val:
+        text = 'Magnet angle: {} deg'.format(angle_val)
+        props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
+    
+        ax.text(0.6, 0.25, text, transform=ax.transAxes, fontsize=12,
+                                verticalalignment="top", bbox=props)
 
     fig.canvas.draw()
     fig.tight_layout()
@@ -257,34 +286,44 @@ def main_with_cxn(cxn, nv_sig, apd_indices, freq_center, freq_range,
                }
 
     name = nv_sig['name']
-#    filePath = tool_belt.get_file_path(__file__, timestamp, name)
-#    tool_belt.save_figure(fig, filePath)
-#    tool_belt.save_raw_data(rawData, filePath)
+    filePath = tool_belt.get_file_path(__file__, timestamp, name)
+    tool_belt.save_figure(fig, filePath)
+    tool_belt.save_raw_data(rawData, filePath)
+    
+    header = ['frequencies','kcps_uwave_off_avg','kcpsc_uwave_on_avg','norm_avg_sig']
+    # print(numpy.shape(norm_avg_sig))
+    # print(norm_avg_sig)
+    rows = [header, freqs,
+           kcps_uwave_off_avg,
+           kcpsc_uwave_on_avg,
+           norm_avg_sig]
+   
+    tool_belt.save_to_csv(filePath,rows)
 
     # Use the pulsed_resonance fitting functions
-#    fit_func, popt, pcov = pulsed_resonance.fit_resonance(freq_range, freq_center,
-#                                  num_steps, norm_avg_sig, norm_avg_sig_ste, ref_counts)
-#    fit_fig = None
-#    if (fit_func is not None) and (popt is not None):
-#        fit_fig = pulsed_resonance.create_fit_figure(freq_range, freq_center,
-#                                     num_steps, norm_avg_sig, fit_func, popt)
-#    filePath = tool_belt.get_file_path(__file__, timestamp, name + '-fit')
-#    if fit_fig is not None:
-#        tool_belt.save_figure(fit_fig, filePath)
-#
-#    if fit_func == pulsed_resonance.single_gaussian_dip:
-#        print('Single resonance at {:.4f} GHz'.format(popt[2]))
-#        print('\n')
-#        return popt[2], None
-#    elif fit_func == pulsed_resonance.double_gaussian_dip:
-#        print('Resonances at {:.4f} GHz and {:.4f} GHz'.format(popt[2], popt[5]))
-#        print('Splitting of {:d} MHz'.format(int((popt[5] - popt[2]) * 1000)))
-#        print('\n')
-#        return popt[2], popt[5]
-#    else:
-#        print('No resonances found')
-#        print('\n')
-#        return None, None
+    fit_func, popt, pcov = pulsed_resonance.fit_resonance(freq_range, freq_center,
+                                  num_steps, norm_avg_sig, norm_avg_sig_ste, ref_counts)
+    fit_fig = None
+    if (fit_func is not None) and (popt is not None):
+        fit_fig = pulsed_resonance.create_fit_figure(freq_range, freq_center,
+                                    num_steps, norm_avg_sig, fit_func, popt, angle_val)
+    filePath = tool_belt.get_file_path(__file__, timestamp, name + '-fit')
+    if fit_fig is not None:
+        tool_belt.save_figure(fit_fig, filePath)
+
+    if fit_func == pulsed_resonance.single_gaussian_dip:
+        print('Single resonance at {:.4f} GHz'.format(popt[2]))
+        print('\n')
+        return popt[2], None
+    elif fit_func == pulsed_resonance.double_gaussian_dip:
+        print('Resonances at {:.4f} GHz and {:.4f} GHz'.format(popt[2], popt[5]))
+        print('Splitting of {:d} MHz'.format(int((popt[5] - popt[2]) * 1000)))
+        print('\n')
+        return popt[2], popt[5]
+    else:
+        print('No resonances found')
+        print('\n')
+        return None, None
 
 # %%
 
@@ -300,7 +339,7 @@ if __name__ == '__main__':
     num_runs = data['num_runs']
     ref_counts = data['ref_counts']
     sig_counts = data['sig_counts']
-    print(len(ref_counts))
+    # print(len(ref_counts))
     ret_vals = pulsed_resonance.process_counts(ref_counts, sig_counts, num_runs)
     avg_ref_counts, avg_sig_counts, norm_avg_sig, ste_ref_counts, ste_sig_counts, norm_avg_sig_ste = ret_vals
     # norm_avg_sig_ste = None

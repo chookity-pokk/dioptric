@@ -36,16 +36,28 @@ class RotationStageEll18k(LabradServer):
     name = 'rotation_stage_ell18k'
     pc_name = socket.gethostname()
 
+    # def initServer(self):
+    #     filename = 'E:/Shared drives/Kolkowitz Lab Group/nvdata/pc_{}/labrad_logging/{}.log'
+    #     filename = filename.format(self.pc_name, self.name)
+    #     logging.basicConfig(level=logging.DEBUG, 
+    #                 format='%(asctime)s %(levelname)-8s %(message)s',
+    #                 datefmt='%y-%m-%d_%H-%M-%S', filename=filename)
+    #     config = ensureDeferred(self.get_config())
+    #     config.addCallback(self.on_get_config)
     def initServer(self):
-        filename = 'E:/Shared drives/Kolkowitz Lab Group/nvdata/pc_{}/labrad_logging/{}.log'
-        filename = filename.format(self.pc_name, self.name)
-        logging.basicConfig(level=logging.DEBUG, 
-                    format='%(asctime)s %(levelname)-8s %(message)s',
-                    datefmt='%y-%m-%d_%H-%M-%S', filename=filename)
+        filename = ('C:/Users/student/Documents/labrad_logging/{}.log' )
+        filename = filename.format(self.name)
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)-8s %(message)s",
+            datefmt="%y-%m-%d_%H-%M-%S",
+            filename=filename,
+        )
         config = ensureDeferred(self.get_config())
         config.addCallback(self.on_get_config)
 
     async def get_config(self):
+        logging.info('here')
         p = self.client.registry.packet()
         p.cd(['', 'Config', 'DeviceIDs'])
         p.get('rotation_stage_ell18k_address')
@@ -58,12 +70,12 @@ class RotationStageEll18k(LabradServer):
             self.stage = serial.Serial(config['get'], 9600, serial.EIGHTBITS,
                                 serial.PARITY_NONE, serial.STOPBITS_ONE)
         except Exception as e:
-            logging.debug(e)
+            logging.info(e)
             del self.stage
         time.sleep(0.1)
         self.stage.flush()
         time.sleep(0.1)
-        logging.debug('Init complete')
+        logging.info('Init complete')
         
     def get_angle(self):
         self.stage.write('0gp'.encode())

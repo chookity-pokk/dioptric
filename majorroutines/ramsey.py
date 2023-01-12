@@ -34,6 +34,8 @@ from random import shuffle
 import labrad
 from utils.tool_belt import States
 from scipy.optimize import curve_fit
+from pathlib import Path
+import logging
 
 
 # %% fit
@@ -90,7 +92,7 @@ def fit_ramsey(norm_avg_sig,taus,  precession_time_range, FreqParams):
     
     taus_us = numpy.array(taus)/1e3
     # Guess the other params for fitting
-    amp_1 = 0.3
+    amp_1 = -0.05
     amp_2 = amp_1
     amp_3 = amp_1
     decay = 1
@@ -104,11 +106,7 @@ def fit_ramsey(norm_avg_sig,taus,  precession_time_range, FreqParams):
 
     try:
         popt,pcov = curve_fit(tool_belt.cosine_sum, taus_us, norm_avg_sig,
-                      p0=guess_params,
-                       bounds=(0, [numpy.infty, numpy.infty, numpy.infty, numpy.infty,
-                                   numpy.infty, numpy.infty,
-                                   numpy.infty, numpy.infty, ])
-                      )
+                      p0=guess_params)
     except Exception:
         print('Something went wrong!')
         popt = guess_params
@@ -120,7 +118,7 @@ def fit_ramsey(norm_avg_sig,taus,  precession_time_range, FreqParams):
     fig_fit, ax = plt.subplots(1, 1, figsize=(10, 8))
     ax.plot(taus_us, norm_avg_sig,'b',label='data')
     ax.plot(taus_us_linspace, tool_belt.cosine_sum(taus_us_linspace,*popt),'r',label='fit')
-    ax.set_xlabel('Free precesion time (ns)')
+    ax.set_xlabel(r"Free precesion time ($\mathrm{\mu s}$)")
     ax.set_ylabel('Contrast (arb. units)')
     ax.legend()
     text1 = "\n".join((r'$C + e^{-t/d} [a_1 \mathrm{cos}(2 \pi \nu_1 t) + a_2 \mathrm{cos}(2 \pi \nu_2 t) + a_3 \mathrm{cos}(2 \pi \nu_3 t)]$',
@@ -190,6 +188,11 @@ def main_with_cxn(
 
     tool_belt.reset_cfm(cxn)
 
+     # logging
+    filename = 'C:/Users/student/Documents/LAB_DATA/pc_fzx31065/branch_instructional-lab/counts_log.log'
+    logging.basicConfig(level=logging.INFO, 
+                format='%(asctime)s %(message)s',
+                datefmt='%y-%m-%d_%H-%M-%S', filename=filename)
     # %% Sequence setup
 
     laser_key = "spin_laser"
@@ -286,12 +289,16 @@ def main_with_cxn(
     # %% Let the user know how long this will take
 
     seq_time_s = seq_time / (10 ** 9)  # to seconds
+    optimize_dur = tool_belt.get_registry_entry(cxn, "optimize_dur_s", ["", "Config", "CommonDurations"])
+    #we'll add in half the time to optimize to each run, assuming that half of the time, it doesn't need to optimize
+    
     expected_run_time_s = (
-        (num_steps / 2) * num_reps * num_runs * seq_time_s
+        (seq_time_s * (num_steps / 2) * num_reps + optimize_dur/2 )* num_runs 
     )  # s
     expected_run_time_m = expected_run_time_s / 60  # to minutes
+    dur_scaling = tool_belt.get_registry_entry(cxn, "seq_dur_scale_ramsey", ["", "Config", "CommonDurations"])
 
-    print(" \nExpected run time: {:.1f} minutes. ".format(expected_run_time_m))
+    print(" \nExpected run time: {:.1f} minutes. ".format(expected_run_time_m * dur_scaling))
     #    return
 
     # %% Get the starting time of the function, to be used to calculate run time
@@ -318,6 +325,11 @@ def main_with_cxn(
             drift = tool_belt.get_drift()
             adj_coords = nv_sig['coords'] + numpy.array(drift)
             tool_belt.set_xyz(cxn, adj_coords)
+            
+            if run_ind==0:
+                check_count_rate = optimize.stationary_count_lite(cxn, nv_sig, opti_coords,  tool_belt.get_config_dict(cxn), apd_indices)
+                logging.info(str(adj_coords[0])+' '+str(adj_coords[1])+' '+str(adj_coords[2])+' '+str(check_count_rate))
+
         else:
             opti_coords = optimize.main_with_cxn(cxn, nv_sig, apd_indices)
         opti_coords_list.append(opti_coords)
@@ -363,8 +375,8 @@ def main_with_cxn(
             if tool_belt.safe_stop():
                 break
 
-            print(" \nFirst relaxation time: {}".format(taus[tau_ind_first]))
-            print("Second relaxation time: {}".format(taus[tau_ind_second]))
+            # print(" \nFirst precession time: {} ns".format(taus[tau_ind_first]))
+            # print("Second precession time: {} ns".format(taus[tau_ind_second]))
 
             seq_args = [
                 taus[tau_ind_first]/2,
@@ -381,35 +393,41 @@ def main_with_cxn(
             seq_args_string = tool_belt.encode_seq_args(seq_args)
             # Clear the tagger buffer of any excess counts
             apd_server.clear_buffer()
+            
+            
+            if apd_server_name == 'apd_daq': #####I PUT THIS BEFORE THE NEXT PARAGRAPH. IT USED TO BE AFTER
+                apd_server.load_stream_reader(apd_indices[0], seq_time,  int(4*num_reps))
+                n_apd_samples = int(4*num_reps)
+            
             cxn.pulse_streamer.stream_immediate(
                 seq_file_name, num_reps, seq_args_string
             )
 
-            if apd_server_name == 'apd_daq':
-                apd_server.load_stream_reader(apd_indices[0], seq_time,  int(4*num_reps))
-                n_apd_samples = int(4*num_reps)
+            # if apd_server_name == 'apd_daq':
+            #     apd_server.load_stream_reader(apd_indices[0], seq_time,  int(4*num_reps))
+            #     n_apd_samples = int(4*num_reps)
                 
             # Each sample is of the form [*(<sig_shrt>, <ref_shrt>, <sig_long>, <ref_long>)]
             # So we can sum on the values for similar index modulus 4 to
             # parse the returned list into what we want.
-            new_counts = apd_server.read_counter_separate_gates(n_apd_samples)
+            new_counts = apd_server.read_counter_separate_gates(n_apd_samples) #This is where it is getting stuck
             sample_counts = new_counts[0]
 
             count = sum(sample_counts[0::4])
             sig_counts[run_ind, tau_ind_first] = count
-            print("First signal = " + str(count))
+            # print("First signal = " + str(count))
 
             count = sum(sample_counts[1::4])
             ref_counts[run_ind, tau_ind_first] = count
-            print("First Reference = " + str(count))
+            # print("First Reference = " + str(count))
 
             count = sum(sample_counts[2::4])
             sig_counts[run_ind, tau_ind_second] = count
-            print("Second Signal = " + str(count))
+            # print("Second Signal = " + str(count))
 
             count = sum(sample_counts[3::4])
             ref_counts[run_ind, tau_ind_second] = count
-            print("Second Reference = " + str(count))
+            # print("Second Reference = " + str(count))
 
         apd_server.stop_tag_stream()
 
@@ -447,6 +465,52 @@ def main_with_cxn(
             "ref_counts": ref_counts.astype(int).tolist(),
             "ref_counts-units": "counts",
         }
+        
+        avg_sig_counts = numpy.average(sig_counts, axis=0)
+        avg_ref_counts = numpy.average(ref_counts, axis=0)
+        try:
+            norm_avg_sig = avg_sig_counts / avg_ref_counts
+        except RuntimeWarning as e:
+            print(e)
+            inf_mask = numpy.isinf(norm_avg_sig)
+            # Assign to 0 based on the passed conditional array
+            norm_avg_sig[inf_mask] = 0
+            
+        raw_data = {
+            "start_timestamp": start_timestamp,
+            "nv_sig": nv_sig,
+            "nv_sig-units": tool_belt.get_nv_sig_units(),
+            'detuning': detuning,
+            'detuning-units': 'MHz',
+            "gate_time": gate_time,
+            "gate_time-units": "ns",
+            "uwave_freq": uwave_freq_detuned,
+            "uwave_freq-units": "GHz",
+            "uwave_power": uwave_power,
+            "uwave_power-units": "dBm",
+            "rabi_period": rabi_period,
+            "rabi_period-units": "ns",
+            "uwave_pi_on_2_pulse": uwave_pi_on_2_pulse,
+            "uwave_pi_on_2_pulse-units": "ns",
+            "precession_time_range": precession_time_range,
+            "precession_time_range-units": "ns",
+            "state": state.name,
+            "num_steps": num_steps,
+            "num_reps": num_reps,
+            "num_runs": num_runs,
+            "tau_index_master_list": tau_index_master_list,
+            "opti_coords_list": opti_coords_list,
+            "opti_coords_list-units": "V",
+            "taus": taus.tolist(),
+            "taus-units": 'ns',
+            "sig_counts": sig_counts.astype(int).tolist(),
+            "sig_counts-units": "counts",
+            "ref_counts": ref_counts.astype(int).tolist(),
+            "ref_counts-units": "counts",
+            "norm_avg_sig": norm_avg_sig.astype(float).tolist(),
+            "norm_avg_sig-units": "arb",
+        }
+
 
         # This will continuously be the same file path so we will overwrite
         # the existing file with the latest version
@@ -485,7 +549,7 @@ def main_with_cxn(
     plot_taus = (taus + uwave_pi_pulse) / 1000
     ax.plot(plot_taus, avg_sig_counts, "r-", label="signal")
     ax.plot(plot_taus, avg_ref_counts, "g-", label="reference")
-    ax.set_xlabel(r"$\tau + \pi$ ($\mathrm{\mu s}$)")
+    ax.set_xlabel(r"$\tau$ ($\mathrm{\mu s}$)")
     ax.set_ylabel("Counts")
     ax.legend()
 
@@ -546,6 +610,16 @@ def main_with_cxn(
     file_path = tool_belt.get_file_path(__file__, timestamp, nv_sig["name"])
     tool_belt.save_figure(raw_fig, file_path)
     tool_belt.save_raw_data(raw_data, file_path)
+    
+    header = ['taus','avg_ref_counts','avg_sig_counts','norm_avg_sig']
+    # print(numpy.shape(norm_avg_sig))
+    # print(norm_avg_sig)
+    rows = [header, taus,
+           avg_ref_counts,
+           avg_sig_counts,
+           norm_avg_sig]
+   
+    tool_belt.save_to_csv(file_path,rows)
 
     # %% Fit and save figs
     
@@ -571,11 +645,15 @@ def main_with_cxn(
 if __name__ == "__main__":
 
 
-    folder = "pc_rabi/branch_master/ramsey/2021_10"
-    file = '2021_10_15-10_37_22-johnson-nv0_2021_10_08'
+    # folder = "pc_rabi/branch_master/ramsey/2021_10"
+    file = '2022_07_30-11_35_20-johnson-nv1'
+    subfolder = Path("2022_07")
+    dir_ = Path("C:/Users/student/Documents/LAB_DATA/pc_fzx31065/branch_instructional-lab/ramsey")
+    # subfolder, dir_ = None, None
+    data = tool_belt.get_raw_data(file,nvdata_dir=dir_,path_from_nvdata=subfolder)
     
     # detuning = 0
-    data = tool_belt.get_raw_data(file, folder)
+    # data = tool_belt.get_raw_data(file, folder)
     detuning= data['detuning']
     norm_avg_sig = data['norm_avg_sig']
     precession_time_range = data['precession_time_range']
@@ -592,6 +670,6 @@ if __name__ == "__main__":
         
         
     _, FreqParams = extract_oscillations(norm_avg_sig, precession_time_range, num_steps, detuning)
-    print(FreqParams)
-
-    fit_ramsey(norm_avg_sig,taus,  precession_time_range, [2.4, 4.5, 6.9])
+    # print(FreqParams)
+    f = fit_ramsey(norm_avg_sig,taus,  precession_time_range, [1.6, 4, 6.2])
+    plt.show()
