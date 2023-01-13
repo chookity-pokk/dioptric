@@ -40,7 +40,7 @@ def get_seq(pulse_streamer, config, args):
     laser_power = args[7]
 
     # Get what we need out of the wiring dictionary
-    pulser_wiring = config['Wiring']['PulseStreamer']
+    pulser_wiring = config['Wiring']['PulseGen']
     key = 'do_apd_{}_gate'.format(apd_index)
     pulser_do_apd_gate = pulser_wiring[key]
     key = 'do_sample_clock'

@@ -47,7 +47,7 @@ def get_seq(pulse_streamer, config, args):
 
     apd_index, laser_name, laser_power = args[3:6]
     
-    pulser_wiring = config['Wiring']['PulseStreamer']
+    pulser_wiring = config['Wiring']['PulseGen']
     do_apd_gate = pulser_wiring['do_apd_{}_gate'.format(apd_index)]
     pulser_do_daq_clock = pulser_wiring['do_sample_clock']
         

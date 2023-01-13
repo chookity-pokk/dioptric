@@ -50,7 +50,7 @@ def get_seq(pulse_streamer, config, args):
     wait_time = config['CommonDurations']['uwave_buffer']
     aom_delay_time = config['Optics'][laser_name]['delay']
     
-    pulser_wiring = config['Wiring']['PulseStreamer']
+    pulser_wiring = config['Wiring']['PulseGen']
     pulser_do_apd_gate = pulser_wiring['do_apd_{}_gate'.format(apd_index)]
     pulser_do_sig_gen_gate = pulser_wiring['do_{}_gate'.format(sig_gen)]
     pulser_do_daq_clock = pulser_wiring['do_sample_clock']

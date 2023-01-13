@@ -21,7 +21,7 @@ def get_seq(pulse_streamer, config, args):
     readout, state, laser_name, laser_power, apd_index = args
     
     state = States(state)
-    pulser_wiring = config['Wiring']['PulseStreamer']
+    pulser_wiring = config['Wiring']['PulseGen']
     sig_gen_name = config['Microwaves']['sig_gen_{}'.format(state.name)]
     uwave_delay = config['Microwaves'][sig_gen_name]['delay']
     laser_delay = config['Optics'][laser_name]['delay']

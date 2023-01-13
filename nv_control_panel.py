@@ -315,7 +315,7 @@ if __name__ == "__main__":
         "coords":[6.423, 5.660,4.25],
         "name": "{}-nv1".format(sample_name,),
         "disable_opt":False,
-        "ramp_voltages": True,
+        "ramp_voltages": False,
         
         "spin_laser": green_laser,
         "spin_laser_power": green_power,

@@ -48,7 +48,7 @@ def get_seq(pulse_streamer, config, args):
     rf_delay_time = config['Microwaves'][sig_gen_name]['delay']
     back_buffer = 200
 
-    pulser_wiring = config['Wiring']['PulseStreamer']
+    pulser_wiring = config['Wiring']['PulseGen']
     pulser_do_apd_gate = pulser_wiring['do_apd_{}_gate'.format(apd_index)]
     sig_gen_gate_chan_name = 'do_{}_gate'.format(sig_gen_name)
     pulser_do_sig_gen_gate = pulser_wiring[sig_gen_gate_chan_name]
