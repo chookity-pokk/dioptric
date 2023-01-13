@@ -310,7 +310,7 @@ if __name__ == "__main__":
     green_laser = "cobolt_515"
         
     nv_sig = {
-        "coords":[6.409, 5.660,4.25],
+        "coords":[6.423, 5.660,4.25],
         "name": "{}-nv1".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": True,
@@ -328,7 +328,7 @@ if __name__ == "__main__":
         
         "expected_count_rate":17,
         # "expected_count_rate":None,
-        "magnet_angle": 60, 
+        "magnet_angle": 100, 
         "resonance_LOW":2.7641 ,"rabi_LOW": 75.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
         "resonance_HIGH": 2.9098 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, }  # 14.5 max. units is dBm
     
@@ -363,10 +363,10 @@ if __name__ == "__main__":
         # nv_sig['disable_opt']=True
         # do_stationary_count(nv_sig, )
         # do_optimize_magnet_angle(nv_sig, num_angle_steps= 10, angle_range = [0,160], num_runs=15)
-        do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.15,num_runs=15)
+        do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.2,num_runs=15)
         # do_pulsed_resonance_state(nv_sig, nv_sig, States.LOW)
         
-        # do_resonance(nv_sig, 2.87, 0.25, num_runs = 15)
+        # do_resonance(nv_sig, 2.87, 0.2, num_runs = 40)
         # do_resonance(nv_sig, 2.875, 0.1)
         # do_resonance_state(nv_sig , States.LOW)
         
