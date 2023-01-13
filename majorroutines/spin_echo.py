@@ -28,7 +28,7 @@ from utils.tool_belt import States
 from scipy.optimize import curve_fit
 from numpy.linalg import eigvals
 from pathlib import Path
-
+import numpy as np
 
 # %% Constants
 
@@ -917,52 +917,22 @@ def main_with_cxn(
 
 if __name__ == "__main__":
 
-    # plt.ion()
-
-    # file_names = [
-    #     # "2021_09_03-20_36_12-hopper-search",
-    #     # "2021_09_03-22_04_25-hopper-search",
-    #     # "2021_09_03-23_31_54-hopper-search",
-    #     # "2021_09_04-01_07_44-hopper-search",
-    #     "2021_09_04-08_34_53-hopper-search",
-    #     "2021_09_04-10_03_27-hopper-search",
-    #     "2021_09_04-11_31_49-hopper-search",
-    #     "2021_09_04-13_00_14-hopper-search",
-    # ]
-
-    # for f in file_names:
-
-    #     # start = time.time()
-    #     data = tool_belt.get_raw_data(f)
-    #     # stop = time.time()
-    #     # print(stop - start)
-
-    #     #    print(data['norm_avg_sig'])
-
-    #     ret_vals = plot_resonances_vs_theta_B(data)
-    #     fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
-    #     # print(popt)
-
     # file_name = "2022_03_15-23_32_13-wu-nv6_2022_03_14"
     # data = tool_belt.get_raw_data(file_name)
-    file = '2023_01_12-08_-johnson-nv1'
-    subfolder = Path("2023_01")
+    file = '2023_01_12-19_04_53-E6test-nv1'
+    subfolder = Path("2023_01/incremental")
     dir_ = Path("C:/Users/student/Documents/LAB_DATA/pc_DESKTOP-OQNODDN/branch_instructional-lab/spin_echo")
     # subfolder, dir_ = None, None
     data = tool_belt.get_raw_data(file,nvdata_dir=dir_,path_from_nvdata=subfolder)
-    # import numpy as np
-    # taus = numpy.linspace(
-    #     data['precession_time_range'][0],
-    #     data['precession_time_range'][-1],
-    #     num=data['num_steps'],
-    #     dtype=numpy.int32,
-    # )
-    ret_vals = plot_resonances_vs_theta_B(data)
-    # avg_ref_counts=np.average(np.array(data['ref_counts'][0:14]),0)
-    # avg_sig_counts=np.average(np.array(data['sig_counts'][0:14]),0)
-    # norm_avg_sig = avg_sig_counts / avg_ref_counts
-    # plt.figure()
-    # plt.plot(taus,norm_avg_sig)
-    # plt.show()
+    
+    taus = numpy.linspace(
+        data['precession_time_range'][0],data['precession_time_range'][-1],num=data['num_steps'],dtype=numpy.int32,)
+    # ret_vals = plot_resonances_vs_theta_B(data)
+    avg_ref_counts=np.average(np.array(data['ref_counts'][0:46]),0)
+    avg_sig_counts=np.average(np.array(data['sig_counts'][0:46]),0)
+    norm_avg_sig = avg_sig_counts / avg_ref_counts
+    plt.figure()
+    plt.plot(taus,norm_avg_sig)
+    plt.show()
 
     # plt.show(block=True)

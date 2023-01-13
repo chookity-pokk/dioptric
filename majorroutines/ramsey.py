@@ -646,16 +646,18 @@ if __name__ == "__main__":
 
 
     # folder = "pc_rabi/branch_master/ramsey/2021_10"
-    file = '2022_07_30-11_35_20-johnson-nv1'
-    subfolder = Path("2022_07")
-    dir_ = Path("C:/Users/student/Documents/LAB_DATA/pc_fzx31065/branch_instructional-lab/ramsey")
+    file = '2023_01_12-21_41_58-E6test-nv1'
+    subfolder = Path("2023_01/incremental")
+    dir_ = Path("C:/Users/student/Documents/LAB_DATA/pc_DESKTOP-OQNODDN/branch_instructional-lab/ramsey")
     # subfolder, dir_ = None, None
     data = tool_belt.get_raw_data(file,nvdata_dir=dir_,path_from_nvdata=subfolder)
     
     # detuning = 0
     # data = tool_belt.get_raw_data(file, folder)
     detuning= data['detuning']
-    norm_avg_sig = data['norm_avg_sig']
+    sig_counts = numpy.average(numpy.array(data['sig_counts'][0:2]),0)
+    ref_counts = numpy.average(numpy.array(data['ref_counts'][0:2]),0)
+    norm_avg_sig = sig_counts/ref_counts
     precession_time_range = data['precession_time_range']
     num_steps = data['num_steps']
     try:
@@ -669,7 +671,9 @@ if __name__ == "__main__":
         )
         
         
-    _, FreqParams = extract_oscillations(norm_avg_sig, precession_time_range, num_steps, detuning)
-    # print(FreqParams)
-    f = fit_ramsey(norm_avg_sig,taus,  precession_time_range, [1.6, 4, 6.2])
+    # _, FreqParams = extract_oscillations(norm_avg_sig, precession_time_range, num_steps, detuning)
+    # # print(FreqParams)
+    # f = fit_ramsey(norm_avg_sig,taus,  precession_time_range, [1.6, 4, 6.2])
+    plt.figure()
+    plt.plot(taus,norm_avg_sig)
     plt.show()

@@ -37,32 +37,35 @@ if __name__ == "__main__":
     parser.add_argument('--sweep-freq-range',action='store',type=float)
     parser.add_argument('--sweep-points',action='store',type=int)
     parser.add_argument('--num-sweeps',action='store',type=int)
-    parser.add_argument('--pulse-duration',action='store',type=int)
+    parser.add_argument('--pulse-duration',action='store',type=float)
+    parser.add_argument('--image-size',action='store',type=str)
+    parser.add_argument('--state',action='store',type=str)
+    parser.add_argument('--uwave_time_max',action='store',type=float)
+    parser.add_argument('--precession_time_max',action='store',type=float)
+    parser.add_argument('--echo_time_max',action='store',type=float)
+    parser.add_argument('--detuning',action='store',type=float)
     args = parser.parse_args()
 
     # %%%%%%%%%%%%%%% NV Parameters %%%%%%%%%%%%%%%
     
-    nv_coords = [5, 5, 5 ] # V
-    expected_count_rate = None     # kcps
-    magnet_angle =  30.07
-           # deg
+    coords = [6.429, 5.664,4.25] # V
+    expected_count_rate = 18     # kcps
+    magnet_angle =  60  # deg
     
-    resonance_LOW = 2.7917 # 2.7911           # GHz
-    rabi_LOW = 78.9 # 80.7 #88.2 # 84.3, today:88.9ns                  # ns   
-    uwave_power_LOW = 14      # dBm
+    resonance_LOW = 2.7641 # 2.7911           # GHz
+    rabi_LOW = 75.2 # 80.7 #88.2 # 84.3, today:88.9ns                  # ns   
     
-    resonance_HIGH = 2.9484 # 2.9483          # GHz
+    resonance_HIGH = 2.9098 # 2.9483          # GHz
     rabi_HIGH = 76.9 # 80.8 # 89.6 # 89.7  , today 88.3ns               # ns 
-    uwave_power_HIGH = 14      # dBm
     
     #%%  Prepare nv_sig with nv parameters  (do not alter nv_sig)
     
-    green_power =4.8
-    sample_name = "johnson"
+    green_power = 10
+    sample_name = "E6test"
     green_laser = "cobolt_515"
     
     nv_sig = { 
-          "coords":nv_coords,
+          "coords":coords,
         "name": "{}-nv1".format(sample_name,),
         "disable_opt":False, "ramp_voltages": True,
         "expected_count_rate":expected_count_rate,
@@ -75,10 +78,10 @@ if __name__ == "__main__":
         "collection_filter": "630_lp",
         "magnet_angle": magnet_angle,
         "resonance_LOW":resonance_LOW,"rabi_LOW": rabi_LOW,
-        "uwave_power_LOW": uwave_power_LOW,  # 14.5 max
+        "uwave_power_LOW": 15.5 ,  # 14.5 max
         "resonance_HIGH": resonance_HIGH,
         "rabi_HIGH": rabi_HIGH, 
-        "uwave_power_HIGH": uwave_power_HIGH, }  # 14.5 max
+        "uwave_power_HIGH": 14.5 }  # 14.5 max
     
     nv_sig = nv_sig
 
@@ -119,10 +122,40 @@ if __name__ == "__main__":
         # nv.do_resonance(nv_sig, freq_center=2.87, freq_range=0.2, num_steps=101, num_runs=20, uwave_power=-15)
         # Dan: what to do with args.pulse_duration?
         # Dan: should uwave_power be an input parameter?
-        if args.experiment_type == "ESR":
-            nv.do_resonance(nv_sig, freq_center=args.center_freq, freq_range=args.sweep_freq_range, num_steps=args.sweep_points, num_runs=args.num_sweeps, uwave_power=-15)
+        if args.experiment_type == "image":
+            nv.do_image_sample(nv_sig, scan_size=args.image_size)
+            
+        elif args.experiment_type == "optimize":
+            nv.do_optimize(nv_sig)
+
+        elif args.experiment_type == "ESR":
+            nv.do_resonance(nv_sig, freq_center=args.center_freq, freq_range=args.sweep_freq_range, num_steps=args.sweep_points, num_runs=args.num_sweeps)
+        
+        elif args.experiment_type == "rabi":
+            if args.state == 'low':
+                state_input = States.LOW
+            elif args.state == 'high':
+                state_input = States.HIGH
+            nv.do_rabi(nv_sig,state=state_input,uwave_time_range=[0,args.uwave_time_max], num_steps=args.sweep_points, num_runs=args.num_sweeps)
+        
+        elif args.experiment_type == "ramsey":
+            if args.state == 'low':
+                state_input = States.LOW
+            elif args.state == 'high':
+                state_input = States.HIGH
+            nv.do_ramsey(nv_sig,state=state_input,set_detuning=args.detuning,precession_time_range=[0,args.precession_time_max], num_steps=args.sweep_points, num_runs=args.num_sweeps)
+        
+        elif args.experiment_type == "spin-echo":
+            if args.state == 'low':
+                state_input = States.LOW
+            elif args.state == 'high':
+                state_input = States.HIGH
+            nv.do_spin_echo(nv_sig,state=state_input,precession_time_range=[0,args.echo_time_max], num_steps=args.sweep_points, num_runs=args.num_sweeps)
+        
         else:
             raise Exception("Unsupported experiment type: " + repr(args.experiment_type))
+            
+         
 
         ####### EXPERIMENT 2: Rabi oscillations #######
         # nv.do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 200], num_steps = 51, num_reps = 1e4, num_runs=15)
