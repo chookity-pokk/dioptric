@@ -43,11 +43,8 @@ class PulseGenSwab82(PulseGen, LabradServer):
     pc_name = socket.gethostname()
 
     def initServer(self):
-        filename = (
-            "E:/Shared drives/Kolkowitz Lab"
-            " Group/nvdata/pc_{}/labrad_logging/{}.log"
-        )
-        filename = filename.format(self.pc_name, self.name)
+        filename = 'C:/Users/student/Documents/labrad_logging/{}.log' 
+        filename = filename.format(self.name)
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s %(levelname)-8s %(message)s",
@@ -67,6 +64,7 @@ class PulseGenSwab82(PulseGen, LabradServer):
 
     def on_get_config(self, config):
         self.pulse_streamer = PulseStreamer(config["get"])
+
         sequence_library_path = (
             Path.home()
             / f"Documents/GitHub/kolkowitz-nv-experiment-v1.0/servers/timing/sequencelibrary/{self.name}"

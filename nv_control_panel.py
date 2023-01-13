@@ -16,9 +16,11 @@ use file 5/5/2022
 # %% Imports
 
 import labrad
+import utils.positioning as positioning
 import utils.tool_belt as tool_belt
+import utils.common as common
 import majorroutines.image_sample as image_sample
-import majorroutines.image_sample_xz as image_sample_xz
+# import majorroutines.image_sample_xz as image_sample_xz
 import majorroutines.optimize as optimize
 import majorroutines.stationary_count as stationary_count
 import majorroutines.resonance as resonance
@@ -27,7 +29,7 @@ import majorroutines.optimize_magnet_angle as optimize_magnet_angle
 import majorroutines.rabi as rabi
 import majorroutines.ramsey as ramsey
 import majorroutines.spin_echo as spin_echo
-from utils.tool_belt import States
+from utils.tool_belt import States, NormStyle
 import time
 import numpy as np
 
@@ -69,15 +71,15 @@ def do_image_sample(nv_sig, scan_size='medium'):
         num_steps = 10
         
     # For now we only support square scans so pass scan_range twice
-    image_sample.main(nv_sig, scan_range, scan_range, num_steps, apd_indices, save_data= True)
+    image_sample.main(nv_sig, scan_range, scan_range, num_steps)
 
-def do_image_sample_xz(nv_sig, zrange=2,steps=60):
+# def do_image_sample_xz(nv_sig, zrange=2,steps=60):
     
-    x_range = .5
-    z_range = zrange
-    num_steps = steps
+#     x_range = .5
+#     z_range = zrange
+#     num_steps = steps
     
-    image_sample_xz.main(nv_sig, x_range, z_range, num_steps, apd_indices)
+#     image_sample_xz.main(nv_sig, x_range, z_range, num_steps, apd_indices)
 
 def do_optimize(nv_sig):
 
@@ -330,13 +332,14 @@ if __name__ == "__main__":
         # "expected_count_rate":None,
         "magnet_angle": 100, 
         "resonance_LOW":2.7641 ,"rabi_LOW": 75.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
-        "resonance_HIGH": 2.9098 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, }  # 14.5 max. units is dBm
+        "resonance_HIGH": 2.9098 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, 
+        'norm_style':NormStyle.POINT_TO_POINT}  # 14.5 max. units is dBm
     
     nv_sig = nv_sig
 
     # %% Functions to run
     try:
-        # startt = time.time()
+
         # tool_belt.init_safe_stop()
         # tool_belt.set_drift([0.0, 0.0, tool_belt.get_drift()[2]])  # Keep z. we should explain how you can set the z focus if there are more nvs ate other depths
         # tool_belt.set_drift([0.0, 0.0, 0.0])  
@@ -349,7 +352,7 @@ if __name__ == "__main__":
         # do_optimize(nv_sig,)
 
         # do_image_sample(nv_sig, scan_size='test')
-        # do_image_sample(nv_sig,  scan_size='medium')
+        do_image_sample(nv_sig,  scan_size='medium')
         # do_image_sample(nv_sig,  scan_size='big-ish')
         # z_list = np.arange(9.5,0.5,-0.25)
         # for z in z_list:
@@ -363,7 +366,7 @@ if __name__ == "__main__":
         # nv_sig['disable_opt']=True
         # do_stationary_count(nv_sig, )
         # do_optimize_magnet_angle(nv_sig, num_angle_steps= 10, angle_range = [0,160], num_runs=15)
-        do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.2,num_runs=15)
+        # do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.2,num_runs=15)
         # do_pulsed_resonance_state(nv_sig, nv_sig, States.LOW)
         
         # do_resonance(nv_sig, 2.87, 0.2, num_runs = 40)
@@ -380,12 +383,7 @@ if __name__ == "__main__":
         # do_spin_echo(nv_sig,echo_time_range = [0, 60 * 10 ** 3], num_steps=41, num_runs=100) 
         # print('Run time: ',(time.time()-startt)/60,' minutes')
     finally:
-        # Reset our hardware - this sh#ould be done in each routine, but
-        # let's double check here
-        
-        
+
+        # Make sure everything is reset
         tool_belt.reset_cfm()
-        # Kill safe stop
-        if tool_belt.check_safe_stop_alive():
-            print("\n\nRoutine complete. Press enter to exit.")
-            tool_belt.poll_safe_stop()
+        tool_belt.reset_safe_stop()

@@ -8,7 +8,7 @@ Created on Mon Apr  8 19:50:12 2019
 
 ### BEGIN NODE INFO
 [info]
-name = piezo_stage_mcl_3d200ft_analog
+name = pos_xyz_MCL_3d200ft_analog
 version = 1.1
 description =
 

@@ -10,7 +10,6 @@ Created September 10th, 2021
 
 import platform
 from pathlib import Path
-import utils.tool_belt as tool_belt
 ### Lab-specific stuff here
 
 shared_email = "kolkowitznvlab@gmail.com"
@@ -23,7 +22,7 @@ linux_nvdata_dir = Path.home() / "E/nvdata"
 def get_nvdata_dir():
     """Returns an OS-dependent Path to the nvdata directory (configured above)"""
     
-    check_if_instructional_lab_pc_name = tool_belt.check_if_instructional_lab()
+    check_if_instructional_lab_pc_name = True
     
     if check_if_instructional_lab_pc_name != None:
         nvdata_dir = Path("C:/Users/student/Documents/LAB_DATA")

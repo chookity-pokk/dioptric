@@ -13,7 +13,6 @@ Created September 10th, 2021
 # region Imports and constants
 
 import utils.common as common
-import utils.tool_belt as tool_belt
 import os
 from pathlib import PurePath
 import sqlite3
@@ -42,7 +41,7 @@ def process_full_path(full_path):
     path_to_file = full_path.parent
     path_to_file_parts = path_to_file.parts
     
-    instructional_lab_pc_name = tool_belt.check_if_instructional_lab()
+    instructional_lab_pc_name = True
         
     if instructional_lab_pc_name != None:
         nvdata_ind = path_to_file_parts.index("LAB_DATA")

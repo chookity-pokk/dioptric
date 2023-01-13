@@ -8,7 +8,7 @@ Created on Tue Apr  9 08:52:34 2019
 
 ### BEGIN NODE INFO
 [info]
-name = apd_daq
+name = daq_counter_NI_PXIe6363
 version = 1.0
 description =
 
