@@ -29,6 +29,7 @@ import nidaqmx
 from nidaqmx.constants import AcquisitionType
 import nidaqmx.stream_writers as stream_writers
 import numpy
+import numpy as np
 import logging
 import socket
 
@@ -77,9 +78,11 @@ class PosXyzMcl3d200ftAnalog(LabradServer):
         self.close_task_internal()
 
 # %%
-        
-    def load_stream_writer_xy(self, c, task_name, voltages, period, 
+    @setting(102, coords_x="*v[]", coords_y="*v[]", continuous="b")    
+    def load_stream_xy(self, c, coords_x, coords_y,
                               continuous=False):
+        
+        voltages = np.vstack((coords_x, coords_y))
 
         # Close the existing task if there is one
         if self.task is not None:
@@ -92,7 +95,7 @@ class PosXyzMcl3d200ftAnalog(LabradServer):
         stream_voltages = numpy.ascontiguousarray(stream_voltages)
         num_stream_voltages = num_voltages - 1
         # Create a new task
-        task = nidaqmx.Task(task_name)
+        task = nidaqmx.Task(f"{self.name}-load_stream_xy")
         self.task = task
 
         # Set up the output channels
@@ -110,7 +113,7 @@ class PosXyzMcl3d200ftAnalog(LabradServer):
         # Configure the sample to advance on the rising edge of the PFI input.
         # The frequency specified is just the max expected rate in this case.
         # We'll stop once we've run all the samples.
-        freq = float(1 / (period * (10 ** -9)))  # freq in seconds as a float
+        freq = 100 # freq in seconds as a float
         if continuous:
             task.timing.cfg_samp_clk_timing(
                 freq, source=self.daq_di_clock, 

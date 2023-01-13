@@ -504,7 +504,12 @@ def main_with_cxn(
     ### Collect the data
     
     
-    counter.start_tag_stream() 
+    # counter.start_tag_stream() 
+    
+    if 'daq' in counter.name:
+        counter.load_stream_reader(0, period,  total_num_samples)
+    else:
+        counter.start_tag_stream()
     tool_belt.init_safe_stop()
     
     if xy_control_style == ControlStyle.STEP:

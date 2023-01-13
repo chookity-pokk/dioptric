@@ -890,7 +890,7 @@ def save_figure(fig, file_path):
             The file path to save to including the file name, excluding the
             extension
     """
-    instructional_lab_pc_name = check_if_instructional_lab()
+    instructional_lab_pc_name = True
         
     if instructional_lab_pc_name != None:
         fig.savefig(str(file_path.with_suffix(".png")), dpi=300)

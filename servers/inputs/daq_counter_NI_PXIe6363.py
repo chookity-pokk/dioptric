@@ -345,6 +345,11 @@ class DaqCounterNiPxie6363(LabradServer):
         """
         Dummy setting to match apd_tagger
         """
+    @setting(5)
+    def start_tag_stream(self, c):
+        """
+        Dummy setting to match apd_tagger
+        """
         
 __server__ = DaqCounterNiPxie6363()
 
