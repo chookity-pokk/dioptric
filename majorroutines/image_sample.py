@@ -633,11 +633,14 @@ def main_with_cxn(
 
 if __name__ == "__main__":
 
-    file_name = "2022_12_20-19_00_52-siena-nv_search"
+    file_name = "2023_01_14-08_01_18-E6test-nv1"
     data = tool_belt.get_raw_data(file_name)
     img_array = np.array(data["img_array"])
     readout = data["readout"]
     img_array_kcps = (img_array / 1000) / (readout * 1e-9)
+    img_array_kcps[np.where(img_array_kcps<0)]=np.nan
+    vmin = np.nanmin(img_array_kcps)
+    vmax = np.nanmax(img_array_kcps)
     x_voltages = data["x_positions_1d"]
     y_voltages = data["y_positions_1d"]
     x_half_pixel = (x_voltages[1] - x_voltages[0]) / 2
@@ -651,12 +654,14 @@ if __name__ == "__main__":
 
     kpl.init_kplotlib()
     fig, ax = plt.subplots()
-    kpl.imshow(
+    img=kpl.imshow(
         ax,
         img_array_kcps,
         title="Replot test",
         x_label="V",
         y_label="V",
+        vmin=vmin,
+        vmax=vmax,
         cbar_label="kcps",
         extent=extent,
     )

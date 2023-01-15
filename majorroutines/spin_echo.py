@@ -980,32 +980,6 @@ def main_with_cxn(
 
 if __name__ == "__main__":
 
-    # plt.ion()
-
-    # file_names = [
-    #     # "2021_09_03-20_36_12-hopper-search",
-    #     # "2021_09_03-22_04_25-hopper-search",
-    #     # "2021_09_03-23_31_54-hopper-search",
-    #     # "2021_09_04-01_07_44-hopper-search",
-    #     "2021_09_04-08_34_53-hopper-search",
-    #     "2021_09_04-10_03_27-hopper-search",
-    #     "2021_09_04-11_31_49-hopper-search",
-    #     "2021_09_04-13_00_14-hopper-search",
-    # ]
-
-    # for f in file_names:
-
-    #     # start = time.time()
-    #     data = tool_belt.get_raw_data(f)
-    #     # stop = time.time()
-    #     # print(stop - start)
-
-    #     #    print(data['norm_avg_sig'])
-
-    #     ret_vals = plot_resonances_vs_theta_B(data)
-    #     fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
-    #     # print(popt)
-    
     file_name = "2022_12_16-01_10_36-siena-nv1_2022_10_27"
     folder = 'pc_rabi/branch_master/spin_echo/2022_12'
     data = tool_belt.get_raw_data(file_name, folder)

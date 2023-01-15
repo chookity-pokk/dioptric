@@ -922,26 +922,19 @@ def main_with_cxn(
 
 if __name__ == "__main__":
 
-    print(Path(__file__).stem)
-    sys.exit()
+    file = '2023_01_14-09_03_23-E6test-nv1'
+    # file_path = "pc_carr/branch_master/resonance/2023_01/"
+    data = tool_belt.get_raw_data(file)
 
-    kpl.init_kplotlib()
-
-    file_name = "2022_11_19-09_14_08-wu-nv1_zfs_vs_t"
-    data = tool_belt.get_raw_data(file_name)
-    freq_center = data["freq_center"]
-    freq_range = data["freq_range"]
-    num_steps = data["num_steps"]
-    ref_counts = data["ref_counts"]
-    sig_counts = data["sig_counts"]
-    num_reps = data["num_reps"]
-    nv_sig = data["nv_sig"]
-    readout = nv_sig["spin_readout_dur"]
-    try:
-        norm_style = NormStyle[str.upper(nv_sig["norm_style"])]
-    except Exception as exc:
-        # norm_style = NormStyle.POINT_TO_POINT
-        norm_style = NormStyle.SINGLE_VALUED
+    freq_center = data['freq_center']
+    freq_range = data['freq_range']
+    num_steps = data['num_steps']
+    num_runs = data['num_runs']
+    num_reps = data['num_reps']
+    ref_counts = data['ref_counts']
+    sig_counts = data['sig_counts']
+    readout = data['readout']
+    norm_style = NormStyle.SINGLE_VALUED #data['nv_sig']['norm_style']
 
     ret_vals = tool_belt.process_counts(
         sig_counts, ref_counts, num_reps, readout, norm_style
@@ -952,20 +945,19 @@ if __name__ == "__main__":
         norm_avg_sig,
         norm_avg_sig_ste,
     ) = ret_vals
-    # create_raw_data_figure(
-    #     freq_center,
-    #     freq_range,
-    #     num_steps,
-    #     sig_counts_avg_kcps,
-    #     ref_counts_avg_kcps,
-    #     norm_avg_sig,
-    # )
-    create_fit_figure(
-        freq_center,
-        freq_range,
-        num_steps,
-        norm_avg_sig,
-        norm_avg_sig_ste,
-    )
 
-    plt.show(block=True)
+    # Raw data
+    kpl.init_kplotlib()
+    
+    raw_fig, ax_sig_ref, ax_norm = create_raw_data_figure(
+        freq_center, freq_range, num_steps
+    )
+    kpl.plot_line_update(ax_sig_ref, line_ind=0, y=sig_counts_avg_kcps)
+    kpl.plot_line_update(ax_sig_ref, line_ind=1, y=ref_counts_avg_kcps)
+    kpl.plot_line_update(ax_norm, y=norm_avg_sig)
+    
+    # Fits
+    fit_fig, _, fit_func, popt, _ = create_fit_figure(
+        freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste
+    )
+    

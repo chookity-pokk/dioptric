@@ -370,9 +370,9 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
 
 if __name__ == '__main__':
 
-    file = '2022_12_06-15_24_46-johnson-search'
-    file_path = "pc_carr/branch_master/resonance/2023_01/"
-    data = tool_belt.get_raw_data(file, file_path)
+    file = '2023_01_14-12_59_48-E6test-nv1'
+    # file_path = "pc_carr/branch_master/resonance/2023_01/"
+    data = tool_belt.get_raw_data(file)
 
     freq_center = data['freq_center']
     freq_range = data['freq_range']
@@ -381,7 +381,7 @@ if __name__ == '__main__':
     ref_counts = data['ref_counts']
     sig_counts = data['sig_counts']
     readout = data['readout']
-    norm_style = NormStyle.POINT_TO_POINT #data['nv_sig']['norm_style']
+    norm_style = NormStyle.SINGLE_VALUED #data['nv_sig']['norm_style']
 
     ret_vals = tool_belt.process_counts(
         sig_counts, ref_counts, 1, readout, norm_style
