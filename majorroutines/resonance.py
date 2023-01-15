@@ -21,7 +21,8 @@ from utils.tool_belt import States, NormStyle
 from majorroutines import pulsed_resonance 
 from random import shuffle
 import majorroutines.optimize as optimize
-
+import utils.kplotlib as kpl
+from utils.kplotlib import KplColors
 
 def process_counts(ref_counts, sig_counts, norm_style=NormStyle.SINGLE_VALUED):
     """Extract the normalized average signal at each data point.
@@ -79,6 +80,8 @@ def main(nv_sig, freq_center, freq_range,
 def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
                   num_steps, num_runs, uwave_power, state=States.LOW, opti_nv_sig = None):
 
+    kpl.init_kplotlib()
+    
     # %% Initial calculations and setup
 
     tool_belt.reset_cfm(cxn)
@@ -134,6 +137,15 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
     print('')
     print(tool_belt.get_expected_run_time_string(period,num_steps,1,num_runs))
     print('')
+    
+    # Create raw data figure for incremental plotting
+    raw_fig, ax_sig_ref, ax_norm = pulsed_resonance.create_raw_data_figure(
+        freq_center, freq_range, num_steps
+    )
+    # Set up a run indicator for incremental plotting
+    run_indicator_text = "Run #{}/{}"
+    text = run_indicator_text.format(0, num_runs)
+    run_indicator_obj = kpl.anchored_text(ax_norm, text, loc=kpl.Loc.UPPER_RIGHT)
 
     # %% Get the starting time of the function
 
@@ -223,6 +235,30 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
             # print(norm)
 
         counter_server.stop_tag_stream()
+        
+        ### Incremental plotting
+
+        # Update the run indicator
+        text = run_indicator_text.format(run_ind + 1, num_runs)
+        run_indicator_obj.txt.set_text(text)
+
+        # Average the counts over the iterations
+        inc_sig_counts = sig_counts[: run_ind + 1]
+        inc_ref_counts = ref_counts[: run_ind + 1]
+        ret_vals = tool_belt.process_counts(
+            inc_sig_counts, inc_ref_counts, 1, readout, norm_style
+        )
+        (
+            sig_counts_avg_kcps,
+            ref_counts_avg_kcps,
+            norm_avg_sig,
+            norm_avg_sig_ste,
+        ) = ret_vals
+
+        kpl.plot_line_update(ax_sig_ref, line_ind=0, y=sig_counts_avg_kcps)
+        kpl.plot_line_update(ax_sig_ref, line_ind=1, y=ref_counts_avg_kcps)
+        kpl.plot_line_update(ax_norm, y=norm_avg_sig)
+
 
         # %% Save the data we have incrementally for long measurements
 
@@ -252,40 +288,38 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
         file_path = tool_belt.get_file_path(__file__, start_timestamp,
                                             nv_sig['name'], 'incremental')
         tool_belt.save_raw_data(rawData, file_path)
+        
+        tool_belt.save_figure(raw_fig, file_path)
 
     # %% Process and plot the data
-
-    ret_vals = tool_belt.process_counts(sig_counts, ref_counts, 1, readout, norm_style)
+    
+    ret_vals = tool_belt.process_counts(
+        sig_counts, ref_counts, 1, readout, norm_style
+    )
     (
         sig_counts_avg_kcps,
         ref_counts_avg_kcps,
         norm_avg_sig,
         norm_avg_sig_ste,
     ) = ret_vals
+
+    # Raw data
+    kpl.plot_line_update(ax_sig_ref, line_ind=0, y=sig_counts_avg_kcps)
+    kpl.plot_line_update(ax_sig_ref, line_ind=1, y=ref_counts_avg_kcps)
+    kpl.plot_line_update(ax_norm, y=norm_avg_sig)
+    run_indicator_obj.remove()
     
+    # Fits
+    fit_fig, _, fit_func, popt, _ = pulsed_resonance.create_fit_figure(
+        freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste
+    )
 
-    # Create an image with 2 plots on one row, with a specified size
-    # Then draw the canvas and flush all the previous plots from the canvas
-    fig, axes_pack = plt.subplots(1, 2, figsize=(17, 8.5))
-
-    # The first plot will display both the uwave_off and uwave_off counts
-    ax = axes_pack[0]
-    ax.plot(freqs, ref_counts_avg_kcps, 'r-', label = 'Reference')
-    ax.plot(freqs, sig_counts_avg_kcps, 'g-', label = 'Signal')
-    ax.set_title('Non-normalized Count Rate Versus Frequency')
-    ax.set_xlabel('Frequency (GHz)')
-    ax.set_ylabel('Count rate (kcps)')
-    ax.legend()
-    # The second plot will show their subtracted values
-    ax = axes_pack[1]
-    ax.plot(freqs, norm_avg_sig, 'b-')
-    ax.set_title('Normalized Count Rate vs Frequency')
-    ax.set_xlabel('Frequency (GHz)')
-    ax.set_ylabel('Contrast (arb. units)')
-
-    fig.canvas.draw()
-    fig.tight_layout()
-    fig.canvas.flush_events()
+    if len(popt) == 3:
+        low_freq = popt[2]
+        high_freq = None
+    elif len(popt) == 6:
+        low_freq = popt[2]
+        high_freq = popt[5]
 
     # %% Clean up and save the data
 
@@ -319,37 +353,17 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
 #               'norm_avg_sig_ste-units': 'arb',
                }
 
-    name = nv_sig['name']
-    filePath = tool_belt.get_file_path(__file__, timestamp, name)
-    tool_belt.save_figure(fig, filePath)
-    tool_belt.save_raw_data(rawData, filePath)
+    nv_name = nv_sig['name']
+    
+    file_path = tool_belt.get_file_path(__file__, timestamp, nv_name)
+    data_file_name = file_path.stem
+    tool_belt.save_figure(raw_fig, file_path)
 
-    # Use the pulsed_resonance fitting functions
-    fit_func = None
-    if False:
-        fit_func, popt, pcov = pulsed_resonance.fit_resonance(freq_range, freq_center,
-                                      num_steps, norm_avg_sig, norm_avg_sig_ste, ref_counts)
-        
-    fit_fig = None
-    if (fit_func is not None) and (popt is not None):
-        fit_fig = pulsed_resonance.create_fit_figure(freq_range, freq_center,
-                                     num_steps, norm_avg_sig, fit_func, popt)
-    filePath = tool_belt.get_file_path(__file__, timestamp, name + '-fit')
-    if fit_fig is not None:
-        tool_belt.save_figure(fit_fig, filePath)
+    tool_belt.save_raw_data(data, file_path)
 
-    # if fit_func == pulsed_resonance.single_gaussian_dip:
-    #     print('Single resonance at {:.4f} GHz'.format(popt[2]))
-    #     print('\n')
-    #     return popt[2], None
-    # elif fit_func == pulsed_resonance.double_gaussian_dip:
-    #     print('Resonances at {:.4f} GHz and {:.4f} GHz'.format(popt[2], popt[5]))
-    #     print('Splitting of {:d} MHz'.format(int((popt[5] - popt[2]) * 1000)))
-    #     print('\n')
-    #     return popt[2], popt[5]
-    # else:
-    #     print('No resonances found')
-    #     print('\n')
+    file_path = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit")
+    tool_belt.save_figure(fit_fig, file_path)
+
     return None, None
 
 # %%
@@ -357,27 +371,40 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
 if __name__ == '__main__':
 
     file = '2022_12_06-15_24_46-johnson-search'
-    file_path = "pc_carr/branch_master/resonance/2022_12/incremental"
+    file_path = "pc_carr/branch_master/resonance/2023_01/"
     data = tool_belt.get_raw_data(file, file_path)
 
     freq_center = data['freq_center']
     freq_range = data['freq_range']
     num_steps = data['num_steps']
     num_runs = data['num_runs']
-    ref_counts = data['ref_counts'][0:1]
-    sig_counts = data['sig_counts'][0:1]
-    print(len(ref_counts))
-    ret_vals = process_counts(ref_counts, sig_counts)
-    avg_ref_counts, avg_sig_counts, norm_avg_sig, ste_ref_counts, ste_sig_counts, norm_avg_sig_ste = ret_vals
-    # norm_avg_sig_ste = None
+    ref_counts = data['ref_counts']
+    sig_counts = data['sig_counts']
+    readout = data['readout']
+    norm_style = NormStyle.POINT_TO_POINT #data['nv_sig']['norm_style']
+
+    ret_vals = tool_belt.process_counts(
+        sig_counts, ref_counts, 1, readout, norm_style
+    )
+    (
+        sig_counts_avg_kcps,
+        ref_counts_avg_kcps,
+        norm_avg_sig,
+        norm_avg_sig_ste,
+    ) = ret_vals
+
+    # Raw data
+    kpl.init_kplotlib()
     
-
-    fit_func, popt, pcov = pulsed_resonance.fit_resonance(freq_center, freq_range,num_steps,
-                                         norm_avg_sig, norm_avg_sig_ste)
-
-    # fit_func, popt, pcov = fit_resonance(freq_range, freq_center, num_steps,
-    #                                norm_avg_sig, ref_counts)
-
-    pulsed_resonance.create_fit_figure(freq_center, freq_range, num_steps,
-                      norm_avg_sig, fit_func, popt)
+    raw_fig, ax_sig_ref, ax_norm = pulsed_resonance.create_raw_data_figure(
+        freq_center, freq_range, num_steps
+    )
+    kpl.plot_line_update(ax_sig_ref, line_ind=0, y=sig_counts_avg_kcps)
+    kpl.plot_line_update(ax_sig_ref, line_ind=1, y=ref_counts_avg_kcps)
+    kpl.plot_line_update(ax_norm, y=norm_avg_sig)
+    
+    # Fits
+    fit_fig, _, fit_func, popt, _ = pulsed_resonance.create_fit_figure(
+        freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste
+    )
     
