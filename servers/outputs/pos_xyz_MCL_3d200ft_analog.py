@@ -133,6 +133,13 @@ class PosXyzMcl3d200ftAnalog(LabradServer):
 
         task.start()
         
+    @setting(223,coords_z="*v[]")
+    def load_stream_z(self, c, coords_z):
+        """Load a linear sweep with the DAQ"""
+        
+        period = 1e6
+        self.load_stream_writer_z(c, "xyzMCLpiezo-load_scan_z", coords_z, period)
+        
     def load_stream_writer_z(self, c, task_name, voltages, period, 
                               continuous=False):
 

@@ -85,7 +85,6 @@ def do_optimize(nv_sig):
 
     optimize.main(
         nv_sig,
-        apd_indices,
         set_to_opti_coords=False,
         save_data=True,
         plot_data=True,
@@ -103,11 +102,10 @@ def do_stationary_count(nv_sig):
 
 def do_resonance(nv_sig,  freq_center=2.87, freq_range=0.2, num_steps = 101, num_runs = 40):
     
-    uwave_power = -15.0
+    uwave_power = -5.0
 
     resonance.main(
         nv_sig,
-        apd_indices,
         freq_center,
         freq_range,
         num_steps,
@@ -154,7 +152,6 @@ def do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.2,num_runs=30):
 
     pulsed_resonance.main(
         nv_sig,
-        apd_indices,
         freq_center,
         freq_range,
         num_steps,
@@ -260,7 +257,6 @@ def do_ramsey(nv_sig,  precession_time_range = [0, 0.2 * 10 ** 4], num_steps = 1
     # angle= 
     ramsey.main(
         nv_sig,
-        apd_indices,
         detuning,
         precession_time_range,
         num_steps,
@@ -287,7 +283,6 @@ def do_spin_echo(nv_sig, echo_time_range = [0, 80 * 10 ** 3],num_steps = 81,
 
     angle = spin_echo.main(
         nv_sig,
-        apd_indices,
         echo_time_range,
         num_steps,
         num_reps,
@@ -312,7 +307,7 @@ if __name__ == "__main__":
     green_laser = "cobolt_515"
         
     nv_sig = {
-        "coords":[6.423, 5.660,4.25],
+        "coords":[6.4, 5.64,4.25],
         "name": "{}-nv1".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": False,
@@ -328,9 +323,9 @@ if __name__ == "__main__":
         "imaging_readout_dur": 1e7,
         "collection_filter": "630_lp",
         
-        "expected_count_rate":17,
-        # "expected_count_rate":None,
-        "magnet_angle": 100, 
+        # "expected_count_rate":22,
+        "expected_count_rate":None,
+        "magnet_angle": 50, 
         "resonance_LOW":2.7641 ,"rabi_LOW": 75.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
         "resonance_HIGH": 2.9098 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, 
         'norm_style':NormStyle.POINT_TO_POINT}  # 14.5 max. units is dBm
@@ -369,7 +364,7 @@ if __name__ == "__main__":
         # do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.2,num_runs=15)
         # do_pulsed_resonance_state(nv_sig, nv_sig, States.LOW)
         
-        # do_resonance(nv_sig, 2.87, 0.2, num_runs = 40)
+        # do_resonance(nv_sig, 2.87, 0.2, num_runs = 15)
         # do_resonance(nv_sig, 2.875, 0.1)
         # do_resonance_state(nv_sig , States.LOW)
         

@@ -492,7 +492,7 @@ def main_with_cxn(
         laser_power = tool_belt.set_laser_power(cxn, nv_sig, laser_key)
 
         # Load the APD
-        counter_server.start_tag_stream()
+        # counter_server.start_tag_stream()
 
         # Shuffle the list of tau indices so that it steps thru them randomly
         shuffle(tau_ind_list)
@@ -555,6 +555,12 @@ def main_with_cxn(
             seq_args_string = tool_belt.encode_seq_args(seq_args)
             # Clear the counter/tagger buffer of any excess counts
             counter_server.clear_buffer()
+            
+            if 'daq' in counter_server.name: #####I PUT THIS BEFORE THE NEXT PARAGRAPH. IT USED TO BE AFTER
+                counter_server.load_stream_reader(0, seq_time,  int(4*num_reps))
+                n_apd_samples = int(4*num_reps)
+            else:
+                counter_server.start_tag_stream()
             # print(seq_args)
             pulsegen_server.stream_immediate(
                 seq_file_name, num_reps, seq_args_string
@@ -563,7 +569,7 @@ def main_with_cxn(
             # Each sample is of the form [*(<sig_shrt>, <ref_shrt>, <sig_long>, <ref_long>)]
             # So we can sum on the values for similar index modulus 4 to
             # parse the returned list into what we want.
-            new_counts = counter_server.read_counter_separate_gates(1)
+            new_counts = counter_server.read_counter_separate_gates(n_apd_samples)
             sample_counts = new_counts[0]
 
             count = sum(sample_counts[0::4])

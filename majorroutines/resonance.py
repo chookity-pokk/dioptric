@@ -165,8 +165,13 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
         sig_gen_cxn.uwave_on()
 
         # Load the APD task with two samples for each frequency step
-        pulsegen_server.stream_load(file_name, seq_args_string)
-        counter_server.start_tag_stream()
+        ret_vals = pulsegen_server.stream_load(file_name, seq_args_string)
+        period = ret_vals[0]
+        
+        if 'daq' in counter_server.name:
+            counter_server.load_stream_reader(0, period,  2*num_steps)#put the total number of samples you expect for this run
+        else:
+            counter_server.start_tag_stream()
         
         # Shuffle the list of frequency indices so that we step through
         # them randomly
@@ -189,14 +194,23 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
             pulsegen_server.stream_start() 
 
             # Read the counts using parity to distinguish signal vs ref
-            new_counts = counter_server.read_counter_modulo_gates(2, 1)
+            # new_counts = counter_server.read_counter_modulo_gates(2, 1)
+            # sample_counts = new_counts[0]
+            
+            # cur_run_sig_counts_summed = sample_counts[1]
+            # cur_run_ref_counts_summed = sample_counts[0]
+            
+            # sig_counts[run_ind, freq_ind] = cur_run_sig_counts_summed
+            # ref_counts[run_ind, freq_ind] = cur_run_ref_counts_summed
+            
+            new_counts = counter_server.read_counter_separate_gates(2) #originally 1
+#            print(new_counts)
             sample_counts = new_counts[0]
-            
-            cur_run_sig_counts_summed = sample_counts[1]
-            cur_run_ref_counts_summed = sample_counts[0]
-            
-            sig_counts[run_ind, freq_ind] = cur_run_sig_counts_summed
-            ref_counts[run_ind, freq_ind] = cur_run_ref_counts_summed
+            ref_gate_counts = sample_counts[0::2]
+            ref_counts[run_ind, freq_ind]  = sum(ref_gate_counts)
+
+            sig_gate_counts = sample_counts[1::2]
+            sig_counts[run_ind, freq_ind] = sum(sig_gate_counts)
             # break
             # norm= sum(sig_gate_counts) / sum(ref_gate_counts)
             # print(norm)

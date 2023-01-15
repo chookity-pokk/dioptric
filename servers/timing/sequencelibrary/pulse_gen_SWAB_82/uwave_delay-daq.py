@@ -43,7 +43,7 @@ def get_seq(pulse_streamer, config, args):
     durations = [numpy.int64(el) for el in durations]
     tau, max_tau, readout, pi_pulse, polarization = durations
     
-    state, apd_index, laser_name, laser_power = args[5:9]
+    state, laser_name, laser_power = args[5:8]
     state = States(state)
     sig_gen = config['Microwaves']['sig_gen_{}'.format(state.name)]
     
@@ -51,7 +51,7 @@ def get_seq(pulse_streamer, config, args):
     aom_delay_time = config['Optics'][laser_name]['delay']
     
     pulser_wiring = config['Wiring']['PulseGen']
-    pulser_do_apd_gate = pulser_wiring['do_apd_{}_gate'.format(apd_index)]
+    pulser_do_apd_gate = pulser_wiring['do_apd_gate']
     pulser_do_sig_gen_gate = pulser_wiring['do_{}_gate'.format(sig_gen)]
     pulser_do_daq_clock = pulser_wiring['do_sample_clock']
     

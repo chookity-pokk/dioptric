@@ -45,10 +45,10 @@ def get_seq(pulse_streamer, config, args):
     durations = [numpy.int64(el) for el in durations]
     tau, max_tau, readout = durations
 
-    apd_index, laser_name, laser_power = args[3:6]
+    laser_name, laser_power = args[3:5]
     
     pulser_wiring = config['Wiring']['PulseGen']
-    do_apd_gate = pulser_wiring['do_apd_{}_gate'.format(apd_index)]
+    do_apd_gate = pulser_wiring['do_apd_gate']
     pulser_do_daq_clock = pulser_wiring['do_sample_clock']
         
     illumination = 10*readout

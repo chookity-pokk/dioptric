@@ -715,8 +715,8 @@ def main_with_cxn(
         tool_belt.set_filter(cxn, nv_sig, laser_key)
         laser_power = tool_belt.set_laser_power(cxn, nv_sig, laser_key)
 
-        pulse_gen.stream_load(seq_name, seq_args_string)
-        counter.start_tag_stream()
+        ret_vals = pulse_gen.stream_load(seq_name, seq_args_string)
+        period = ret_vals[0]
 
         # Take a sample and step through the shuffled frequencies
         shuffle(freq_ind_list)
@@ -725,6 +725,12 @@ def main_with_cxn(
             # Break out of the while if the user says stop
             if tool_belt.safe_stop():
                 break
+            
+            if 'daq' in counter.name:
+                counter.load_stream_reader(0, period,  int(2*num_reps))
+                n_apd_samples = int(2*num_reps)
+            else:
+                counter.start_tag_stream()
 
             freq_index_master_list[run_ind].append(freq_ind)
             sig_gen_cxn.set_freq(freqs[freq_ind])
@@ -732,12 +738,23 @@ def main_with_cxn(
             pulse_gen.stream_start(int(num_reps))
 
             # Get and write the counts
-            new_counts = counter.read_counter_modulo_gates(2, 1)
+            # new_counts = counter.read_counter_modulo_gates(2, 1)
+            # sample_counts = new_counts[0]
+            # cur_run_sig_counts_summed = sample_counts[0]
+            # cur_run_ref_counts_summed = sample_counts[1]
+            # sig_counts[run_ind, freq_ind] = cur_run_sig_counts_summed
+            # ref_counts[run_ind, freq_ind] = cur_run_ref_counts_summed
+            
+            new_counts = counter.read_counter_separate_gates(n_apd_samples)
+
             sample_counts = new_counts[0]
-            cur_run_sig_counts_summed = sample_counts[0]
-            cur_run_ref_counts_summed = sample_counts[1]
-            sig_counts[run_ind, freq_ind] = cur_run_sig_counts_summed
-            ref_counts[run_ind, freq_ind] = cur_run_ref_counts_summed
+
+            # signal counts are even - get every second element starting from 0
+            sig_gate_counts = sample_counts[0::2]
+            sig_counts[run_ind, freq_ind] = sum(sig_gate_counts)
+            # ref counts are odd - sample_counts every second element starting from 1
+            ref_gate_counts = sample_counts[1::2]
+            ref_counts[run_ind, freq_ind] = sum(ref_gate_counts)
 
         counter.stop_tag_stream()
 

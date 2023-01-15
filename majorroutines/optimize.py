@@ -141,7 +141,11 @@ def read_timed_counts(cxn, num_steps, period):
 
     counter_server = tool_belt.get_server_counter(cxn)
     pulsegen_server = tool_belt.get_server_pulse_gen(cxn)
-    counter_server.start_tag_stream()
+    
+    if 'daq' in counter_server.name:
+        counter_server.load_stream_reader(0, period,  num_steps)
+    else:
+        counter_server.start_tag_stream()
 
     num_read_so_far = 0
     counts = []
@@ -176,7 +180,10 @@ def read_manual_counts(cxn, period, axis_write_func, scan_vals):
 
     counter_server = tool_belt.get_server_counter(cxn)
     pulsegen_server = tool_belt.get_server_pulse_gen(cxn)
-    counter_server.start_tag_stream()
+    if 'daq' in counter_server.name:
+        counter_server.load_stream_reader(0, period,  num_steps)
+    else:
+        counter_server.start_tag_stream()
 
     counts = []
 
@@ -230,10 +237,14 @@ def stationary_count_lite(cxn, nv_sig, coords, config):
         delay = config["Positioning"]["xy_delay"]
     seq_args = [delay, readout, laser_name, laser_power]
     seq_args_string = tool_belt.encode_seq_args(seq_args)
-    pulsegen_server.stream_load(seq_file_name, seq_args_string)
+    ret_vals = pulsegen_server.stream_load(seq_file_name, seq_args_string)
+    period = ret_vals[0]
 
     # Collect the data
-    counter_server.start_tag_stream()
+    if 'daq' in counter_server.name:
+        counter_server.load_stream_reader(0, period,  total_num_samples)
+    else:
+        counter_server.start_tag_stream()
     pulsegen_server.stream_start(total_num_samples)
     new_samples = counter_server.read_counter_simple(total_num_samples)
 
@@ -633,6 +644,9 @@ def main_with_cxn(
                     positioning.set_xyz(cxn, int_coords)
                 axis_ind = 2
                 ret_vals = optimize_on_axis(cxn, adjusted_nv_sig, axis_ind, config, fig)
+                opti_coords.append(ret_vals[0])
+                scan_vals_by_axis.append(ret_vals[1])
+                counts_by_axis.append(ret_vals[2])
 
         elif z_control_style == ControlStyle.STEP:
             if None not in opti_coords:
@@ -644,11 +658,10 @@ def main_with_cxn(
                 adjusted_nv_sig_z["coords"] = adjusted_coords
             axis_ind = 2
             ret_vals = optimize_on_axis(cxn, adjusted_nv_sig_z, axis_ind, config, fig)
+            opti_coords.append(ret_vals[0])
+            scan_vals_by_axis.append(ret_vals[1])
+            counts_by_axis.append(ret_vals[2])
 
-        # MCC: What is this doing here? It breaks optimize for me (xy and z are streams and disable_z_opt is set)
-        # opti_coords.append(ret_vals[0])
-        # scan_vals_by_axis.append(ret_vals[1])
-        # counts_by_axis.append(ret_vals[2])
 
         # return
         # We failed to get optimized coordinates, try again

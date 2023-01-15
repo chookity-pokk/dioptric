@@ -27,8 +27,7 @@ def get_seq(pulse_streamer, config, args):
     # Unpack the durations
     tau_shrt, polarization_time, gate_time, pi_pulse, pi_on_2_pulse, tau_long = durations
 
-    # Get the APD indices
-    apd_index, state, laser_name, laser_power = args[6:10]
+    state, laser_name, laser_power = args[6:9]
     state = States(state)
         
     # time of illumination during which signal readout occurs
@@ -49,7 +48,7 @@ def get_seq(pulse_streamer, config, args):
     back_buffer = 200
 
     pulser_wiring = config['Wiring']['PulseGen']
-    pulser_do_apd_gate = pulser_wiring['do_apd_{}_gate'.format(apd_index)]
+    pulser_do_apd_gate = pulser_wiring['do_apd_gate']
     sig_gen_gate_chan_name = 'do_{}_gate'.format(sig_gen_name)
     pulser_do_sig_gen_gate = pulser_wiring[sig_gen_gate_chan_name]
     key = 'do_sample_clock'

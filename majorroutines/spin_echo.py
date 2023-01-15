@@ -697,7 +697,7 @@ def main_with_cxn(
         laser_power = tool_belt.set_laser_power(cxn, nv_sig, laser_key)
 
         # Load the APD
-        counter_server.start_tag_stream()
+        # counter_server.start_tag_stream()
 
         # Shuffle the list of tau indices so that it steps thru them randomly
         shuffle(tau_ind_list)
@@ -756,18 +756,43 @@ def main_with_cxn(
             seq_args_string = tool_belt.encode_seq_args(seq_args)
             # Clear the tagger buffer of any excess counts
             counter_server.clear_buffer()
+            
+            if 'daq' in counter_server.name:
+                counter_server.load_stream_reader(0, seq_time,  int(4*num_reps))
+                n_apd_samples = int(4*num_reps)
+            else:
+                counter_server.start_tag_stream()
+                
             pulsegen_server.stream_immediate(
                 seq_file_name, num_reps, seq_args_string
             )
             
-            new_counts = counter_server.read_counter_modulo_gates(4, 1)
+            # new_counts = counter_server.read_counter_modulo_gates(4, 1)
+            # sample_counts = new_counts[0]
+            
+            # sig_counts[run_ind, tau_ind_first] = sample_counts[0]
+            # ref_counts[run_ind, tau_ind_first] = sample_counts[1]
+            # sig_counts[run_ind, tau_ind_second] = sample_counts[2]
+            # ref_counts[run_ind, tau_ind_second] = sample_counts[3]
+            
+            new_counts = counter_server.read_counter_separate_gates(n_apd_samples)
             sample_counts = new_counts[0]
-            
-            sig_counts[run_ind, tau_ind_first] = sample_counts[0]
-            ref_counts[run_ind, tau_ind_first] = sample_counts[1]
-            sig_counts[run_ind, tau_ind_second] = sample_counts[2]
-            ref_counts[run_ind, tau_ind_second] = sample_counts[3]
-            
+
+            count = sum(sample_counts[0::4])
+            sig_counts[run_ind, tau_ind_first] = count
+            # print("First signal = " + str(count))
+
+            count = sum(sample_counts[1::4])
+            ref_counts[run_ind, tau_ind_first] = count
+            # print("First Reference = " + str(count))
+
+            count = sum(sample_counts[2::4])
+            sig_counts[run_ind, tau_ind_second] = count
+            # print("Second Signal = " + str(count))
+
+            count = sum(sample_counts[3::4])
+            ref_counts[run_ind, tau_ind_second] = count
+            # print("Second Reference = " + str(count))
 
         counter_server.stop_tag_stream()
 

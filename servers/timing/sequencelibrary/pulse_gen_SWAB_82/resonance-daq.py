@@ -18,7 +18,7 @@ HIGH = 1
 def get_seq(pulse_streamer, config, args):
     
     # Unpack the args
-    readout, state, laser_name, laser_power, apd_index = args
+    readout, state, laser_name, laser_power = args
     
     state = States(state)
     pulser_wiring = config['Wiring']['PulseGen']
@@ -34,7 +34,7 @@ def get_seq(pulse_streamer, config, args):
 
     # Get what we need out of the wiring dictionary
     pulser_do_daq_clock = pulser_wiring['do_sample_clock']
-    pulser_do_apd_gate = pulser_wiring['do_apd_{}_gate'.format(apd_index)]
+    pulser_do_apd_gate = pulser_wiring['do_apd_gate']
     sig_gen_gate_chan_name = 'do_{}_gate'.format(sig_gen_name)
     pulser_do_sig_gen_gate = pulser_wiring[sig_gen_gate_chan_name]
 #    laser_chan = pulser_wiring['do_{}_dm'.format(laser_name)]
