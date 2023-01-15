@@ -88,10 +88,10 @@ def create_fit_figure(uwave_time_range, num_steps, uwave_freq, norm_avg_sig,
         )
 
     # Plot setup
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(1,1,figsize=kpl.figsize)
     ax.set_xlabel('Microwave duration (ns)')
     ax.set_ylabel("Normalized fluorescence")
-    ax.set_title('Rabi Oscillation Of NV Center Electron Spin')
+    ax.set_title('Rabi Oscillation Of NV Electron Spin')
     
     # Plotting
     if norm_avg_sig_ste is not None:
@@ -551,14 +551,10 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
         return None, sig_counts, ref_counts
 
 
-# %% Run the file
 
-
-if __name__ == '__main__':
-    
+def replot(file):
     kpl.init_kplotlib()
 
-    file = '2023_01_11-11_21_28-johnson-nv1'
     data = tool_belt.get_raw_data(file)
     
     uwave_freq = data['uwave_freq']
@@ -588,5 +584,13 @@ if __name__ == '__main__':
 
     rabi_period_unc = rabi_period**2 * v_unc
     print('Rabi period measured: {} +/- {} ns\n'.format('%.2f'%rabi_period, '%.2f'%rabi_period_unc))
+    
+# %% Run the file
 
-    # simulate([0,250], 2.8268, 2.8288, 0.43, measured_rabi_period=197)
+
+if __name__ == '__main__':
+    
+
+    file = '2023_01_13-08_13_07-E6test-nv1'
+    
+    replot(file)

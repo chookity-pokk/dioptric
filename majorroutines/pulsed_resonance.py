@@ -919,11 +919,8 @@ def main_with_cxn(
 
 # endregion
 
-
-if __name__ == "__main__":
-
-    file = '2023_01_14-09_03_23-E6test-nv1'
-    # file_path = "pc_carr/branch_master/resonance/2023_01/"
+def replot(file):
+    
     data = tool_belt.get_raw_data(file)
 
     freq_center = data['freq_center']
@@ -960,4 +957,12 @@ if __name__ == "__main__":
     fit_fig, _, fit_func, popt, _ = create_fit_figure(
         freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste
     )
+    
+
+
+if __name__ == "__main__":
+
+    file = '2023_01_14-09_03_23-E6test-nv1'
+    
+    replot(file)
     

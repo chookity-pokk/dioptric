@@ -327,7 +327,7 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
 
     timestamp = tool_belt.get_time_stamp()
 
-    rawData = {'timestamp': timestamp,
+    data = {'timestamp': timestamp,
                'nv_sig': nv_sig,
                # 'nv_sig-units': tool_belt.get_nv_sig_units(),
                'opti_coords_list': opti_coords_list,
@@ -366,12 +366,9 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
 
     return None, None
 
-# %%
 
-if __name__ == '__main__':
+def replot(file):
 
-    file = '2023_01_14-12_59_48-E6test-nv1'
-    # file_path = "pc_carr/branch_master/resonance/2023_01/"
     data = tool_belt.get_raw_data(file)
 
     freq_center = data['freq_center']
@@ -407,4 +404,10 @@ if __name__ == '__main__':
     fit_fig, _, fit_func, popt, _ = pulsed_resonance.create_fit_figure(
         freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste
     )
+# %%
+
+if __name__ == '__main__':
+
+    file = '2023_01_14-12_59_48-E6test-nv1'
     
+    replot(file)
