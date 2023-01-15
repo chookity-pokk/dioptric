@@ -10,7 +10,7 @@ It will run nv_control_panel with the inputted parameters
 """
 import nv_control_panel as nv
 import utils.tool_belt as tool_belt
-from utils.tool_belt import States
+from utils.tool_belt import States, NormStyle
 import labrad
 import time
 import sys
@@ -21,9 +21,9 @@ import argparse
 # import utils.tool_belt.laser_off_no_cxn as laser_off
 
 # %%
-lase_namer = 'cobolt_515'
+laser_namer = 'cobolt_515'
 def turn_laser_on(time_on): #time to leave laser on in seconds
-    tool_belt.laser_on_no_cxn(lase_namer)
+    tool_belt.laser_on_no_cxn(laser_namer)
     time.sleep(time_on)
 # def turn_laser_off():
 #     tool_belt.laser_off_no_cxn(lase_namer)
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     
     #%%  Prepare nv_sig with nv parameters  (do not alter nv_sig)
     
-    green_power = 10
+    green_power = 8
     sample_name = "E6test"
     green_laser = "cobolt_515"
     
@@ -74,6 +74,7 @@ if __name__ == "__main__":
         "spin_pol_dur": 1e4, "spin_readout_dur": 350,
         "imaging_laser":green_laser, "imaging_laser_power": green_power,
         "imaging_readout_dur": 1e7,
+        'norm_style':NormStyle.SINGLE_VALUED,
 
         "collection_filter": "630_lp",
         "magnet_angle": magnet_angle,
@@ -95,33 +96,8 @@ if __name__ == "__main__":
         # tool_belt.reset_xy_drift()
         # print(tool_belt.get_drift())
         # tool_belt.set_drift([0.0, 0.0, 0.0]) 
-        # turn_laser_on(2000) # To see the laser on, you can use this function to turn on the laser for the inputted amount of seconds
-        # tool_belt.set_xyz(labrad.connect(), [5,5,5])
-
-    
-        ####### EXPERIMENT 0: Finding an nv #######
-        ### Take confocal image
-        ### xy scans can be ['small', 'medium', 'big-ish', 'big', 'huge']
+       
         
-        # nv.do_image_sample(nv_sig,  scan_size='small')
-        # nv.do_image_sample(nv_sig, scan_size='medium')
-        # nv.do_image_sample(nv_sig,  scan_size='big-ish')
-        # nv.do_image_sample(nv_sig,  scan_size='big')
-        # nv.do_image_sample(nv_sig,  scan_size='huge')
-        # nv.do_image_sample_xz(nv_sig,steps=80,zrange=6) 
-        # for z in [2,3,4,5,6,7,8]:
-        #     nv_sig['coords'][2] = z
-        #     nv.do_image_sample(nv_sig,  scan_size='big')#xz scan for finding better z position if needed
-        
-        ### Optimize on NV
-         # nv.do_optimize(nv_sig)
-            
-        
-        ####### EXPERIMENT 1: CW electron spin resonance #######
-        ### Measure CW resonance
-        # nv.do_resonance(nv_sig, freq_center=2.87, freq_range=0.2, num_steps=101, num_runs=20, uwave_power=-15)
-        # Dan: what to do with args.pulse_duration?
-        # Dan: should uwave_power be an input parameter?
         if args.experiment_type == "image":
             nv.do_image_sample(nv_sig, scan_size=args.image_size)
             
@@ -154,25 +130,6 @@ if __name__ == "__main__":
         
         else:
             raise Exception("Unsupported experiment type: " + repr(args.experiment_type))
-            
-         
-
-        ####### EXPERIMENT 2: Rabi oscillations #######
-        # nv.do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 200], num_steps = 51, num_reps = 1e4, num_runs=15)
-        #nv.do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 200], num_steps = 51, num_reps = 1e4, num_runs=15)
-        
-        
-        
-        ####### EXPERIMENT 3: Ramsey experiment #######
-        # nv.do_ramsey(nv_sig, state=States.LOW, precession_time_range=[0, 2000],  
-                                       # num_steps=151, set_detuning=4, num_reps=1e4, num_runs=200) 
-        
-        # nv.do_ramsey(nv_sig, state=States.HIGH, precession_time_range=[0, 120],  
-        #                             num_steps=101, set_detuning=4, num_reps=1e4, num_runs=50) 
-        
-        ####### EXPERIMENT 4: Spim echo #######
-        # nv.do_spin_echo(nv_sig, state=States.HIGH, echo_time_range=[0, 150e3], 
-                            # num_steps=151, num_reps = 1e4, num_runs=200) 
     
     except Exception as exc:
         print("Code crashed. Press enter to see error")
@@ -181,9 +138,5 @@ if __name__ == "__main__":
     finally:
         # Reset our hardware - this should be done in each routine, but
         # let's double check here
-        
         tool_belt.reset_cfm()
-        # Kill safe stop
-        if tool_belt.check_safe_stop_alive():
-            print("\n\nRoutine complete. Press enter to exit.")
-            tool_belt.poll_safe_stop()
+        tool_belt.reset_safe_stop()
