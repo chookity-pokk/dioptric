@@ -684,6 +684,13 @@ def main_with_cxn(
 
     # Start 'Press enter to stop...'
     tool_belt.init_safe_stop()
+    
+    ret_vals = pulse_gen.stream_load(seq_name, seq_args_string)
+    period = ret_vals[0]
+    
+    print('')
+    print(tool_belt.get_expected_run_time_string(period,num_steps,num_reps,num_runs))
+    print('')
 
     for run_ind in range(num_runs):
         print("Run index: {}".format(run_ind))

@@ -281,8 +281,8 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
     # return
     seq_args_string = tool_belt.encode_seq_args(seq_args)
     file_name = 'rabi.py'
-    pulsegen_server.stream_load(file_name, seq_args_string)
-
+    ret_vals = pulsegen_server.stream_load(file_name, seq_args_string)
+    period = ret_vals[0]
     # Set up our data structure, an array of NaNs that we'll fill
     # incrementally. NaNs are ignored by matplotlib, which is why they're
     # useful for us here.
@@ -309,6 +309,10 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
     run_indicator_text = "Run #{}/{}"
     text = run_indicator_text.format(0, num_runs)
     run_indicator_obj = kpl.anchored_text(ax_norm, text, loc=kpl.Loc.UPPER_RIGHT)
+    
+    print('')
+    print(tool_belt.get_expected_run_time_string(period,num_steps,num_reps,num_runs))
+    print('')
 
     # %% Collect the data
 
@@ -363,6 +367,10 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
             # Break out of the while if the user says stop
             if tool_belt.safe_stop():
                 break
+            
+            if 'daq' in counter_server.name:
+                counter_server.load_stream_reader(0, period,  int(2*num_reps))
+                n_apd_samples = int(2*num_reps)
 #            print(taus[tau_ind])
             # add the tau indexxes used to a list to save at the end
             tau_index_master_list[run_ind].append(tau_ind)
@@ -379,11 +387,27 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
             counter_server.clear_buffer()
             pulsegen_server.stream_immediate(file_name, num_reps,
                                              seq_args_string)
-            new_counts = counter_server.read_counter_modulo_gates(2, 1)
-            # print(new_counts)
+            # new_counts = counter_server.read_counter_modulo_gates(2, 1)
+            # # print(new_counts)
+            # sample_counts = new_counts[0]
+            # sig_counts[run_ind, tau_ind] = sample_counts[0]
+            # ref_counts[run_ind, tau_ind] = sample_counts[1]
+            
+            # Get the counts
+            new_counts = counter_server.read_counter_separate_gates(n_apd_samples)
+#            print(new_counts)
+
             sample_counts = new_counts[0]
-            sig_counts[run_ind, tau_ind] = sample_counts[0]
-            ref_counts[run_ind, tau_ind] = sample_counts[1]
+
+            # signal counts are even - get every second element starting from 0
+            sig_gate_counts = sample_counts[0::2]
+            sig_counts[run_ind, tau_ind] = sum(sig_gate_counts)
+#            print('Sig counts: {}'.format(sum(sig_gate_counts)))
+
+            # ref counts are odd - sample_counts every second element starting from 1
+            ref_gate_counts = sample_counts[1::2]
+            ref_counts[run_ind, tau_ind] = sum(ref_gate_counts)
+#            print('Ref counts: {}'.format(sum(ref_gate_counts)))
 
 
 #            run_time = time.time()

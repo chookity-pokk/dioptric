@@ -127,6 +127,13 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
     sig_counts = np.copy(ref_counts)
 
     opti_coords_list = []
+    
+    ret_vals = pulsegen_server.stream_load(file_name, seq_args_string)
+    period = ret_vals[0]
+    
+    print('')
+    print(tool_belt.get_expected_run_time_string(period,num_steps,1,num_runs))
+    print('')
 
     # %% Get the starting time of the function
 

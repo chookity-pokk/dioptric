@@ -180,10 +180,8 @@ def read_manual_counts(cxn, period, axis_write_func, scan_vals):
 
     counter_server = tool_belt.get_server_counter(cxn)
     pulsegen_server = tool_belt.get_server_pulse_gen(cxn)
-    if 'daq' in counter_server.name:
-        counter_server.load_stream_reader(0, period,  num_steps)
-    else:
-        counter_server.start_tag_stream()
+    
+    counter_server.start_tag_stream()
 
     counts = []
 
@@ -192,6 +190,9 @@ def read_manual_counts(cxn, period, axis_write_func, scan_vals):
         # Break out of the while if the user says stop
         if tool_belt.safe_stop():
             break
+        
+        if 'daq' in counter_server.name:
+            counter_server.load_stream_reader(0, period,  1)
 
         # Write the new value to the axis and run a rep. The delay to account
         # for the time it takes the axis to move is already handled in the

@@ -416,21 +416,6 @@ def main_with_cxn(
     seq_args_string = tool_belt.encode_seq_args(seq_args)
     ret_vals = pulsegen_server.stream_load(seq_file_name, seq_args_string)
     seq_time = ret_vals[0]
-    #    print(seq_args)
-    # return
-    #    print(seq_time)
-
-    # %% Let the user know how long this will take
-
-    seq_time_s = seq_time / (10 ** 9)  # to seconds
-    expected_run_time_s = (
-        (num_steps / 2) * num_reps * num_runs * seq_time_s
-    )  # s
-    expected_run_time_m = expected_run_time_s / 60  # to minutes
-
-    print(" \nExpected run time: {:.1f} minutes. ".format(expected_run_time_m))
-    #    return
-
 
     # Create raw data figure for incremental plotting
     raw_fig, ax_sig_ref, ax_norm = create_raw_data_figure(
@@ -440,6 +425,10 @@ def main_with_cxn(
     run_indicator_text = "Run #{}/{}"
     text = run_indicator_text.format(0, num_runs)
     run_indicator_obj = kpl.anchored_text(ax_norm, text, loc=kpl.Loc.UPPER_RIGHT)
+    
+    print('')
+    print(tool_belt.get_expected_run_time_string(seq_time,num_steps,num_reps,num_runs))
+    print('')
 
     # %% Get the starting time of the function, to be used to calculate run time
 
@@ -492,7 +481,7 @@ def main_with_cxn(
         laser_power = tool_belt.set_laser_power(cxn, nv_sig, laser_key)
 
         # Load the APD
-        # counter_server.start_tag_stream()
+        counter_server.start_tag_stream()
 
         # Shuffle the list of tau indices so that it steps thru them randomly
         shuffle(tau_ind_list)
@@ -559,8 +548,6 @@ def main_with_cxn(
             if 'daq' in counter_server.name: #####I PUT THIS BEFORE THE NEXT PARAGRAPH. IT USED TO BE AFTER
                 counter_server.load_stream_reader(0, seq_time,  int(4*num_reps))
                 n_apd_samples = int(4*num_reps)
-            else:
-                counter_server.start_tag_stream()
             # print(seq_args)
             pulsegen_server.stream_immediate(
                 seq_file_name, num_reps, seq_args_string

@@ -58,6 +58,16 @@ class Digital(IntEnum):
 
 Boltzmann = 8.617e-2  # meV / K
 
+
+
+def get_expected_run_time_string(seq_period,num_steps,num_reps,num_runs):
+    seq_time_s = seq_period / (10 ** 9)  # to seconds
+
+    expected_run_time_s = (seq_time_s * num_steps * num_reps) * num_runs
+    expected_run_time_m = expected_run_time_s / 60  # to minutes
+
+    return " \nExpected run time: {:.2f} minutes. ".format(expected_run_time_m)
+
 # endregion
 # region Laser utils
 
