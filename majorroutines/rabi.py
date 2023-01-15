@@ -555,81 +555,38 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
 
 
 if __name__ == '__main__':
+    
+    kpl.init_kplotlib()
 
-    path = 'pc_rabi/branch_master/rabi_srt/2022_12'
-    file = '2022_12_15-13_47_58-siena-nv1_2022_10_27'
-    data = tool_belt.get_raw_data(file, path)
-
-    # norm_avg_sig = data['norm_avg_sig']
-    # uwave_time_range = data['uwave_time_range']
-    # num_steps = data['num_steps']
-    # uwave_freq = data['uwave_freq']
-
-    # fit_func, popt = fit_data(uwave_time_range, num_steps, norm_avg_sig)
-    # if (fit_func is not None) and (popt is not None):
-    #     create_fit_figure(uwave_time_range, uwave_freq, num_steps,
-    #                       norm_avg_sig, fit_func, popt)
+    file = '2023_01_11-11_21_28-johnson-nv1'
+    data = tool_belt.get_raw_data(file)
+    
+    uwave_freq = data['uwave_freq']
+    uwave_time_range = data['uwave_time_range']
+    num_steps = data['num_steps']
+    min_uwave_time = uwave_time_range[0]
+    max_uwave_time = uwave_time_range[1]
+    taus = numpy.linspace(min_uwave_time, max_uwave_time, num=num_steps, dtype=numpy.int32)
 
     sig_counts = data['sig_counts']
     ref_counts = data['ref_counts']
-    taus = numpy.array(data['taus'])
-    num_steps = data['num_steps']
     num_runs = data['num_runs']
-    # uwave_freq = data['uwave_freq']
-    uwave_time_range = [taus[0], taus[-1]]
-    num_steps = data['num_steps']
-    norm_avg_sig = data['norm_avg_sig']
     num_reps = data['num_reps']
     nv_sig = data['nv_sig']
     readout = nv_sig['spin_readout_dur']
     norm_style = NormStyle.SINGLE_VALUED
     
     ret_vals = tool_belt.process_counts(sig_counts, ref_counts, num_reps, readout, norm_style)
-    (
-        sig_counts_avg_kcps,
-        ref_counts_avg_kcps,
-        norm_avg_sig,
-        norm_avg_sig_ste,
-    ) = ret_vals
-
-    # min_uwave_time = uwave_time_range[0]
-    # max_uwave_time = uwave_time_range[1]
-    # taus = numpy.linspace(min_uwave_time, max_uwave_time,
-    #                       num=num_steps, dtype=numpy.int32)
+    (sig_counts_avg_kcps, ref_counts_avg_kcps,
+        norm_avg_sig, norm_avg_sig_ste,    ) = ret_vals
     
-    fit_func = tool_belt.inverted_cosexp
-    fit_func, popt, pcov = fit_data(uwave_time_range, num_steps, fit_func, norm_avg_sig, norm_avg_sig_ste = None)
-    taus_linspace = numpy.linspace(uwave_time_range[0], uwave_time_range[1], 1000)
+    #  Plot the data itself and the fitted curve
+    fit_func = tool_belt.cosexp_1_at_0
+    fit_fig, ax, fit_func, popt, pcov = create_fit_figure( uwave_time_range, num_steps, uwave_freq, norm_avg_sig, norm_avg_sig_ste, fit_func  )
+    rabi_period = 1/popt[1]
+    v_unc = numpy.sqrt(pcov[1][1])
 
-    print(popt)
-    avg_sig_counts = numpy.average(sig_counts, axis=0)
-    st_err_sig_counts = numpy.std(sig_counts, axis=0)/numpy.sqrt(num_runs)
-    avg_ref_counts = numpy.average(ref_counts, axis=0)
-    st_err_ref_counts = numpy.std(ref_counts, axis=0)/numpy.sqrt(num_runs)
-
-    norm_avg_sig = avg_sig_counts / avg_ref_counts
-
-    sig_perc_err = st_err_sig_counts / avg_sig_counts
-    ref_perc_err = st_err_ref_counts / avg_ref_counts
-    st_err_norm_avg_sig = norm_avg_sig * numpy.sqrt((sig_perc_err)**2 + (ref_perc_err)**2)
-
-
-    raw_fig, axes_pack = plt.subplots(1, 2, figsize=(17, 8.5))
-
-    ax = axes_pack[0]
-    ax.errorbar(taus, avg_sig_counts, yerr = st_err_sig_counts, fmt = 'r-', label = 'signal')
-    ax.errorbar(taus, avg_ref_counts, yerr = st_err_ref_counts,fmt = 'g-', label = 'refernece')
-    ax.legend()
-
-    ax.set_xlabel('Microwave duration (ns)')
-    ax.set_ylabel('Counts')
-
-
-    ax = axes_pack[1]
-    ax.errorbar(taus , norm_avg_sig,yerr=st_err_norm_avg_sig,  fmt = 'bo')
-    ax.plot(taus_linspace , fit_func(taus_linspace, *popt),  'r-')
-    ax.set_title('Normalized Signal With Varying Microwave Duration')
-    ax.set_xlabel('Microwave duration (ns)')
-    ax.set_ylabel('Normalized signal')
+    rabi_period_unc = rabi_period**2 * v_unc
+    print('Rabi period measured: {} +/- {} ns\n'.format('%.2f'%rabi_period, '%.2f'%rabi_period_unc))
 
     # simulate([0,250], 2.8268, 2.8288, 0.43, measured_rabi_period=197)

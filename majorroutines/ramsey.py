@@ -764,7 +764,6 @@ def main_with_cxn(
 
 if __name__ == "__main__":
     
-    folder = "pc_rabi/branch_master/ramsey/2022_12"
     file = '2023_01_13-00_40_34-E6test-nv1'
 
     data = tool_belt.get_raw_data(file)
