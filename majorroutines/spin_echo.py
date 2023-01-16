@@ -97,12 +97,12 @@ def theta_B_cost_func(
     return numpy.sqrt(diff_low ** 2 + diff_high ** 2)
 
 
-def plot_resonances_vs_theta_B(data, center_freq=None):
+def plot_resonances_vs_theta_B(data, center_freq=None,revival_time_guess=None,num_revivals_guess=None):
 
     # %% Setup
 
-    fit_func, popt, stes, fit_fig = fit_data(data)
-    print(popt)
+    fit_func, popt, stes, fit_fig = fit_data(data,revival_time_guess,num_revivals_guess)
+    # print(popt)
     if (fit_func is None) or (popt is None):
         print("Fit failed!")
         return
@@ -213,7 +213,7 @@ def quartic(tau, offset, revival_time, decay_time, *amplitudes):
     return tally
 
 
-def fit_data(data):
+def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
 
     precession_dur_range = data["precession_time_range"]
     sig_counts = data["sig_counts"]
@@ -265,7 +265,6 @@ def fit_data(data):
     amplitude = 1.0 - numpy.average(norm_avg_sig)
     offset = 1.0 - amplitude
     decay_time = 4500.0
-    #    decay_time /= 2
 
     # To estimate the revival frequency let's find the highest peak in the FFT
     transform = numpy.fft.rfft(norm_avg_sig)
@@ -278,16 +277,7 @@ def fit_data(data):
     # magnitudes. We'll find the right one by brute force
     sorted_inds = numpy.argsort(transform_mag[2:])
     dominant_freqs = [freqs[sorted_inds[-1] + 1], freqs[sorted_inds[-2] + 1]]
-    # print(dominant_freqs)
-    # return
-
-    # Hard guess
-    # amplitude = 0.07
-    # offset = 0.90
-    # decay_time = 2000.0
-    # revival_time = 10e3
-    # dominant_freqs = [1 / (1000*revival_time)]
-
+    
     # %% Fit
 
     # The fit doesn't like dealing with vary large numbers. We'll convert to
@@ -305,15 +295,21 @@ def fit_data(data):
     max_bounds_tests = []
     best_scaled_chi_sq = None
     best_popt = None
-    # print(dominant_freqs)
+
     for freq in dominant_freqs:
-        # print(freq)
-        revival_time = 60e3#1 / freq
-        # print(revival_time)
-        num_revivals = 2#round(max_precession_dur / revival_time)
+
+        if revival_time_guess == None:
+            revival_time = 1 / freq
+        else:
+            revival_time = revival_time_guess
+
+        if num_revivals_guess == None:
+            num_revivals = round(max_precession_dur / revival_time)
+        else:
+            num_revivals = num_revivals_guess -1
         # print(num_revivals)
         amplitudes = [amplitude for el in range(0, int(1.0 + num_revivals))]
-        print('amps',amplitudes)
+        # print('amps',amplitudes)
         # print(num_revivals)
 
         revival_time_us = revival_time / 1000
@@ -974,91 +970,28 @@ def main_with_cxn(
         
     return theta_B_deg
 
-
+    
 # %% Run the file
 
 
 if __name__ == "__main__":
 
-    file_name = "2022_12_16-01_10_36-siena-nv1_2022_10_27"
-    folder = 'pc_rabi/branch_master/spin_echo/2022_12'
-    data = tool_belt.get_raw_data(file_name, folder)
+    file_name = "2023_01_13-01_49_41-E6test-nv1"
+    
+    data = tool_belt.get_raw_data(file_name)
     nv_name = data['nv_sig']["name"]
     timestamp = data['timestamp']
-    # data['sig_counts'] = data['sig_counts'][:5]
-    # data['ref_counts'] = data['ref_counts'][:5]
-    # data['num_runs'] = 5
     
-    # ret_vals = plot_resonances_vs_theta_B(data)
-    # fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
-    # file_path_fit = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit_redo")
-    # plt.show()
-    # tool_belt.save_figure(fit_fig, file_path_fit)
+    revival_time_guess = 15 * 1000
+    num_peaks = 4
     
-    #### T2 time
+    ret_vals = plot_resonances_vs_theta_B(data, revival_time_guess=revival_time_guess, num_revivals_guess=num_peaks)
     
-    norm_avg_sig = data['norm_avg_sig']
-    sig_counts = data['sig_counts']
-    ref_counts = data['ref_counts']
-    precession_time_range = data['precession_time_range']
-    num_steps = data['num_steps']
-    num_reps = data['num_reps']
-    nv_sig = data['nv_sig']
-    readout = nv_sig['spin_readout_dur']
-    norm_style = NormStyle.SINGLE_VALUED
+    fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
+    file_path_fit = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit_redo")
+    plt.show()
     
-    ret_vals = tool_belt.process_counts(sig_counts, ref_counts, num_reps, readout, norm_style)
-    (
-        sig_counts_avg_kcps,
-        ref_counts_avg_kcps,
-        norm_avg_sig,
-        norm_avg_sig_ste,
-    ) = ret_vals
-    
-    min_precession_time = int(precession_time_range[0])
-    max_precession_time = int(precession_time_range[1])
-
-    taus = numpy.linspace(
-        min_precession_time,
-        max_precession_time,
-        num=num_steps,
-    )
-    
-    taus_ms = numpy.array(taus)*2/1e6
+        
     
     
-    guess_params = [0.05, 3, 0.85]
-    fit_func = tool_belt.exp_t2
     
-    popt, pcov = curve_fit(
-        fit_func,
-        taus_ms,
-        norm_avg_sig,
-        sigma=norm_avg_sig_ste,
-        absolute_sigma=True,
-        p0=guess_params,
-    )
-    print(popt)
-    print(numpy.sqrt(numpy.diag(pcov)))
-    
-    
-    taus_ms_linspace = numpy.linspace(taus_ms[0], taus_ms[-1],
-                          num=1000)
-
-    fig_fit, ax = plt.subplots(1, 1, figsize=(10, 8))
-    ax.errorbar(taus_ms, norm_avg_sig,fmt = 'bo', yerr = norm_avg_sig_ste, label='data')
-    ax.plot(taus_ms_linspace, fit_func(taus_ms_linspace,*popt),'r',label='fit')
-    ax.set_xlabel(r'Free precesion time (ms)')
-    ax.set_ylabel('Contrast (arb. units)')
-    ax.legend()
-    text = r"$T_2 =$ " + '%.2f'%(popt[1]) + r' $\pm$ '+ '%.2f'%(numpy.sqrt(pcov[1][1])) + r" ms" 
-    props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
-    ax.text(
-        0.65,
-        0.65,
-        text,
-        fontsize=14,
-        transform=ax.transAxes,
-        verticalalignment="top",
-        bbox=props,
-)
