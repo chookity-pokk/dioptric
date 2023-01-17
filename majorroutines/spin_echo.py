@@ -166,6 +166,7 @@ def plot_resonances_vs_theta_B(data, center_freq=None,revival_time_guess=None,nu
     ax.plot(linspace_theta_B_deg, const, label="Measured low")
     const = [resonance_HIGH for el in range(0, num_steps)]
     ax.plot(linspace_theta_B_deg, const, label="Measured high")
+    
 
     if theta_B is not None:
         text = r"$\theta_{B} = $%.3f" % (theta_B_deg)
@@ -270,6 +271,7 @@ def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
     transform = numpy.fft.rfft(norm_avg_sig)
     freqs = numpy.fft.rfftfreq(num_steps, d=tau_step)
     transform_mag = numpy.absolute(transform)
+    
     fig, ax = plt.subplots()
     ax.plot(freqs, transform_mag)
 
@@ -957,13 +959,15 @@ def main_with_cxn(
 
     # %% Fit and save figs
     try:
-        ret_vals = plot_resonances_vs_theta_B(raw_data)
-        fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
+        ret_vals = fit_data(raw_data)
+        # ret_vals = plot_resonances_vs_theta_B(raw_data)
+        fit_func, popt, stes, fit_fig = ret_vals
+        # fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
 
         file_path_fit = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit")
         tool_belt.save_figure(fit_fig, file_path_fit)
-        file_path_angle = tool_belt.get_file_path(__file__, timestamp, nv_name + "-angle")
-        tool_belt.save_figure(angle_fig, file_path_angle)
+        # file_path_angle = tool_belt.get_file_path(__file__, timestamp, nv_name + "-angle")
+        # tool_belt.save_figure(angle_fig, file_path_angle)
     except Exception:
         print("Fit Failed")
         theta_B_deg = None
@@ -985,10 +989,11 @@ if __name__ == "__main__":
     revival_time_guess = 15 * 1000
     num_peaks = 4
     
-    ret_vals = plot_resonances_vs_theta_B(data, revival_time_guess=revival_time_guess, num_revivals_guess=num_peaks)
+    # ret_vals = plot_resonances_vs_theta_B(data, revival_time_guess=revival_time_guess, num_revivals_guess=num_peaks)
+    ret_vals = fit_data(data, revival_time_guess=revival_time_guess, num_revivals_guess=num_peaks)
     
-    fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
-    file_path_fit = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit_redo")
+    # fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
+    # file_path_fit = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit_redo")
     plt.show()
     
         
