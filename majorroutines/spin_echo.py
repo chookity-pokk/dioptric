@@ -452,19 +452,18 @@ def create_fit_figure(
     tau_pis = taus + pi_pulse_dur
 
     linspace_taus = numpy.linspace(
-        min_precession_dur, max_precession_dur, num=1000
-    )
+        min_precession_dur, max_precession_dur, num=1000)
+    
     linspace_tau_pis = linspace_taus + pi_pulse_dur
 
-    fit_fig, ax = plt.subplots(figsize=(8.5, 8.5))
-    fit_fig.set_tight_layout(True)
-    ax.plot(tau_pis / 1000, norm_avg_sig, "bo", label="data")
-    # ax.errorbar(taus, norm_avg_sig, yerr=norm_avg_sig_ste,\
-    #             fmt='bo', label='data')
-    ax.plot(
+    fit_fig, ax = plt.subplots(1,1,figsize=kpl.figsize_large)
+
+    kpl.plot_points(ax, tau_pis / 1000, norm_avg_sig, color=KplColors.BLUE, label="data")
+
+    kpl.plot_line(ax,
         linspace_tau_pis / 1000,
         fit_func(linspace_tau_pis, *popt),
-        "r-",
+        color=KplColors.RED,
         label="fit",
     )
     ax.set_xlabel(r"$\tau + \pi$ ($\mathrm{\mu s}$)")
@@ -477,23 +476,10 @@ def create_fit_figure(
         (
             r"$\tau_{r}=$%.3f $\mathrm{\mu s}$" % (revival_time / 1000),
             r"$B=$%.3f G" % (mag_B_from_revival_time(revival_time)),
-        )
-    )
+        ))
 
-    props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
-    ax.text(
-        0.80,
-        0.85,
-        text_popt,
-        transform=ax.transAxes,
-        fontsize=12,
-        verticalalignment="top",
-        bbox=props,
-    )
-
-    fit_fig.canvas.draw()
-    fit_fig.set_tight_layout(True)
-    fit_fig.canvas.flush_events()
+    
+    kpl.anchored_text(ax, text_popt, kpl.Loc.LOWER_RIGHT, size=kpl.Size.SMALL)
 
     return fit_fig
 
