@@ -53,7 +53,7 @@ class HistType(StrEnum):
 marker_Size = {Size.NORMAL: 7, Size.SMALL: 6, Size.TINY: 4}
 line_widths = {Size.NORMAL: 1.5, Size.SMALL: 1.25, Size.TINY: 1.0}
 marker_edge_widths = line_widths.copy()
-font_Size = {Size.NORMAL: 17, Size.SMALL: 13}
+font_Size = {Size.NORMAL: 17, Size.SMALL: 13, Size.TINY:10}
 
 # Default sizes
 marker_size = marker_Size[Size.NORMAL]
@@ -65,6 +65,8 @@ marker_edge_width_inset = marker_edge_widths[Size.SMALL]
 default_font_size = Size.NORMAL
 default_data_size = Size.NORMAL
 figsize = [6.5, 5.0]
+figsize_large = [10,8]
+figsize_extralarge = [17, 8.5]
 double_figsize = [figsize[0] * 2, figsize[1]]
 
 # Default styles

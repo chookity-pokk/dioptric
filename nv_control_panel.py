@@ -55,7 +55,7 @@ def do_image_sample(nv_sig, scan_size='medium'):
         scan_range = 1# large scan
         num_steps = 120
     elif scan_size == 'medium':
-        scan_range = 0.4 # large scan
+        scan_range = 0.5 # large scan
         num_steps = 40
     elif scan_size == 'small-ish':
         scan_range = 0.25 # large scan
@@ -144,7 +144,7 @@ def do_resonance_state(nv_sig,  state):
 
 def do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.2,num_runs=30):
 
-    num_steps =31
+    num_steps = 51
     num_reps = 2e4
     # num_runs = runs
     uwave_power = 14.5
@@ -307,7 +307,7 @@ if __name__ == "__main__":
     green_laser = "cobolt_515"
         
     nv_sig = {
-        "coords":[6.4, 5.64,4.25],
+        "coords":[6.47, 5.545,4.35],
         "name": "{}-nv1".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": False,
@@ -323,9 +323,9 @@ if __name__ == "__main__":
         "imaging_readout_dur": 1e7,
         "collection_filter": "630_lp",
         
-        # "expected_count_rate":22,
-        "expected_count_rate":None,
-        "magnet_angle": 50, 
+        "expected_count_rate":17,
+        # "expected_count_rate":None,
+        "magnet_angle": 35, 
         "resonance_LOW":2.7641 ,"rabi_LOW": 75.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
         "resonance_HIGH": 2.9098 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, 
         'norm_style':NormStyle.POINT_TO_POINT}  # 14.5 max. units is dBm
@@ -347,12 +347,13 @@ if __name__ == "__main__":
         # do_optimize(nv_sig,)
 
         # do_image_sample(nv_sig, scan_size='test')
-        do_image_sample(nv_sig,  scan_size='medium')
+        # do_image_sample(nv_sig,  scan_size='medium')
         # do_image_sample(nv_sig,  scan_size='big-ish')
         # z_list = np.arange(9.5,0.5,-0.25)
+        # z_list = np.arange(3.5,5,.25)
         # for z in z_list:
         #     nv_sig['coords'][2] = z
-        #     do_image_sample(nv_sig,  scan_size='big')
+        #     do_image_sample(nv_sig,  scan_size='bigger-highres')
         # do_image_sample(nv_sig,  scan_size='bigger-highres')
         # do_image_sample(nv_sig,  scan_size='small-ish')
         # do_image_sample(nv_sig, scan_size='huge')
@@ -361,7 +362,11 @@ if __name__ == "__main__":
         # nv_sig['disable_opt']=True
         # do_stationary_count(nv_sig, )
         # do_optimize_magnet_angle(nv_sig, num_angle_steps= 10, angle_range = [0,160], num_runs=15)
-        # do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.2,num_runs=15)
+        mangles = [185,210,235]
+        for m in mangles:
+            nv_sig['magnet_angle'] = m
+            do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.25,num_runs=20)
+            
         # do_pulsed_resonance_state(nv_sig, nv_sig, States.LOW)
         
         # do_resonance(nv_sig, 2.87, 0.2, num_runs = 15)

@@ -41,15 +41,14 @@ import majorroutines.optimize as optimize
 
 # %% fit
 
-def create_theory_figure(taus,offset,decay,amp_1,freq_1, amp_2, freq_2, amp_3, freq_3):
+def create_theory_figure(taus_us,offset,decay,amp_1,freq_1, amp_2, freq_2, amp_3, freq_3):
     
     func = tool_belt.cosine_sum
-    taus_us = taus/1000
     
     theory_vals = func(taus_us,offset,decay,amp_1,freq_1, amp_2, freq_2, amp_3, freq_3)
     
-    fig_fit, ax = plt.subplots(1, 1, figsize=(10, 8))
-    ax.plot(taus_us, theory_vals,'b',label='theory')
+    fig_fit, ax = plt.subplots(1, 1, figsize=kpl.figsize_large)
+    kpl.plot_line(ax,taus_us, theory_vals,color=KplColors.BLUE,label='theory')
     ax.set_xlabel(r'Free precesion time ($\mu$s)')
     ax.set_ylabel('Contrast (arb. units)')
     ax.legend()
@@ -62,12 +61,9 @@ def create_theory_figure(taus,offset,decay,amp_1,freq_1, amp_2, freq_2, amp_3, f
                         r'$\nu_3 = $' + '%.2f'%(freq_3) + ' MHz'
                         ))
 
-    props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
-    # print(text1)
+    size = kpl.Size.SMALL
 
-    ax.text(0.70, 0.25, text1, transform=ax.transAxes, fontsize=12,
-                            verticalalignment="top", bbox=props)
-
+    kpl.anchored_text(ax, text1, kpl.Loc.LOWER_RIGHT, size=size)
 
 
 def create_raw_data_figure(
@@ -123,8 +119,8 @@ def extract_oscillations(norm_avg_sig, precession_time_range, num_steps, detunin
     transform_mag = numpy.absolute(transform)
 
     # Plot the fft
-    fig_fft, ax= plt.subplots(1, 1, figsize=(10, 8))
-    ax.plot(freqs[1:], transform_mag[1:])  # [1:] excludes frequency 0 (DC component)
+    fig_fft, ax= plt.subplots(1, 1, figsize=kpl.figsize_large)
+    ax.plot_line(freqs[1:], transform_mag[1:])  # [1:] excludes frequency 0 (DC component)
     ax.set_xlabel('Frequency (MHz)')
     ax.set_ylabel('FFT magnitude')
     ax.set_title('Ramsey FFT')
@@ -170,49 +166,24 @@ def fit_ramsey(norm_avg_sig,taus,  precession_time_range, FreqParams):
     guess_params = (offset, decay, amp_1, FreqParams[0],
                         amp_2, FreqParams[1],
                         amp_3, FreqParams[2])
-    # guess_params_double = (offset, decay,
-    #                 # amp_1, FreqParams[0],
-    #                     amp_2, FreqParams[1],
-    #                     amp_3, FreqParams[2])
-
-    # guess_params_fixed_freq = (offset, decay, amp_1,
-    #                     amp_2,
-    #                     amp_3, )
-    # cosine_sum_fixed_freq = lambda t, offset, decay, amp_1,amp_2,  amp_3:tool_belt.cosine_sum(t, offset, decay, amp_1, FreqParams[0], amp_2, FreqParams[1], amp_3, FreqParams[2])
-
-    # Try the fit to a sum of three cosines
-
+    
     fit_func = tool_belt.cosine_sum
     init_params = guess_params
-
-    # fit_func = cosine_sum_fixed_freq
-    # init_params = guess_params_fixed_freq
-
-    # fit_func = tool_belt.cosine_double_sum
-    # init_params = guess_params_double
 
     try:
         popt,pcov = curve_fit(fit_func, taus_us, norm_avg_sig,
                       p0=init_params,
-                        bounds=([0, 0, -1, -15,
-                                    -1, -15,
-                                    -1, -15, ]
-                                , [1, numpy.infty,
-                                   1, 15,
-                                    1, 15,
-                                    1, 15, ])
-                       )
+                        bounds=([0, 0, -1, -15, -1, -15, -1, -15, ]
+                                , [1, numpy.infty, 1, 15, 1, 15, 1, 15, ]) )
     except Exception:
         print('Something went wrong!')
         popt = guess_params
-    print(popt)
 
-    taus_us_linspace = numpy.linspace(precession_time_range[0]/1e3, precession_time_range[1]/1e3,
-                          num=1000)
+    taus_us_linspace = numpy.linspace(precession_time_range[0]/1e3, precession_time_range[1]/1e3, num=1000)
 
-    fig_fit, ax = plt.subplots(1, 1, figsize=(10, 8))
-    ax.plot(taus_us, norm_avg_sig,'b',label='data')
-    ax.plot(taus_us_linspace, fit_func(taus_us_linspace,*popt),'r',label='fit')
+    fig_fit, ax = plt.subplots(1, 1, figsize=kpl.figsize_large)
+    kpl.plot_line(ax,taus_us, norm_avg_sig,color=KplColors.BLUE,label='data' )
+    kpl.plot_line(ax,taus_us_linspace, fit_func(taus_us_linspace,*popt),color=KplColors.RED,label='fit')
     ax.set_xlabel(r'Free precesion time ($\mu$s)')
     ax.set_ylabel('Contrast (arb. units)')
     ax.legend()
@@ -224,12 +195,10 @@ def fit_ramsey(norm_avg_sig,taus,  precession_time_range, FreqParams):
                         r'$\nu_2 = $' + '%.2f'%(popt[5]) + ' MHz',
                         r'$\nu_3 = $' + '%.2f'%(popt[7]) + ' MHz'
                         ))
+    
+    size = kpl.Size.SMALL
 
-    props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
-    # print(text1)
-
-    ax.text(0.70, 0.25, text1, transform=ax.transAxes, fontsize=12,
-                            verticalalignment="top", bbox=props)
+    kpl.anchored_text(ax, text1, kpl.Loc.LOWER_RIGHT, size=size)
 
 
 
@@ -764,6 +733,8 @@ def main_with_cxn(
 
 if __name__ == "__main__":
     
+    kpl.init_kplotlib()
+    
     file = '2023_01_13-00_40_34-E6test-nv1'
 
     data = tool_belt.get_raw_data(file)
@@ -780,7 +751,7 @@ if __name__ == "__main__":
     taus = numpy.array(taus)
 
     analysis= True
-    analytics = False
+    analytics = True
     
     if analysis:
         
@@ -796,6 +767,8 @@ if __name__ == "__main__":
     if analytics:
 
         func = tool_belt.cosine_sum#(t, offset, decay, amp_1, freq_1, amp_2, freq_2, amp_3, freq_3)
+        
+        taus_us = taus/1000
         offset=.92
         decay = 30
         amp_1 = -.025
@@ -807,4 +780,4 @@ if __name__ == "__main__":
         freq_2 = detuning + freq_offset
         freq_3 = detuning+2.2 + freq_offset
         
-        create_theory_figure(taus, offset, decay, amp_1, freq_1, amp_2, freq_2, amp_3, freq_3)
+        create_theory_figure(taus_us, offset, decay, amp_1, freq_1, amp_2, freq_2, amp_3, freq_3)

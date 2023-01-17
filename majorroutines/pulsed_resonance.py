@@ -858,9 +858,13 @@ def main_with_cxn(
     if len(popt) == 3:
         low_freq = popt[2]
         high_freq = None
+        print('Single resonance: ',low_freq,'GHz') 
     elif len(popt) == 6:
         low_freq = popt[2]
         high_freq = popt[5]
+        print('Low resonance: ',low_freq,'GHz') 
+        print('High resonance: ',high_freq,'GHz')
+        print('Slitting = ',(high_freq-low_freq)*1000,'MHz')
 
     ### Clean up, save the data, return
 

@@ -18,6 +18,8 @@ Created on Wed Apr 24 15:01:04 2019
 import utils.tool_belt as tool_belt
 from scipy.optimize import minimize_scalar
 from numpy import pi
+import utils.kplotlib as kpl
+from utils.kplotlib import KplColors
 import numpy
 import time
 import matplotlib.pyplot as plt
@@ -37,6 +39,43 @@ im = 0 + 1j
 inv_sqrt_2 = 1 / numpy.sqrt(2)
 gmuB = 2.8e-3  # gyromagnetic ratio in GHz / G
 
+
+def create_raw_data_figure(
+    taus,
+    avg_sig_counts=None,
+    avg_ref_counts=None,
+    norm_avg_sig=None,
+):
+    num_steps = len(taus)
+    # Plot setup
+    fig, axes_pack = plt.subplots(1, 2, figsize=kpl.figsize_extralarge)
+    ax_sig_ref, ax_norm = axes_pack
+    ax_sig_ref.set_xlabel(r"$T = 2\tau$ ($\mathrm{\mu s}$)")
+    ax_norm.set_xlabel(r"$T = 2\tau$ ($\mathrm{\mu s}$)")
+    ax_sig_ref.set_ylabel("Count rate (kcps)")
+    ax_norm.set_ylabel("Normalized fluorescence")
+
+    # Plotting
+    if avg_sig_counts is None:
+        avg_sig_counts = numpy.empty(num_steps)
+        avg_sig_counts[:] = numpy.nan
+    kpl.plot_line(
+        ax_sig_ref, taus, avg_sig_counts, label="Signal", color=KplColors.GREEN
+    )
+    if avg_ref_counts is None:
+        avg_ref_counts = numpy.empty(num_steps)
+        avg_ref_counts[:] = numpy.nan
+    kpl.plot_line(
+        ax_sig_ref, taus, avg_ref_counts, label="Reference", color=KplColors.RED
+    )
+    ax_sig_ref.legend(loc=kpl.Loc.LOWER_RIGHT)
+    if norm_avg_sig is None:
+        norm_avg_sig = numpy.empty(num_steps)
+        norm_avg_sig[:] = numpy.nan
+    kpl.plot_line(ax_norm, taus, norm_avg_sig, color=KplColors.BLUE)
+    ax_norm.set_title('Spin Echo experiment')
+    
+    return fig, ax_sig_ref, ax_norm
 
 # %% Simplified Hamiltonian analysis
 # This assumes no E field, though it does allow for a variable center frequency
@@ -206,6 +245,7 @@ def mag_B_from_revival_time(revival_time, revival_time_ste=None):
 
 
 def quartic(tau, offset, revival_time, decay_time, *amplitudes):
+
     tally = offset
     # print(len(amplitudes))
     for ind in range(0, len(amplitudes)):
@@ -496,6 +536,8 @@ def main_with_cxn(
     do_dq = False
 ):
     
+    kpl.init_kplotlib()
+    
     counter_server = tool_belt.get_server_counter(cxn)
     pulsegen_server = tool_belt.get_server_pulse_gen(cxn)
     
@@ -637,7 +679,11 @@ def main_with_cxn(
     
     
     # create figure
-    raw_fig, axes_pack = plt.subplots(1, 2, figsize=(17, 8.5))
+    raw_fig, ax_sig_ref, ax_norm = create_raw_data_figure(taus/1000)
+    # raw_fig, axes_pack = plt.subplots(1, 2, figsize=kpl.figsize_extralarge)
+    run_indicator_text = "Run #{}/{}"
+    text = run_indicator_text.format(0, num_runs)
+    run_indicator_obj = kpl.anchored_text(ax_norm, text, loc=kpl.Loc.UPPER_RIGHT)
     
     print('')
     print(tool_belt.get_expected_run_time_string(seq_time,num_steps,num_reps,num_runs))
@@ -786,6 +832,10 @@ def main_with_cxn(
 
         # %% incremental plotting
         
+        # Update the run indicator
+        text = run_indicator_text.format(run_ind + 1, num_runs)
+        run_indicator_obj.txt.set_text(text)
+        
         # Average the counts over the iterations
         inc_sig_counts = sig_counts[: run_ind + 1]
         inc_ref_counts = ref_counts[: run_ind + 1]
@@ -799,33 +849,10 @@ def main_with_cxn(
             norm_avg_sig_ste,
         ) = ret_vals
         
+        kpl.plot_line_update(ax_sig_ref, line_ind=0, y=sig_counts_avg_kcps)
+        kpl.plot_line_update(ax_sig_ref, line_ind=1, y=ref_counts_avg_kcps)
+        kpl.plot_line_update(ax_norm, y=norm_avg_sig)
         
-        ax = axes_pack[0]
-        ax.cla()
-        ax.plot(plot_taus, sig_counts_avg_kcps, "r-", label="signal")
-        ax.plot(plot_taus, ref_counts_avg_kcps, "g-", label="reference")
-        ax.set_xlabel(r"$T = 2\tau$ ($\mathrm{\mu s}$)")
-        # ax.set_xlabel(r"$\tau + \pi$ ($\mathrm{\mu s}$)")
-        ax.set_ylabel("Counts")
-        ax.legend()
-        
-        ax = axes_pack[1]
-        ax.cla()
-        ax.plot(plot_taus, norm_avg_sig, "b-")
-        ax.set_title("Spin Echo Measurement")
-        ax.set_xlabel(r"$T = 2\tau$ ($\mathrm{\mu s}$)")
-        # ax.set_xlabel(r"$\tau + \pi$ ($\mathrm{\mu s}$)")
-        ax.set_ylabel("Contrast (arb. units)")
-        
-        text_popt = 'Run # {}/{}'.format(run_ind+1,num_runs)
-
-        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        ax.text(0.8, 0.9, text_popt,transform=ax.transAxes,
-                verticalalignment='top', bbox=props)
-        
-        raw_fig.canvas.draw()
-        raw_fig.set_tight_layout(True)
-        raw_fig.canvas.flush_events()
         
         # %% Save the data we have incrementally for long T1s
 
@@ -884,28 +911,11 @@ def main_with_cxn(
         norm_avg_sig_ste,
     ) = ret_vals
     
-    # print(numpy.average(norm_avg_sig))
-    # print(numpy.average(norm_avg_sig_ste))
-    ax = axes_pack[0]
-    ax.cla()
-    ax.plot(plot_taus, sig_counts_avg_kcps, "r-", label="signal")
-    ax.plot(plot_taus, ref_counts_avg_kcps, "g-", label="reference")
-    ax.set_xlabel(r"$T = 2\tau$ ($\mathrm{\mu s}$)")
-    # ax.set_xlabel(r"$\tau + \pi$ ($\mathrm{\mu s}$)")
-    ax.set_ylabel("kcps")
-    ax.legend()
-
-    ax = axes_pack[1]
-    ax.cla()
-    ax.plot(plot_taus, norm_avg_sig, "b-")
-    ax.set_title("Spin Echo Measurement")
-    ax.set_xlabel(r"$T = 2\tau$ ($\mathrm{\mu s}$)")
-    # ax.set_xlabel(r"$\tau + \pi$ ($\mathrm{\mu s}$)")
-    ax.set_ylabel("Contrast (arb. units)")
-
-    raw_fig.canvas.draw()
-    raw_fig.set_tight_layout(True)
-    raw_fig.canvas.flush_events()
+    kpl.plot_line_update(ax_sig_ref, line_ind=0, y=sig_counts_avg_kcps)
+    kpl.plot_line_update(ax_sig_ref, line_ind=1, y=ref_counts_avg_kcps)
+    kpl.plot_line_update(ax_norm, y=norm_avg_sig)
+    run_indicator_obj.remove()
+    
 
     # %% Save the data
 
@@ -974,7 +984,7 @@ def main_with_cxn(
         
     return theta_B_deg
 
-    
+
 # %% Run the file
 
 
@@ -985,18 +995,14 @@ if __name__ == "__main__":
     data = tool_belt.get_raw_data(file_name)
     nv_name = data['nv_sig']["name"]
     timestamp = data['timestamp']
-    
+
     revival_time_guess = 15 * 1000
     num_peaks = 4
     
-    # ret_vals = plot_resonances_vs_theta_B(data, revival_time_guess=revival_time_guess, num_revivals_guess=num_peaks)
     ret_vals = fit_data(data, revival_time_guess=revival_time_guess, num_revivals_guess=num_peaks)
     
-    # fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
-    # file_path_fit = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit_redo")
-    plt.show()
     
         
     
-    
-    
+
+
