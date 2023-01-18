@@ -344,11 +344,13 @@ def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
             revival_time = 1 / freq
         else:
             revival_time = revival_time_guess
+            
 
         if num_revivals_guess == None:
             num_revivals = round(max_precession_dur / revival_time)
         else:
             num_revivals = num_revivals_guess -1
+            
         # print(num_revivals)
         amplitudes = [amplitude for el in range(0, int(1.0 + num_revivals))]
         # print('amps',amplitudes)
@@ -958,6 +960,7 @@ def main_with_cxn(
         ret_vals = fit_data(raw_data)
         # ret_vals = plot_resonances_vs_theta_B(raw_data)
         fit_func, popt, stes, fit_fig = ret_vals
+        theta_B_deg = None
         # fit_func, popt, stes, fit_fig, theta_B_deg, angle_fig = ret_vals
 
         file_path_fit = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit")
@@ -976,13 +979,13 @@ def main_with_cxn(
 
 if __name__ == "__main__":
 
-    file_name = "2023_01_13-01_49_41-E6test-nv1"
+    file_name = "2023_01_17-21_08_51-E6test-nv1"
     
     data = tool_belt.get_raw_data(file_name)
     nv_name = data['nv_sig']["name"]
     timestamp = data['timestamp']
 
-    revival_time_guess = 15 * 1000
+    revival_time_guess = 30 * 1000
     num_peaks = 4
     
     ret_vals = fit_data(data, revival_time_guess=revival_time_guess, num_revivals_guess=num_peaks)

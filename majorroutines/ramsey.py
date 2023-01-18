@@ -120,7 +120,7 @@ def extract_oscillations(norm_avg_sig, precession_time_range, num_steps, detunin
 
     # Plot the fft
     fig_fft, ax= plt.subplots(1, 1, figsize=kpl.figsize_large)
-    ax.plot_line(freqs[1:], transform_mag[1:])  # [1:] excludes frequency 0 (DC component)
+    ax.plot(ax,freqs[1:], transform_mag[1:])  # [1:] excludes frequency 0 (DC component)
     ax.set_xlabel('Frequency (MHz)')
     ax.set_ylabel('FFT magnitude')
     ax.set_title('Ramsey FFT')
@@ -187,13 +187,14 @@ def fit_ramsey(norm_avg_sig,taus,  precession_time_range, FreqParams):
     ax.set_xlabel(r'Free precesion time ($\mu$s)')
     ax.set_ylabel('Contrast (arb. units)')
     ax.legend()
+    freqs_sorted = numpy.sort([popt[3],popt[5],popt[7]])
     text1 = "\n".join((#r'$C + e^{-t/d} [a_1 \mathrm{cos}(2 \pi \nu_1 t) + a_2 \mathrm{cos}(2 \pi \nu_2 t) + a_3 \mathrm{cos}(2 \pi \nu_3 t)]$',
                        r'$C + e^{-t/d\sum_{i=1}^3} a_i\mathrm{cos}(2 \pi \nu_i t)$',
                        r'$C = $' + '%.2f'%(popt[0]),
                         r'$d = $' + '%.2f'%(abs(popt[1])) + ' us',
-                        r'$\nu_1 = $' + '%.2f'%(popt[3]) + ' MHz',
-                        r'$\nu_2 = $' + '%.2f'%(popt[5]) + ' MHz',
-                        r'$\nu_3 = $' + '%.2f'%(popt[7]) + ' MHz'
+                        r'$\nu_1 = $' + '%.2f'%(freqs_sorted[0]) + ' MHz',
+                        r'$\nu_2 = $' + '%.2f'%(freqs_sorted[1]) + ' MHz',
+                        r'$\nu_3 = $' + '%.2f'%(freqs_sorted[2]) + ' MHz'
                         ))
     
     size = kpl.Size.SMALL
@@ -735,7 +736,7 @@ if __name__ == "__main__":
     
     kpl.init_kplotlib()
     
-    file = '2023_01_13-00_40_34-E6test-nv1'
+    file = '2023_01_17-23_11_54-E6test-nv1'
 
     data = tool_belt.get_raw_data(file)
     detuning= data['detuning']
@@ -751,11 +752,11 @@ if __name__ == "__main__":
     taus = numpy.array(taus)
 
     analysis= True
-    analytics = True
+    analytics = False
     
     if analysis:
         
-        freq_offset = 0.8  # our measurement of the resonance frequency could be slightly off because the linewidth is several MHz
+        freq_offset = -1.  # our measurement of the resonance frequency could be slightly off because the linewidth is several MHz
         
         freq_1 = detuning + freq_offset
         freq_2 = detuning - 2.2 + freq_offset
@@ -769,13 +770,13 @@ if __name__ == "__main__":
         func = tool_belt.cosine_sum#(t, offset, decay, amp_1, freq_1, amp_2, freq_2, amp_3, freq_3)
         
         taus_us = taus/1000
-        offset=.92
-        decay = 30
-        amp_1 = -.025
+        offset=.91
+        decay = 7
+        amp_1 = -.04
         amp_2 = amp_1
         amp_3 = amp_1
         detuning = 4
-        freq_offset = .8
+        freq_offset = -1
         freq_1 = detuning-2.2 + freq_offset
         freq_2 = detuning + freq_offset
         freq_3 = detuning+2.2 + freq_offset

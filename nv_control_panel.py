@@ -231,7 +231,6 @@ def do_rabi(nv_sig,  state, uwave_time_range=[0, 200], num_steps = 51, num_reps 
 
     period = rabi.main(
         nv_sig,
-        apd_indices,
         uwave_time_range,
         state,
         num_steps,
@@ -325,10 +324,10 @@ if __name__ == "__main__":
         
         "expected_count_rate":17,
         # "expected_count_rate":None,
-        "magnet_angle": 35, 
-        "resonance_LOW":2.7641 ,"rabi_LOW": 75.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
-        "resonance_HIGH": 2.9098 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, 
-        'norm_style':NormStyle.POINT_TO_POINT}  # 14.5 max. units is dBm
+        "magnet_angle": 75, 
+        "resonance_LOW":2.808 ,"rabi_LOW": 81.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
+        "resonance_HIGH": 2.937 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, 
+        'norm_style':NormStyle.SINGLE_VALUED}  # 14.5 max. units is dBm
     
     nv_sig = nv_sig
 
@@ -362,14 +361,11 @@ if __name__ == "__main__":
         # nv_sig['disable_opt']=True
         # do_stationary_count(nv_sig, )
         # do_optimize_magnet_angle(nv_sig, num_angle_steps= 10, angle_range = [0,160], num_runs=15)
-        mangles = [185,210,235]
-        for m in mangles:
-            nv_sig['magnet_angle'] = m
-            do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.25,num_runs=20)
+        do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.25,num_runs=20)
             
         # do_pulsed_resonance_state(nv_sig, nv_sig, States.LOW)
         
-        # do_resonance(nv_sig, 2.87, 0.2, num_runs = 15)
+        # do_resonance(nv_sig, 2.87, 0.2, num_runs = 25)
         # do_resonance(nv_sig, 2.875, 0.1)
         # do_resonance_state(nv_sig , States.LOW)
         
@@ -377,10 +373,10 @@ if __name__ == "__main__":
         
         # do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 250],num_runs=15)
         # do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 250],num_runs=30)
-        # detunings=[0,2,4]
+        # detunings=[4]
         # for d in detunings:
-        #     do_ramsey(nv_sig, set_detuning=d,num_runs=50, precession_time_range = [0, 1.75 * 10 ** 3],num_steps = 101)  
-        # do_spin_echo(nv_sig,echo_time_range = [0, 60 * 10 ** 3], num_steps=41, num_runs=100) 
+        #     do_ramsey(nv_sig, set_detuning=d,num_runs=10, precession_time_range = [0, 1.75 * 10 ** 3],num_steps = 101)  
+        # do_spin_echo(nv_sig,echo_time_range = [0, 110 * 10 ** 3], num_steps=71, num_runs=100) 
         # print('Run time: ',(time.time()-startt)/60,' minutes')
     finally:
 
