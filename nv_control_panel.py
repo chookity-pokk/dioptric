@@ -42,19 +42,24 @@ def do_auto_check_location(nv_sig,haystack_fname):
         new_drift = np.array([0, 0, drift[2]])
         positioning.set_drift(cxn, new_drift)
     
-    needle_fname = do_image_sample(nv_sig,scan_size='small-ish')
+    needle_fname = do_image_sample(nv_sig,scan_size='auto-tracker')
     
     x_shift, y_shift = auto_tracker.get_shift(haystack_fname, needle_fname)
     
-    nv_sig['coords'][0] = nv_sig['coords'][0] + x_shift
-    nv_sig['coords'][1] = nv_sig['coords'][1] + y_shift
+    with labrad.connect() as cxn:
+        positioning.set_drift(cxn, np.array([x_shift, y_shift, drift[2]]))
+    # nv_sig['coords'][0] = nv_sig['coords'][0] + x_shift
+    # nv_sig['coords'][1] = nv_sig['coords'][1] + y_shift
     # do_image_sample(nv_sig,scan_size='small-ish')
+    for i in range(2):
+        nv_sig['expected_count_rate'] = None
+        opti_coords, opti_count_rate = do_optimize(nv_sig)
+    nv_sig['expected_count_rate'] = opti_count_rate
     
-    do_optimize(nv_sig)
     
 
 def do_image_sample(nv_sig, scan_size='medium'):
-    scan_options=['huge','medium','big-ish','small','small-ish','big','test','bigger-highres']
+    scan_options=['huge','medium','big-ish','small','small-ish','auto-tracker','big','test','bigger-highres']
     if scan_size not in scan_options:
     #     raise Exception():
         print('scan_size must be in: ', scan_options)
@@ -72,6 +77,9 @@ def do_image_sample(nv_sig, scan_size='medium'):
         scan_range = 0.5 # large scan
         num_steps = 40
     elif scan_size == 'small-ish':
+        scan_range = 0.4 # large scan
+        num_steps = 50
+    elif scan_size == 'auto-tracker':
         scan_range = 0.4 # large scan
         num_steps = 50
     elif scan_size == 'small':
