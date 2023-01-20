@@ -90,7 +90,7 @@ def main(
 ):
 
     with labrad.connect() as cxn:
-        img_array, x_voltages, y_voltages = main_with_cxn(
+        fname = main_with_cxn(
             cxn,
             nv_sig,
             x_range,
@@ -103,7 +103,7 @@ def main(
             scan_type,
         )
 
-    return img_array, x_voltages, y_voltages
+    return fname
 
 
 def main_with_cxn(
@@ -426,11 +426,15 @@ def main_with_cxn(
                 'img_array-units': 'counts',
                }
 
-    filePath = tool_belt.get_file_path(__file__, timestamp, nv_sig['name']+'_'+scan_type)
+    fname = nv_sig['name']+'_'+scan_type
+    filePath = tool_belt.get_file_path(__file__, timestamp, fname)
+    filename = f"{timestamp}-{fname}"
     tool_belt.save_figure(fig, filePath)
     tool_belt.save_raw_data(rawData, filePath)
     
-    return img_array, x_positions_1d, y_positions_1d
+    return filename
+    
+    # return img_array, x_positions_1d, y_positions_1d
 
 
 

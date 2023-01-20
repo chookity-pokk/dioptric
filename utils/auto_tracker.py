@@ -13,6 +13,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import json
+import utils.tool_belt as tool_belt
 import sys
 
 def convert_to_8bit(img, min_val=0, max_val=255):
@@ -38,15 +39,15 @@ def get_img_extent(data):
     return img_extent
 
 
-def get_shift(directory, haystack_file, needle_file, plot=True):
+def get_shift(haystack_file, needle_file, plot=True):
     
     diff_lim_spot_diam = 0.015  # expected st dev of the gaussian in volts
     
     ####################### Process Haystack File #######################
-    file_path = directory + haystack_file
-    with open(file_path, 'r') as file:
-        haystack_data = json.load(file)
         
+    haystack_data = tool_belt.get_raw_data(haystack_file)
+    haystack_x_range = haystack_data['x_range']
+    haystack_num_steps = haystack_data['num_steps']
     x_voltages = haystack_data['x_positions_1d']
     y_voltages = haystack_data['y_positions_1d']
     
@@ -58,8 +59,8 @@ def get_shift(directory, haystack_file, needle_file, plot=True):
     x_range = haystack_data['x_range']
     y_range = haystack_data['y_range']
     min_range = min(x_range, y_range)
-    num_steps = haystack_data['num_steps']
-    volts_per_pixel = min_range / num_steps
+    haystack_num_steps = haystack_data['num_steps']
+    volts_per_pixel = min_range / haystack_num_steps
     
     haystack_img_array = np.array(haystack_data['img_array'])
     haystack_img_array = convert_to_8bit(haystack_img_array)
@@ -74,12 +75,16 @@ def get_shift(directory, haystack_file, needle_file, plot=True):
         diff_lim_spot_pixels += 1
     
     ####################### Process Needle File #######################
-    
-    file_path = directory + needle_file
-    with open(file_path, 'r') as file:
-        needle_data = json.load(file)
         
+    needle_data = tool_belt.get_raw_data(needle_file)
     template_img = np.array(needle_data['img_array'])
+    needle_x_range = needle_data['x_range']
+    needle_num_steps = needle_data['num_steps']
+    
+    if needle_x_range/needle_num_steps != haystack_x_range/haystack_num_steps:
+        print('images must have same scale of volts per pixel!')
+        raise RuntimeError
+    
     needle_x = needle_data['x_positions_1d']
     needle_y = needle_data['y_positions_1d']
     needle_img_array = np.array(needle_data['img_array'])
@@ -130,8 +135,12 @@ def get_shift(directory, haystack_file, needle_file, plot=True):
         cv2.circle(haystack_img_array, [center_x,center_y], 0, (255, 0, 0), 1)
         plt.imshow(haystack_img_array, extent=tuple(haystack_img_extent))
         ax.set_title('result: x_shift = {} V    y_shift = {} V'.format(shift_x_volts,shift_y_volts))
-        fig.tight_layout()
-        fig_manager = plt.get_current_fig_manager()
+        # fig.tight_layout()
+        # fig_manager = plt.get_current_fig_manager()
+        timestamp = tool_belt.get_time_stamp()
+        fname = 'auto_tracker'
+        filePath = tool_belt.get_file_path(__file__, timestamp, fname)
+        tool_belt.save_figure(fig, filePath)
         
     return shift_x_volts, shift_y_volts
 
@@ -139,10 +148,9 @@ def get_shift(directory, haystack_file, needle_file, plot=True):
 if __name__ == '__main__':
     
     ####################### Files #######################
-    directory = "C:/Users/student/Documents/LAB_DATA/pc_nvcenter-pc/branch_instructional-lab-v2/image_sample/2023_01/"
-    needle_file = '2023_01_20-09_41_50-E6test-nv1_XY.txt'
-    haystack_file = '2023_01_20-08_28_56-E6test-nv1_XY.txt'
+    needle_file = '2023_01_20-09_41_50-E6test-nv1_XY'
+    haystack_file = '2023_01_20-08_28_56-E6test-nv1_XY'
     
-    shift_x_volts, shift_y_volts = get_shift(directory, haystack_file, needle_file,plot=True)
+    shift_x_volts, shift_y_volts = get_shift( haystack_file, needle_file,plot=True)
     print('x shift = {} V'.format(shift_x_volts))
     print('y shift = {} V'.format(shift_y_volts))

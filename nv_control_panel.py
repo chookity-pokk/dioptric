@@ -28,11 +28,30 @@ import majorroutines.optimize_magnet_angle as optimize_magnet_angle
 import majorroutines.rabi as rabi
 import majorroutines.ramsey as ramsey
 import majorroutines.spin_echo as spin_echo
-from utils.tool_belt import States, NormStyle
+from utils.tool_belt import States, NormStyle 
+import utils.auto_tracker as auto_tracker
 import time
 import numpy as np
 
 # %% Major Routines
+
+def do_auto_check_location(nv_sig,haystack_fname):
+    
+    with labrad.connect() as cxn:
+        drift = positioning.get_drift(cxn)
+        new_drift = np.array([0, 0, drift[2]])
+        positioning.set_drift(cxn, new_drift)
+    
+    needle_fname = do_image_sample(nv_sig,scan_size='small-ish')
+    
+    x_shift, y_shift = auto_tracker.get_shift(haystack_fname, needle_fname)
+    
+    nv_sig['coords'][0] = nv_sig['coords'][0] + x_shift
+    nv_sig['coords'][1] = nv_sig['coords'][1] + y_shift
+    # do_image_sample(nv_sig,scan_size='small-ish')
+    
+    do_optimize(nv_sig)
+    
 
 def do_image_sample(nv_sig, scan_size='medium'):
     scan_options=['huge','medium','big-ish','small','small-ish','big','test','bigger-highres']
@@ -66,7 +85,8 @@ def do_image_sample(nv_sig, scan_size='medium'):
         num_steps = 10
         
     # For now we only support square scans so pass scan_range twice
-    image_sample.main(nv_sig, scan_range, scan_range, num_steps)
+    timestamp = image_sample.main(nv_sig, scan_range, scan_range, num_steps)
+    return timestamp
 
 def do_image_sample_xz(nv_sig, scan_size='medium'):
     
@@ -221,7 +241,7 @@ if __name__ == "__main__":
     green_laser = "cobolt_515"
         
     nv_sig = {
-        "coords":[6.408, 5.503,4.19],
+        "coords":[6.5, 5.4, 4.21],
         "name": "{}-nv1".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": False,
@@ -237,8 +257,8 @@ if __name__ == "__main__":
         "imaging_readout_dur": 1e7,
         "collection_filter": "630_lp",
         
-        "expected_count_rate":15,
-        # "expected_count_rate":None,
+        # "expected_count_rate":15,
+        "expected_count_rate":None,
         "magnet_angle": 75, 
         "resonance_LOW":2.808 ,"rabi_LOW": 81.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
         "resonance_HIGH": 2.937 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, 
@@ -257,8 +277,10 @@ if __name__ == "__main__":
         # tool_belt.laser_on_no_cxn('cobolt_515') # turn the laser on
         # tool_belt.laser_off_no_cxn('cobolt_515') # turn the laser on
         
+        do_auto_check_location(nv_sig, haystack_fname='2023_01_20-08_28_56-E6test-nv1_XY')
+        
         # do_image_sample(nv_sig, scan_size='test')
-        do_image_sample(nv_sig,  scan_size='medium')
+        # do_image_sample(nv_sig,  scan_size='medium')
         # do_image_sample(nv_sig,  scan_size='big')
         # do_image_sample(nv_sig,  scan_size='small-ish')
         
