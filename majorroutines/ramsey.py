@@ -120,7 +120,7 @@ def extract_oscillations(norm_avg_sig, precession_time_range, num_steps, detunin
 
     # Plot the fft
     fig_fft, ax= plt.subplots(1, 1, figsize=kpl.figsize_large)
-    ax.plot(ax,freqs[1:], transform_mag[1:])  # [1:] excludes frequency 0 (DC component)
+    ax.plot(freqs[1:], transform_mag[1:])  # [1:] excludes frequency 0 (DC component)
     ax.set_xlabel('Frequency (MHz)')
     ax.set_ylabel('FFT magnitude')
     ax.set_title('Ramsey FFT')
@@ -420,7 +420,7 @@ def main_with_cxn(
     run_indicator_obj = kpl.anchored_text(ax_norm, text, loc=kpl.Loc.UPPER_RIGHT)
     
     print('')
-    print(tool_belt.get_expected_run_time_string(seq_time,num_steps,num_reps,num_runs))
+    print(tool_belt.get_expected_run_time_string(cxn,'ramsey',seq_time,num_steps/2,num_reps,num_runs))
     print('')
 
     # %% Get the starting time of the function, to be used to calculate run time
@@ -736,7 +736,7 @@ if __name__ == "__main__":
     
     kpl.init_kplotlib()
     
-    file = '2023_01_17-23_11_54-E6test-nv1'
+    file = '2023_01_19-11_14_34-E6test-nv1'
 
     data = tool_belt.get_raw_data(file)
     detuning= data['detuning']
@@ -756,7 +756,7 @@ if __name__ == "__main__":
     
     if analysis:
         
-        freq_offset = -1.  # our measurement of the resonance frequency could be slightly off because the linewidth is several MHz
+        freq_offset = 0.  # our measurement of the resonance frequency could be slightly off because the linewidth is several MHz
         
         freq_1 = detuning + freq_offset
         freq_2 = detuning - 2.2 + freq_offset

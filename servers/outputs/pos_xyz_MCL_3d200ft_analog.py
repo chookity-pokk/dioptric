@@ -132,6 +132,65 @@ class PosXyzMcl3d200ftAnalog(LabradServer):
         task.register_done_event(self.close_task_internal)
 
         task.start()
+    
+    @setting(302, coords_x="*v[]", coords_y="*v[]", coords_z="*v[]", continuous="b")    
+    def load_stream_xyz(self, c, coords_x, coords_y, coords_z,
+                              continuous=False):
+        
+        voltages = np.vstack((coords_x, coords_y, coords_z))
+
+        # Close the existing task if there is one
+        if self.task is not None:
+            self.close_task_internal()
+
+        # Write the initial voltages and stream the rest
+        num_voltages = voltages.shape[1]
+        self.write_xy(c, voltages[0, 0], voltages[1, 0])
+        self.write_z(c, voltages[2, 0])
+        stream_voltages = voltages[:, 1:num_voltages]
+        stream_voltages = numpy.ascontiguousarray(stream_voltages)
+        num_stream_voltages = num_voltages - 1
+        # Create a new task
+        task = nidaqmx.Task(f"{self.name}-load_stream_xyz")
+        self.task = task
+
+        # Set up the output channels
+        task.ao_channels.add_ao_voltage_chan(
+            self.daq_ao_piezo_x, min_val=0.0, max_val=10.0
+        )
+        task.ao_channels.add_ao_voltage_chan(
+            self.daq_ao_piezo_y, min_val=0.0, max_val=10.0
+        )
+        task.ao_channels.add_ao_voltage_chan(
+            self.daq_ao_piezo_z, min_val=0.0, max_val=10.0
+        )
+
+        # Set up the output stream
+        output_stream = nidaqmx.task.OutStream(task)
+        writer = stream_writers.AnalogMultiChannelWriter(output_stream)
+
+        # Configure the sample to advance on the rising edge of the PFI input.
+        # The frequency specified is just the max expected rate in this case.
+        # We'll stop once we've run all the samples.
+        freq = 100 # freq in seconds as a float
+        if continuous:
+            task.timing.cfg_samp_clk_timing(
+                freq, source=self.daq_di_clock, 
+                samps_per_chan=num_stream_voltages,
+                sample_mode=AcquisitionType.CONTINUOUS,
+            )
+        else:
+            task.timing.cfg_samp_clk_timing(
+                freq, source=self.daq_di_clock, 
+                samps_per_chan=num_stream_voltages
+            )
+
+        writer.write_many_sample(stream_voltages)
+
+        # Close the task once we've written all the samples
+        task.register_done_event(self.close_task_internal)
+
+        task.start()
         
     @setting(223,coords_z="*v[]")
     def load_stream_z(self, c, coords_z):

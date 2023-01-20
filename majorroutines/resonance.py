@@ -23,6 +23,7 @@ from random import shuffle
 import majorroutines.optimize as optimize
 import utils.kplotlib as kpl
 from utils.kplotlib import KplColors
+import time
 
 def process_counts(ref_counts, sig_counts, norm_style=NormStyle.SINGLE_VALUED):
     """Extract the normalized average signal at each data point.
@@ -135,7 +136,7 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
     period = ret_vals[0]
     
     print('')
-    print(tool_belt.get_expected_run_time_string(period,num_steps,1,num_runs))
+    print(tool_belt.get_expected_run_time_string(cxn,'resonance',period,num_steps,1,num_runs))
     print('')
     
     # Create raw data figure for incremental plotting
@@ -205,34 +206,19 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
                 break
 
             freq_ind = freq_ind_list[step_ind]
-            # print(freqs[freq_ind])
             sig_gen_cxn.set_freq(freqs[freq_ind])
 
             # Start the timing stream
             counter_server.clear_buffer()
             pulsegen_server.stream_start() 
 
-            # Read the counts using parity to distinguish signal vs ref
-            # new_counts = counter_server.read_counter_modulo_gates(2, 1)
-            # sample_counts = new_counts[0]
-            
-            # cur_run_sig_counts_summed = sample_counts[1]
-            # cur_run_ref_counts_summed = sample_counts[0]
-            
-            # sig_counts[run_ind, freq_ind] = cur_run_sig_counts_summed
-            # ref_counts[run_ind, freq_ind] = cur_run_ref_counts_summed
-            
             new_counts = counter_server.read_counter_separate_gates(2) #originally 1
-#            print(new_counts)
             sample_counts = new_counts[0]
             ref_gate_counts = sample_counts[0::2]
             ref_counts[run_ind, freq_ind]  = sum(ref_gate_counts)
 
             sig_gate_counts = sample_counts[1::2]
             sig_counts[run_ind, freq_ind] = sum(sig_gate_counts)
-            # break
-            # norm= sum(sig_gate_counts) / sum(ref_gate_counts)
-            # print(norm)
 
         counter_server.stop_tag_stream()
         
@@ -314,12 +300,17 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
         freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste
     )
 
+
     if len(popt) == 3:
         low_freq = popt[2]
         high_freq = None
+        print('Single resonance: ',low_freq,'GHz') 
     elif len(popt) == 6:
         low_freq = popt[2]
         high_freq = popt[5]
+        print('Low resonance: ',low_freq,'GHz') 
+        print('High resonance: ',high_freq,'GHz')
+        print('Slitting = ',(high_freq-low_freq)*1000,'MHz')
 
     # %% Clean up and save the data
 

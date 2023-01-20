@@ -32,7 +32,7 @@ def create_figure():
         ax.set_title(axis_titles[ind])
         ax.set_xlabel("Volts (V)")
         ax.set_ylabel("Count rate (kcps)")
-    fig.set_tight_layout(True)
+    # fig.set_tight_layout(True)
     fig.canvas.draw()
     fig.canvas.flush_events()
     return fig

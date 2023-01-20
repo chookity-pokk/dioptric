@@ -20,7 +20,6 @@ import utils.positioning as positioning
 import utils.tool_belt as tool_belt
 import utils.common as common
 import majorroutines.image_sample as image_sample
-# import majorroutines.image_sample_xz as image_sample_xz
 import majorroutines.optimize as optimize
 import majorroutines.stationary_count as stationary_count
 import majorroutines.resonance as resonance
@@ -33,11 +32,7 @@ from utils.tool_belt import States, NormStyle
 import time
 import numpy as np
 
-apd_indices = [0]
-
-
 # %% Major Routines
-
 
 def do_image_sample(nv_sig, scan_size='medium'):
     scan_options=['huge','medium','big-ish','small','small-ish','big','test','bigger-highres']
@@ -49,8 +44,8 @@ def do_image_sample(nv_sig, scan_size='medium'):
         scan_range = 4.0#0.6 # large scan
         num_steps = 40
     elif scan_size == 'big':
-        scan_range = .6 # large scan
-        num_steps = 40
+        scan_range = .8 # large scan
+        num_steps = 100
     elif scan_size == 'bigger-highres':
         scan_range = 1# large scan
         num_steps = 120
@@ -58,8 +53,8 @@ def do_image_sample(nv_sig, scan_size='medium'):
         scan_range = 0.5 # large scan
         num_steps = 40
     elif scan_size == 'small-ish':
-        scan_range = 0.25 # large scan
-        num_steps = 30
+        scan_range = 0.4 # large scan
+        num_steps = 50
     elif scan_size == 'small':
         scan_range = 0.15 # large scan
         num_steps = 30
@@ -73,13 +68,27 @@ def do_image_sample(nv_sig, scan_size='medium'):
     # For now we only support square scans so pass scan_range twice
     image_sample.main(nv_sig, scan_range, scan_range, num_steps)
 
-# def do_image_sample_xz(nv_sig, zrange=2,steps=60):
+def do_image_sample_xz(nv_sig, scan_size='medium'):
     
-#     x_range = .5
-#     z_range = zrange
-#     num_steps = steps
+    scan_options=['huge','medium','big-ish','small','small-ish','big','test','bigger-highres']
+    if scan_size not in scan_options:
+    #     raise Exception():
+        print('scan_size must be in: ', scan_options)
+        return 
+    if scan_size == 'huge':
+        scan_range = 1#0.6 # large scan
+        num_steps = 40
+    elif scan_size == 'big':
+        scan_range = .3 # large scan
+        num_steps = 30
+    elif scan_size == 'medium':
+        scan_range = 0.15 # large scan
+        num_steps = 30
+    elif scan_size == 'small':
+        scan_range = 0.1 # large scan
+        num_steps = 30
     
-#     image_sample_xz.main(nv_sig, x_range, z_range, num_steps, apd_indices)
+    image_sample.main(nv_sig, scan_range, scan_range, num_steps,scan_type='XZ')
 
 def do_optimize(nv_sig):
 
@@ -96,13 +105,13 @@ def do_stationary_count(nv_sig):
 
     run_time = 1 * 60 * 10 ** 9  # ns
 
-    stationary_count.main(nv_sig, run_time, apd_indices)
+    stationary_count.main(nv_sig, run_time)
 
 
 
 def do_resonance(nv_sig,  freq_center=2.87, freq_range=0.2, num_steps = 101, num_runs = 40):
     
-    uwave_power = -5.0
+    uwave_power = -15.0
 
     resonance.main(
         nv_sig,
@@ -112,32 +121,6 @@ def do_resonance(nv_sig,  freq_center=2.87, freq_range=0.2, num_steps = 101, num
         num_runs,
         uwave_power,
         state=States.HIGH,
-        opti_nv_sig = nv_sig
-    )
-
-
-def do_resonance_state(nv_sig,  state):
-
-    freq_center = nv_sig["resonance_{}".format(state.name)]
-    uwave_power = -15.0
-
-    freq_range = 0.1
-    num_steps = 51
-    num_runs = 10
-
-    # Zoom
-    # freq_range = 0.060
-    # num_steps = 51
-    # num_runs = 10
-
-    resonance.main(
-        nv_sig,
-        apd_indices,
-        freq_center,
-        freq_range,
-        num_steps,
-        num_runs,
-        uwave_power,
         opti_nv_sig = nv_sig
     )
 
@@ -163,68 +146,6 @@ def do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.2,num_runs=30):
     )
 
 
-def do_pulsed_resonance_state(nv_sig, state):
-
-    # freq_range = 0.150
-    # num_steps = 51
-    # num_reps = 10**4
-    # num_runs = 8
-
-    # Zoom
-    freq_range = 0.05
-    # freq_range = 0.120
-    num_steps = 51
-    num_reps = int(1e4)
-    num_runs = 10
-
-    composite = False
-
-    res, _ = pulsed_resonance.state(
-        nv_sig,
-        apd_indices,
-        state,
-        freq_range,
-        num_steps,
-        num_reps,
-        num_runs,
-        composite,
-        opti_nv_sig = nv_sig
-    )
-    nv_sig["resonance_{}".format(state.name)] = res
-
-
-def do_optimize_magnet_angle(nv_sig, num_angle_steps = 4, angle_range = [0, 150], num_runs=30):
-
-    freq_center = 2.87
-    freq_range = 0.3
-    num_freq_steps = 101
-    num_freq_runs = num_runs
-
-    # Pulsed
-    # uwave_power = 14.5
-    # uwave_pulse_dur =int(nv_sig["rabi_LOW"]/2)
-    # num_freq_reps = int(1e4)
-
-    # CW
-    uwave_power = -15.0
-    uwave_pulse_dur = None
-    num_freq_reps = None
-
-    optimize_magnet_angle.main(
-        nv_sig,
-        apd_indices,
-        angle_range,
-        num_angle_steps,
-        freq_center,
-        freq_range,
-        num_freq_steps,
-        num_freq_reps,
-        num_freq_runs,
-        uwave_power,
-        uwave_pulse_dur,
-    )
-
-
 def do_rabi(nv_sig,  state, uwave_time_range=[0, 200], num_steps = 51, num_reps = 2e4, num_runs=20):
 
     num_reps = int(num_reps)
@@ -241,8 +162,6 @@ def do_rabi(nv_sig,  state, uwave_time_range=[0, 200], num_steps = 51, num_reps 
     nv_sig["rabi_{}".format(state.name)] = period
 
 
-
-
 def do_ramsey(nv_sig,  precession_time_range = [0, 0.2 * 10 ** 4], num_steps = 101,
                       set_detuning=10,num_reps = 2e4, num_runs=10, state=States.LOW,):
 
@@ -253,7 +172,6 @@ def do_ramsey(nv_sig,  precession_time_range = [0, 0.2 * 10 ** 4], num_steps = 1
     num_reps = int(num_reps)
     # num_runs = runs
 
-    # angle= 
     ramsey.main(
         nv_sig,
         detuning,
@@ -264,9 +182,6 @@ def do_ramsey(nv_sig,  precession_time_range = [0, 0.2 * 10 ** 4], num_steps = 1
         state,
         opti_nv_sig = nv_sig
     )
-    # return angle
-
-
 
 
 def do_spin_echo(nv_sig, echo_time_range = [0, 80 * 10 ** 3],num_steps = 81,
@@ -306,7 +221,7 @@ if __name__ == "__main__":
     green_laser = "cobolt_515"
         
     nv_sig = {
-        "coords":[6.47, 5.545,4.35],
+        "coords":[6.408, 5.503,4.19],
         "name": "{}-nv1".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": False,
@@ -322,7 +237,7 @@ if __name__ == "__main__":
         "imaging_readout_dur": 1e7,
         "collection_filter": "630_lp",
         
-        "expected_count_rate":17,
+        "expected_count_rate":15,
         # "expected_count_rate":None,
         "magnet_angle": 75, 
         "resonance_LOW":2.808 ,"rabi_LOW": 81.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
@@ -334,50 +249,48 @@ if __name__ == "__main__":
     # %% Functions to run
     try:
 
-        # tool_belt.init_safe_stop()
-        # tool_belt.set_drift([0.0, 0.0, tool_belt.get_drift()[2]])  # Keep z. we should explain how you can set the z focus if there are more nvs ate other depths
-        # tool_belt.set_drift([0.0, 0.0, 0.0])  
-        # print(tool_belt.get_drift())
+        # with labrad.connect() as cxn:
+            # positioning.set_drift(cxn,np.array([0,0,0]))
+            # print(positioning.get_drift(cxn))
         # tool_belt.set_xyz(labrad.connect(), [5,5,5])
         
         # tool_belt.laser_on_no_cxn('cobolt_515') # turn the laser on
         # tool_belt.laser_off_no_cxn('cobolt_515') # turn the laser on
         
-        # do_optimize(nv_sig,)
-
         # do_image_sample(nv_sig, scan_size='test')
-        # do_image_sample(nv_sig,  scan_size='medium')
-        # do_image_sample(nv_sig,  scan_size='big-ish')
-        # z_list = np.arange(9.5,0.5,-0.25)
+        do_image_sample(nv_sig,  scan_size='medium')
+        # do_image_sample(nv_sig,  scan_size='big')
+        # do_image_sample(nv_sig,  scan_size='small-ish')
+        
+        # z_list = np.arange(9.85,9.3,-0.08)
         # z_list = np.arange(3.5,5,.25)
         # for z in z_list:
         #     nv_sig['coords'][2] = z
-        #     do_image_sample(nv_sig,  scan_size='bigger-highres')
+        #     do_image_sample(nv_sig,  scan_size='medium')
         # do_image_sample(nv_sig,  scan_size='bigger-highres')
         # do_image_sample(nv_sig,  scan_size='small-ish')
         # do_image_sample(nv_sig, scan_size='huge')
         # do_image_sample_xz(nv_sig, zrange=5,steps=30)
         
+        # do_optimize(nv_sig,)
         # nv_sig['disable_opt']=True
         # do_stationary_count(nv_sig, )
-        # do_optimize_magnet_angle(nv_sig, num_angle_steps= 10, angle_range = [0,160], num_runs=15)
-        do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.25,num_runs=20)
-            
-        # do_pulsed_resonance_state(nv_sig, nv_sig, States.LOW)
         
-        # do_resonance(nv_sig, 2.87, 0.2, num_runs = 25)
+        # do_pulsed_resonance(nv_sig, freq_center=2.8057, freq_range=0.1,num_runs=3)
+                    
+        # do_resonance(nv_sig, 2.8057, 0.05, num_runs = 20)
         # do_resonance(nv_sig, 2.875, 0.1)
         # do_resonance_state(nv_sig , States.LOW)
-        
-        #do_optimize_magnet_angle(nv_sig, num_runs=15)
-        
+                
         # do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 250],num_runs=15)
         # do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 250],num_runs=30)
-        # detunings=[4]
+        
+        # detunings=[0.25]
         # for d in detunings:
-        #     do_ramsey(nv_sig, set_detuning=d,num_runs=10, precession_time_range = [0, 1.75 * 10 ** 3],num_steps = 101)  
-        # do_spin_echo(nv_sig,echo_time_range = [0, 110 * 10 ** 3], num_steps=71, num_runs=100) 
-        # print('Run time: ',(time.time()-startt)/60,' minutes')
+        #     do_ramsey(nv_sig, set_detuning=d,num_runs=20, precession_time_range = [0, 1.75 * 10 ** 3],num_steps = 101)  
+       
+        # do_spin_echo(nv_sig,echo_time_range = [0, 110 * 10 ** 3], num_steps=71, num_runs=50) 
+
     finally:
 
         # Make sure everything is reset

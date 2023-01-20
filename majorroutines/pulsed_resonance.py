@@ -689,7 +689,7 @@ def main_with_cxn(
     period = ret_vals[0]
     
     print('')
-    print(tool_belt.get_expected_run_time_string(period,num_steps,num_reps,num_runs))
+    print(tool_belt.get_expected_run_time_string(cxn,'pulsed_resonance',period,num_steps,num_reps,num_runs))
     print('')
 
     for run_ind in range(num_runs):

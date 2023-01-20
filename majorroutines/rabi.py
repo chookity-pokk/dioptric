@@ -311,7 +311,7 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
     run_indicator_obj = kpl.anchored_text(ax_norm, text, loc=kpl.Loc.UPPER_RIGHT)
     
     print('')
-    print(tool_belt.get_expected_run_time_string(period,num_steps,num_reps,num_runs))
+    print(tool_belt.get_expected_run_time_string(cxn,'rabi',period,num_steps,num_reps,num_runs))
     print('')
 
     # %% Collect the data
@@ -348,13 +348,7 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
             # arbwavegen_server.load_arb_phases([0])
         sig_gen_cxn.uwave_on()
 
-        # TEST for split resonance
-#        sig_gen_cxn = cxn.signal_generator_bnc835
-#        sig_gen_cxn.set_freq(uwave_freq + 0.008)
-#        sig_gen_cxn.set_amp(uwave_power)
-#        sig_gen_cxn.uwave_on()
-
-        # Load the APD
+        
         counter_server.start_tag_stream()
 
         # Shuffle the list of indices to use for stepping through the taus
@@ -362,9 +356,6 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
 
         # start_time = time.time()
         for tau_ind in tau_ind_list:
-#        for tau_ind in range(len(taus)):
-            # print('Tau: {} ns'. format(taus[tau_ind]))
-            # Break out of the while if the user says stop
             if tool_belt.safe_stop():
                 break
             
@@ -387,16 +378,8 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
             counter_server.clear_buffer()
             pulsegen_server.stream_immediate(file_name, num_reps,
                                              seq_args_string)
-            # new_counts = counter_server.read_counter_modulo_gates(2, 1)
-            # # print(new_counts)
-            # sample_counts = new_counts[0]
-            # sig_counts[run_ind, tau_ind] = sample_counts[0]
-            # ref_counts[run_ind, tau_ind] = sample_counts[1]
-            
             # Get the counts
             new_counts = counter_server.read_counter_separate_gates(n_apd_samples)
-#            print(new_counts)
-
             sample_counts = new_counts[0]
 
             # signal counts are even - get every second element starting from 0
@@ -408,13 +391,6 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
             ref_gate_counts = sample_counts[1::2]
             ref_counts[run_ind, tau_ind] = sum(ref_gate_counts)
 #            print('Ref counts: {}'.format(sum(ref_gate_counts)))
-
-
-#            run_time = time.time()
-#            run_elapsed_time = run_time - start_time
-#            start_time = run_time
-#            print('Tau: {} ns'.format(taus[tau_ind]))
-#            print('Elapsed time {}'.format(run_elapsed_time))
 
         counter_server.stop_tag_stream()
 

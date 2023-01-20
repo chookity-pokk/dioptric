@@ -674,7 +674,7 @@ def main_with_cxn(
     run_indicator_obj = kpl.anchored_text(ax_norm, text, loc=kpl.Loc.UPPER_RIGHT)
     
     print('')
-    print(tool_belt.get_expected_run_time_string(seq_time,num_steps,num_reps,num_runs))
+    print(tool_belt.get_expected_run_time_string(cxn,'spin_echo',seq_time,num_steps/2,num_reps,num_runs))
     print('')
 
     
@@ -743,8 +743,8 @@ def main_with_cxn(
             tau_index_master_list[run_ind].append(tau_ind_second)
 
             # Break out of the while if the user says stop
-            # if tool_belt.safe_stop():
-            #     break
+            if tool_belt.safe_stop():
+                break
 
             print(" \nFirst relaxation time: {}".format(taus[tau_ind_first]))
             print("Second relaxation time: {}".format(taus[tau_ind_second]))

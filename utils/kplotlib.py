@@ -198,7 +198,7 @@ def init_kplotlib(font_size=Size.NORMAL, data_size=Size.NORMAL, latex=False):
     ### Other rcparams
 
     # plt.rcParams["legend.handlelength"] = 0.5
-    plt.rcParams["font.family"] = "sans-serif"
+    plt.rcParams["font.family"] = 'DeJavu Sans'# "sans-serif"
     plt.rcParams["font.sans-serif"] = "Roboto"
     plt.rcParams["font.size"] = font_Size[default_font_size]
     plt.rcParams["figure.figsize"] = figsize
