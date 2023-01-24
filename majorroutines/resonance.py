@@ -72,14 +72,14 @@ def process_counts(ref_counts, sig_counts, norm_style=NormStyle.SINGLE_VALUED):
 
 
 def main(nv_sig, freq_center, freq_range,
-         num_steps, num_runs, uwave_power, state=States.LOW, opti_nv_sig = None):
+         num_steps, num_runs, uwave_power, state=States.LOW, opti_nv_sig = None, close_plot=False):
 
     with labrad.connect() as cxn:
         main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
-                      num_steps, num_runs, uwave_power, state, opti_nv_sig)
+                      num_steps, num_runs, uwave_power, state, opti_nv_sig, close_plot)
 
 def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
-                  num_steps, num_runs, uwave_power, state=States.LOW, opti_nv_sig = None):
+                  num_steps, num_runs, uwave_power, state=States.LOW, opti_nv_sig = None, close_plot=False):
 
     kpl.init_kplotlib()
     
@@ -354,6 +354,9 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
 
     file_path = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit")
     tool_belt.save_figure(fit_fig, file_path)
+    
+    if close_plot:
+        plt.close()
 
     return None, None
 

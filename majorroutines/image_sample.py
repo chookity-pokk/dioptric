@@ -87,6 +87,7 @@ def main(
     vmin=None,
     vmax=None,
     scan_type='XY',
+    close_plot=False
 ):
 
     with labrad.connect() as cxn:
@@ -101,6 +102,7 @@ def main(
             vmin,
             vmax,
             scan_type,
+            close_plot
         )
 
     return fname
@@ -117,6 +119,7 @@ def main_with_cxn(
     vmin=None,
     vmax=None,
     scan_type='XY',
+    close_plot=False
 ):
     
     ### Some initial setup
@@ -124,7 +127,8 @@ def main_with_cxn(
     xy_control_style = positioning.get_xy_control_style(cxn)
     
     tool_belt.reset_cfm(cxn)
-    x_center, y_center, z_center = positioning.set_xyz_on_nv(cxn, nv_sig)
+    x_center, y_center, z_center = positioning.set_xyz_on_nv(cxn, nv_sig,drift_adjust=False)
+
     optimize.prepare_microscope(cxn, nv_sig)
     drift = positioning.get_drift(cxn)
     adj_x_center = x_center + drift[0]
@@ -265,7 +269,7 @@ def main_with_cxn(
 
     ### Set up the image display
     
-    kpl.init_kplotlib(font_size=kpl.Size.SMALL, latex=False)
+    # kpl.init_kplotlib(font_size=kpl.Size.SMALL, latex=False)
     
     if um_scaled:
         extent = [el * xy_scale for el in extent]
@@ -275,7 +279,9 @@ def main_with_cxn(
         
     
     title = f"{scan_type} image under {readout_laser}, {readout_us} us readout"
-    
+            
+    kpl.init_kplotlib(font_size=kpl.Size.SMALL, latex=False)
+
     fig, ax = plt.subplots()
     if scan_type == 'XZ':
         kpl.imshow(
@@ -429,8 +435,12 @@ def main_with_cxn(
     fname = nv_sig['name']+'_'+scan_type
     filePath = tool_belt.get_file_path(__file__, timestamp, fname)
     filename = f"{timestamp}-{fname}"
+    
     tool_belt.save_figure(fig, filePath)
     tool_belt.save_raw_data(rawData, filePath)
+    
+    if close_plot:
+        plt.close()
     
     return filename
     
@@ -441,7 +451,7 @@ def main_with_cxn(
 
 if __name__ == "__main__":
 
-    file_name = "2023_01_14-08_01_18-E6test-nv1"
+    file_name = '2023_01_23-09_29_21-E6test-nv1_XY'
     data = tool_belt.get_raw_data(file_name)
     img_array = np.array(data["img_array"])
     readout = data["readout"]

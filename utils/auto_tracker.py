@@ -15,6 +15,9 @@ from matplotlib import pyplot as plt
 import json
 import utils.tool_belt as tool_belt
 import sys
+import utils.positioning as positioning
+import utils.tool_belt as tool_belt
+import utils.common as common
 
 def convert_to_8bit(img, min_val=0, max_val=255):
     img = img.astype(np.float64)
@@ -39,7 +42,7 @@ def get_img_extent(data):
     return img_extent
 
 
-def get_shift(haystack_file, needle_file, plot=True):
+def get_shift(nv_sig, haystack_file, needle_file, close_plot=False):
     
     diff_lim_spot_diam = 0.015  # expected st dev of the gaussian in volts
     
@@ -48,6 +51,10 @@ def get_shift(haystack_file, needle_file, plot=True):
     haystack_data = tool_belt.get_raw_data(haystack_file)
     haystack_x_range = haystack_data['x_range']
     haystack_num_steps = haystack_data['num_steps']
+    haystack_pos_coords = np.array(haystack_data['nv_sig']['coords'])
+    current_pos_coords = np.array(nv_sig['coords'])
+    manual_coor_shift = current_pos_coords-haystack_pos_coords
+    
     x_voltages = haystack_data['x_positions_1d']
     y_voltages = haystack_data['y_positions_1d']
     
@@ -77,7 +84,7 @@ def get_shift(haystack_file, needle_file, plot=True):
     ####################### Process Needle File #######################
         
     needle_data = tool_belt.get_raw_data(needle_file)
-    template_img = np.array(needle_data['img_array'])
+    needle_img_array = np.array(needle_data['img_array'])
     needle_x_range = needle_data['x_range']
     needle_num_steps = needle_data['num_steps']
     
@@ -87,60 +94,80 @@ def get_shift(haystack_file, needle_file, plot=True):
     
     needle_x = needle_data['x_positions_1d']
     needle_y = needle_data['y_positions_1d']
-    needle_img_array = np.array(needle_data['img_array'])
     w, h = len(needle_x),len(needle_y)
-    template_img = convert_to_8bit(template_img)
-    
     needle_img_extent = get_img_extent(needle_data)
+    needle_img_array = convert_to_8bit(needle_img_array)
     
     
     ####################### Run the matching #######################
     
     method = eval('cv2.TM_CCOEFF_NORMED')
-    res = cv2.matchTemplate(haystack_img_array, template_img, method)
+    res = cv2.matchTemplate(haystack_img_array, needle_img_array, method)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
     top_left = max_loc
     bottom_right = (top_left[0] + w, top_left[1] + h)
-    center_x = int(w/2 + top_left[0])
-    center_y = int(h/2 + top_left[1])
+    # print(top_left, bottom_right)
+    center_x = int( w/2 + top_left[0] )
+    center_y = int( h/2 + top_left[1] )
     
-    center_x_volts = x_voltages[center_x]
-    center_y_volts = y_voltages[center_y]
-    
-    shift_x_volts = round(center_x_volts - og_center_x_volts,4)
-    shift_y_volts = round(center_y_volts - og_center_y_volts,4)
+    if x_voltages[1] > x_voltages[0]:
+        x_voltages.reverse()
+        if y_voltages[1] > y_voltages[0]:
+            y_voltages.reverse()
+    # print(y_voltages)
+    center_x_volts = x_voltages[center_x] + volts_per_pixel/2
+    center_y_volts = y_voltages[center_y] + volts_per_pixel/2
+    # print(center_x_volts,center_y_volts)
+    # print(center_x_volts)
+    # print(og_center_x_volts)
+
+    # print(manual_coor_shift)
+    shift_x_volts = round(-center_x_volts + og_center_x_volts,4) 
+    shift_y_volts = round(-center_y_volts + og_center_y_volts,4)
     
     processed_img_array = np.copy(haystack_img_array)
     processed_img_array = cv2.cvtColor(processed_img_array, cv2.COLOR_GRAY2RGB)
     
     ####################### Plotting #######################
     
-    if plot:
-        fig, axes_pack = plt.subplots(1, 3, figsize=(15, 5))
-        ax = axes_pack[0]
-        ax.set_title('haystack')
-        ax.set_xlabel('x [V]')
-        ax.set_ylabel('y [V]')
-        ax.imshow(haystack_img_array, extent=tuple(haystack_img_extent))
-        ax = axes_pack[1]
-        ax.set_xlabel('x [V]')
-        ax.set_ylabel('y [V]')
-        ax.imshow(needle_img_array, extent=tuple(needle_img_extent))
-        ax.set_title('needle')
-        ax = axes_pack[2]
-        ax.set_xlabel('x [V]')
-        ax.set_ylabel('y [V]')
-        ax.imshow(processed_img_array, extent=tuple(haystack_img_extent))
-        cv2.rectangle(haystack_img_array,top_left, bottom_right, 255, 1)
-        cv2.circle(haystack_img_array, [center_x,center_y], 0, (255, 0, 0), 1)
-        plt.imshow(haystack_img_array, extent=tuple(haystack_img_extent))
-        ax.set_title('result: x_shift = {} V    y_shift = {} V'.format(shift_x_volts,shift_y_volts))
-        # fig.tight_layout()
-        # fig_manager = plt.get_current_fig_manager()
-        timestamp = tool_belt.get_time_stamp()
-        fname = 'auto_tracker'
-        filePath = tool_belt.get_file_path(__file__, timestamp, fname)
-        tool_belt.save_figure(fig, filePath)
+    rawData = {'haystack_fname':haystack_file,
+               'needle_fname':needle_file,
+               'shift_x_volts':shift_x_volts,
+               'shift_y_volts':shift_y_volts,
+               'haystack_data':haystack_data,
+               'needle_data':needle_data,
+               'nv_sig':needle_data['nv_sig']
+               }
+    timestamp = tool_belt.get_time_stamp()
+    fname = 'auto_tracker'
+    filePath = tool_belt.get_file_path(__file__, timestamp, fname)
+    tool_belt.save_raw_data(rawData, filePath)
+    
+    fig, axes_pack = plt.subplots(1, 3, figsize=(15, 5))
+    ax = axes_pack[0]
+    ax.set_title('haystack processed')
+    ax.set_xlabel('x [V]')
+    ax.set_ylabel('y [V]')
+    ax.imshow(haystack_img_array, extent=tuple(haystack_img_extent))
+    ax = axes_pack[1]
+    ax.set_xlabel('x [V]')
+    ax.set_ylabel('y [V]')
+    ax.imshow(needle_img_array, extent=tuple(needle_img_extent))
+    ax.set_title('needle')
+    ax = axes_pack[2]
+    ax.set_xlabel('x [V]')
+    ax.set_ylabel('y [V]')
+    ax.imshow(processed_img_array, extent=tuple(haystack_img_extent))
+    cv2.rectangle(haystack_img_array,top_left, bottom_right, 255, 1)
+    cv2.circle(haystack_img_array, [center_x,center_y], 0, (255, 0, 0), 1)
+    plt.imshow(haystack_img_array, extent=tuple(haystack_img_extent))
+    ax.set_title('x_shift, y_shift = {} V, {} V'.format(shift_x_volts,shift_y_volts))
+    # fig.tight_layout()
+    # fig_manager = plt.get_current_fig_manager()
+    tool_belt.save_figure(fig, filePath)
+        
+    if close_plot:
+        plt.close()
         
     return shift_x_volts, shift_y_volts
 
@@ -148,9 +175,11 @@ def get_shift(haystack_file, needle_file, plot=True):
 if __name__ == '__main__':
     
     ####################### Files #######################
-    needle_file = '2023_01_20-09_41_50-E6test-nv1_XY'
-    haystack_file = '2023_01_20-08_28_56-E6test-nv1_XY'
+    needle_file = '2023_01_22-19_14_47-test'
+    haystack_file = '2023_01_22-19_24_22-E6test-nv1_XY'
+    data_needle = tool_belt.get_raw_data(needle_file)
+    nv_sig= data_needle['nv_sig']
     
-    shift_x_volts, shift_y_volts = get_shift( haystack_file, needle_file,plot=True)
+    shift_x_volts, shift_y_volts = get_shift(nv_sig, haystack_file, needle_file,close_plot=False)
     print('x shift = {} V'.format(shift_x_volts))
     print('y shift = {} V'.format(shift_y_volts))

@@ -21,14 +21,6 @@ import argparse
 # import utils.tool_belt.laser_off_no_cxn as laser_off
 
 # %%
-laser_namer = 'cobolt_515'
-def turn_laser_on(time_on): #time to leave laser on in seconds
-    tool_belt.laser_on_no_cxn(laser_namer)
-    time.sleep(time_on)
-# def turn_laser_off():
-#     tool_belt.laser_off_no_cxn(lase_namer)
-    
-# %%
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(prog = sys.argv[0],description = 'Run nvcenter experiments executed by the web worker process.')
@@ -67,7 +59,7 @@ if __name__ == "__main__":
     nv_sig = { 
           "coords":coords,
         "name": "{}-nv1".format(sample_name,),
-        "disable_opt":False, "ramp_voltages": True,
+        "disable_opt":False, "ramp_voltages": False,
         "expected_count_rate":expected_count_rate,
         
         "spin_laser": green_laser, "spin_laser_power": green_power, "spin_readout_laser_power": green_power,
@@ -96,37 +88,43 @@ if __name__ == "__main__":
         # tool_belt.reset_xy_drift()
         # print(tool_belt.get_drift())
         # tool_belt.set_drift([0.0, 0.0, 0.0]) 
-       
         
-        if args.experiment_type == "image":
-            nv.do_image_sample(nv_sig, scan_size=args.image_size)
+        if args.experiment_type == 'auto-tracker':
+            nv.do_auto_check_location(nv_sig)
+        
+        elif args.experiment_type == "image":
+            nv.do_image_sample(nv_sig, scan_size=args.image_size, close_plot=True)
             
         elif args.experiment_type == "optimize":
-            nv.do_optimize(nv_sig)
+            nv.do_optimize(nv_sig, close_plot=True)
 
         elif args.experiment_type == "ESR":
-            nv.do_resonance(nv_sig, freq_center=args.center_freq, freq_range=args.sweep_freq_range, num_steps=args.sweep_points, num_runs=args.num_sweeps)
+            nv.do_resonance(nv_sig, freq_center=args.center_freq, freq_range=args.sweep_freq_range, 
+                            num_steps=args.sweep_points, num_runs=args.num_sweeps, close_plot=True)
         
         elif args.experiment_type == "rabi":
             if args.state == 'low':
                 state_input = States.LOW
             elif args.state == 'high':
                 state_input = States.HIGH
-            nv.do_rabi(nv_sig,state=state_input,uwave_time_range=[0,args.uwave_time_max], num_steps=args.sweep_points, num_runs=args.num_sweeps)
+            nv.do_rabi(nv_sig,state=state_input,uwave_time_range=[0,args.uwave_time_max], 
+                       num_steps=args.sweep_points, num_runs=args.num_sweeps, close_plot=True)
         
         elif args.experiment_type == "ramsey":
             if args.state == 'low':
                 state_input = States.LOW
             elif args.state == 'high':
                 state_input = States.HIGH
-            nv.do_ramsey(nv_sig,state=state_input,set_detuning=args.detuning,precession_time_range=[0,args.precession_time_max], num_steps=args.sweep_points, num_runs=args.num_sweeps)
+            nv.do_ramsey(nv_sig,state=state_input,set_detuning=args.detuning,precession_time_range=[0,args.precession_time_max], 
+                         num_steps=args.sweep_points, num_runs=args.num_sweeps, close_plot=True)
         
         elif args.experiment_type == "spin-echo":
             if args.state == 'low':
                 state_input = States.LOW
             elif args.state == 'high':
                 state_input = States.HIGH
-            nv.do_spin_echo(nv_sig,state=state_input,precession_time_range=[0,args.echo_time_max], num_steps=args.sweep_points, num_runs=args.num_sweeps)
+            nv.do_spin_echo(nv_sig,state=state_input,precession_time_range=[0,args.echo_time_max], 
+                            num_steps=args.sweep_points, num_runs=args.num_sweeps, close_plot=True)
         
         else:
             raise Exception("Unsupported experiment type: " + repr(args.experiment_type))

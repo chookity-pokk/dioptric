@@ -212,13 +212,13 @@ def simulate(uwave_time_range, freq, resonant_freq, contrast,
 def main(nv_sig, uwave_time_range, state,
          num_steps, num_reps, num_runs,
          opti_nv_sig = None,
-         return_popt=False):
+         return_popt=False,close_plot=False):
 
     with labrad.connect() as cxn:
         rabi_per, sig_counts, ref_counts, popt = main_with_cxn(cxn, nv_sig,
                                          uwave_time_range, state,
                                          num_steps, num_reps, num_runs,
-                                         opti_nv_sig)
+                                         opti_nv_sig,close_plot)
 
         if return_popt:
             return rabi_per, popt
@@ -228,7 +228,7 @@ def main(nv_sig, uwave_time_range, state,
 
 def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
                   num_steps, num_reps, num_runs,
-                  opti_nv_sig = None):
+                  opti_nv_sig = None, close_plot=False):
 
     counter_server = tool_belt.get_server_counter(cxn)
     pulsegen_server = tool_belt.get_server_pulse_gen(cxn)
@@ -520,6 +520,9 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
         file_path_fit = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit")
         tool_belt.save_figure(fit_fig, file_path_fit)
     tool_belt.save_raw_data(raw_data, file_path)
+    
+    if close_plot:
+        plt.close()
 
     if (fit_func is not None) and (popt is not None):
         return rabi_period, sig_counts, ref_counts, popt

@@ -522,6 +522,7 @@ def main(
     state=States.HIGH,
     composite=False,
     opti_nv_sig=None,
+    close_plot=False
 ):
     """Pulsed electron spin resonance measurement
 
@@ -576,6 +577,7 @@ def main(
             state,
             composite,
             opti_nv_sig,
+            close_plot
         )
 
 
@@ -592,6 +594,7 @@ def main_with_cxn(
     state=States.HIGH,
     composite=False,
     opti_nv_sig=None,
+    close_plot=False
 ):
 
     ### Setup
@@ -918,6 +921,10 @@ def main_with_cxn(
     tool_belt.save_figure(fit_fig, file_path)
 
     single_res = return_res_with_error(data)
+    
+    if close_plot:
+        plt.close()
+        
     return single_res, data_file_name, [low_freq, high_freq]
 
 

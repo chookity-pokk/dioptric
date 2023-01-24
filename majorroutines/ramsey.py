@@ -225,7 +225,8 @@ def main(
     opti_nv_sig = None,
     one_precession_time = False,
     do_fm = False,
-    do_dq = False
+    do_dq = False,
+    close_plot=False
 ):
 
     with labrad.connect() as cxn:
@@ -241,7 +242,8 @@ def main(
             opti_nv_sig,
             one_precession_time,
             do_fm,
-            do_dq
+            do_dq,
+            close_plot
         )
         return angle
 
@@ -258,7 +260,8 @@ def main_with_cxn(
     opti_nv_sig = None,
     one_precession_time = False,
     do_fm = False,
-    do_dq = False
+    do_dq = False,
+    close_plot=False
 ):
 
     counter_server = tool_belt.get_server_counter(cxn)
@@ -725,6 +728,9 @@ def main_with_cxn(
     # Save the file in the same file directory
     file_path_fit = tool_belt.get_file_path(__file__, timestamp, nv_sig["name"] + '_fit')
     tool_belt.save_figure(fig_fit, file_path_fit)
+    
+    if close_plot:
+        plt.close()
 
     return
 

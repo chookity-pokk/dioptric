@@ -496,7 +496,8 @@ def main(
     num_reps,
     num_runs,
     state=States.LOW,
-    do_dq = False
+    do_dq = False,
+    close_plot=False
 ):
 
     with labrad.connect() as cxn:
@@ -508,7 +509,8 @@ def main(
             num_reps,
             num_runs,
             state,
-            do_dq
+            do_dq,
+            close_plot
         )
         return angle
 
@@ -521,7 +523,8 @@ def main_with_cxn(
     num_reps,
     num_runs,
     state=States.LOW,
-    do_dq = False
+    do_dq = False,
+    close_plot=False,
 ):
     
     kpl.init_kplotlib()
@@ -970,6 +973,9 @@ def main_with_cxn(
     except Exception:
         print("Fit Failed")
         theta_B_deg = None
+        
+    if close_plot:
+        plt.close()
         
     return theta_B_deg
 

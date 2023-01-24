@@ -493,11 +493,11 @@ def optimize_on_axis(cxn, nv_sig, axis_ind, config, fig=None):
 
 # %% Main
 def main(
-    nv_sig, set_to_opti_coords=True, save_data=False, plot_data=False, set_drift=True
+    nv_sig, set_to_opti_coords=True, save_data=False, plot_data=False, set_drift=True, close_plot=False
 ):
     with labrad.connect() as cxn:
         return main_with_cxn(
-            cxn, nv_sig, set_to_opti_coords, save_data, plot_data, set_drift
+            cxn, nv_sig, set_to_opti_coords, save_data, plot_data, set_drift, close_plot
         )
 
 
@@ -508,6 +508,7 @@ def main_with_cxn(
     save_data=False,
     plot_data=False,
     set_drift=True,
+    close_plot=False
 ):
     xy_control_style = positioning.get_xy_control_style(cxn)
     z_control_style = positioning.get_z_control_style(cxn)
@@ -542,8 +543,8 @@ def main_with_cxn(
     print("Expected count rate: {}".format(expected_count_rate))
 
     if expected_count_rate is not None:
-        lower_threshold = expected_count_rate * 9 / 10
-        upper_threshold = expected_count_rate * 6 / 5
+        lower_threshold = expected_count_rate * 8.5 / 10
+        upper_threshold = expected_count_rate * 7 / 5
 
     # Check the count rate
     opti_count_rate = stationary_count_lite(cxn, nv_sig, adjusted_coords, config)
@@ -585,8 +586,7 @@ def main_with_cxn(
 
         # Create 3 plots in the figure, one for each axis
         fig = None
-        if plot_data:
-            fig = create_figure()
+        fig = create_figure()
 
         # Optimize on each axis
         opti_coords = []
@@ -608,29 +608,29 @@ def main_with_cxn(
                 scan_vals_by_axis.append(ret_vals[1])
                 counts_by_axis.append(ret_vals[2])
             # Check the count rate before moving on to z
-            if z_control_style == ControlStyle.STREAM:
-                if expected_count_rate is not None:
-                    test_coords = [
-                        opti_coords[0],
-                        opti_coords[1],
-                        adjusted_coords[2],
-                    ]
-                    opti_count_rate = stationary_count_lite(
-                        cxn, nv_sig, test_coords, config
-                    )
-                    if lower_threshold <= opti_count_rate <= upper_threshold:
-                        opti_coords = test_coords
-                        print("Z optimization unnecessary.")
-                        print(
-                            "Count rate at optimized coordinates: {:.1f}".format(
-                                opti_count_rate
-                            )
-                        )
-                        print("Optimization succeeded!")
-                        opti_succeeded = True
-                        break
-            else:
-                pass
+            # if z_control_style == ControlStyle.STREAM:
+            #     if expected_count_rate is not None:
+            #         test_coords = [
+            #             opti_coords[0],
+            #             opti_coords[1],
+            #             adjusted_coords[2],
+            #         ]
+            #         opti_count_rate = stationary_count_lite(
+            #             cxn, nv_sig, test_coords, config
+            #         )
+            #         if lower_threshold <= opti_count_rate <= upper_threshold:
+            #             opti_coords = test_coords
+            #             print("Z optimization unnecessary.")
+            #             print(
+            #                 "Count rate at optimized coordinates: {:.1f}".format(
+            #                     opti_count_rate
+            #                 )
+            #             )
+            #             print("Optimization succeeded!")
+            #             opti_succeeded = True
+            #             break
+            # else:
+            #     pass
 
         # z
         if z_control_style == ControlStyle.STREAM:
@@ -778,6 +778,9 @@ def main_with_cxn(
         if fig is not None:
             tool_belt.save_figure(fig, filePath)
         tool_belt.save_raw_data(rawData, filePath)
+        
+        if close_plot:
+            plt.close()
 
     # %% Return the optimized coordinates we found
 
