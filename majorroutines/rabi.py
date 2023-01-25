@@ -474,7 +474,7 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
     )
     rabi_period = 1/popt[1]
     v_unc = numpy.sqrt(pcov[1][1])
-    print(v_unc)
+    # print(v_unc)
     rabi_period_unc = rabi_period**2 * v_unc
     print('Rabi period measured: {} +/- {} ns\n'.format('%.2f'%rabi_period, '%.2f'%rabi_period_unc))
 

@@ -408,7 +408,7 @@ def main_with_cxn(
             laser_name,
             laser_power,
         ]
-    print(seq_args)
+    # print(seq_args)
     seq_args_string = tool_belt.encode_seq_args(seq_args)
     ret_vals = pulsegen_server.stream_load(seq_file_name, seq_args_string)
     seq_time = ret_vals[0]

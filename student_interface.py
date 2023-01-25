@@ -22,12 +22,12 @@ if __name__ == "__main__":
     
     # %%%%%%%%%%%%%%% NV Parameters %%%%%%%%%%%%%%%
     
-    nv_coords = [6.162, 4.084, 4.04 ] # V
-    expected_count_rate = None  # kcps
-    magnet_angle =  145         # deg
+    nv_coords = [6.373, 4.295, 4.1 ] # V
+    expected_count_rate = 13  # kcps
+    magnet_angle =  65         # deg
     
-    resonance_LOW = 2.7917      # GHz
-    rabi_LOW = 80               # ns   
+    resonance_LOW = 2.8071      # GHz
+    rabi_LOW = 80.9             # ns   
     uwave_power_LOW = 15.5      # dBm  15.5 max
     
     resonance_HIGH = 2.9484     # GHz
@@ -73,7 +73,8 @@ if __name__ == "__main__":
         ####### Useful global functions #######
         ### Get/Set drift
         # nv.get_drift()
-        # nv.set_drift(drift_to_set=[0,0,0])
+        # nv.reset_xy_drift()
+        # nv.reset_xyz_drift()
         
         ### Turn laser on or off 
         # tool_belt.laser_on_no_cxn('cobolt_515') # turn the laser on
@@ -92,25 +93,26 @@ if __name__ == "__main__":
         
         
         ### Optimize on NV
-         # nv.do_optimize(nv_sig)
+        # nv.do_optimize(nv_sig)
             
         
         ####### EXPERIMENT 1: CW electron spin resonance #######
         ### Measure CW resonance
-        # nv.do_resonance(nv_sig, freq_center=2.87, freq_range=0.25, num_runs=25, num_steps=101, num_reps=2e4)
+        # mangles = [0,30,60,90,120,150]
+        # nv.do_resonance(nv_sig, freq_center=2.87, freq_range=0.2, uwave_power=-5.0, num_runs=20, num_steps=51)
     
     
         ####### EXPERIMENT 2: Rabi oscillations #######
-        # nv.do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 250], num_runs=15, num_steps=51, num_reps=2e4)
-        # nv.do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 300], num_runs=15, num_steps=51, num_reps=2e4)
+        # nv.do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 150], num_runs=15, num_steps=51, num_reps=2e4)
+        # nv.do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 200], num_runs=15, num_steps=51, num_reps=2e4)
         
         
         ####### EXPERIMENT 3: Ramsey experiment #######
         # nv.do_ramsey(nv_sig, state=States.LOW, precession_time_range = [0, 1.75 * 10 ** 3],
-        #              set_detuning=4, num_runs=20, num_steps = 101,num_reps=2e4)  
+        #                set_detuning=4, num_runs=20, num_steps = 101,num_reps=2e4)  
         
         # nv.do_ramsey(nv_sig, state=States.HIGH, precession_time_range = [0, 1.75 * 10 ** 3],
-        #              set_detuning=4, num_runs=20, num_steps = 101,num_reps=2e4)  
+                      # set_detuning=4, num_runs=20, num_steps = 101,num_reps=2e4)  
         
         
         ####### EXPERIMENT 4: Spim echo #######

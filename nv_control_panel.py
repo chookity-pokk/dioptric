@@ -72,8 +72,8 @@ def do_image_sample(nv_sig, scan_size='medium',close_plot=False):
         scan_range = 1.4#0.6 # large scan
         num_steps = 80
     elif scan_size == 'big':
-        scan_range = .8 # large scan
-        num_steps = 50
+        scan_range = 1.0 # large scan
+        num_steps = 60
     elif scan_size == 'bigger-highres':
         scan_range = 1.4# large scan
         num_steps = 140
@@ -90,8 +90,8 @@ def do_image_sample(nv_sig, scan_size='medium',close_plot=False):
         scan_range = 0.15 # large scan
         num_steps = 30
     elif scan_size == 'big-ish':
-        scan_range = 0.6
-        num_steps = 40
+        scan_range = 0.8
+        num_steps = 50
     elif scan_size == 'test':
         scan_range = .3
         num_steps = 20
@@ -143,10 +143,8 @@ def do_stationary_count(nv_sig):
 
 
 
-def do_resonance(nv_sig,  freq_center=2.87, freq_range=0.2, num_steps = 101, num_runs = 40,close_plot=False):
+def do_resonance(nv_sig,  freq_center=2.87, freq_range=0.2, uwave_power=-5.0, num_steps = 101, num_runs = 40,close_plot=False):
     
-    uwave_power = -10.0
-
     resonance.main(
         nv_sig,
         freq_center,
@@ -254,6 +252,17 @@ def set_drift(drift_to_set):
     with labrad.connect() as cxn:
         positioning.set_drift(cxn,np.asarray(drift_to_set))
 
+def reset_xy_drift():
+    cur_drift = get_drift()
+    
+    with labrad.connect() as cxn:
+        positioning.set_drift(cxn,np.array([0,0,cur_drift[2]]))
+
+def reset_xyz_drift():
+    
+    with labrad.connect() as cxn:
+        positioning.set_drift(cxn,np.array([0,0,0]))
+
 
 
 # %% Run the file
@@ -287,10 +296,10 @@ if __name__ == "__main__":
         "imaging_readout_dur": 1e7,
         "collection_filter": "630_lp",
         
-        "expected_count_rate":22,
+        "expected_count_rate":21,
         # "expected_count_rate":None,
-        "magnet_angle": 170, 
-        "resonance_LOW":2.808 ,"rabi_LOW": 81.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
+        "magnet_angle": 175, 
+        "resonance_LOW":2.7833 ,"rabi_LOW": 68.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
         "resonance_HIGH": 2.937 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, 
         'norm_style':NormStyle.SINGLE_VALUED}  # 14.5 max. units is dBm
     
@@ -316,7 +325,7 @@ if __name__ == "__main__":
         # do_image_sample(nv_sig,  scan_size='small-ish')
         # do_image_sample(nv_sig,  scan_size='bigger-highres')
         
-        # do_image_sample(nv_sig,  scan_size='small')
+        # do_image_sample(nv_sig,  scan_size='medium')
         
         # do_image_sample(nv_sig,  scan_size='auto-tracker')
         # do_image_sample(nv_sig, scan_size='big')
@@ -326,17 +335,19 @@ if __name__ == "__main__":
         # do_stationary_count(nv_sig, )
         
         # do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.25,num_runs=5)
-                    
-        do_resonance(nv_sig, 2.87, 0.25, num_runs = 25)
-        # do_resonance(nv_sig, 2.875, 0.1)
+        # mangles = [0,30,60,90,120,150]
+        # for m in mangles:
+        #     nv_sig['magnet_angle'] = m
+        #     do_resonance(nv_sig, 2.87, 0.25, num_runs = 15)
+        do_resonance(nv_sig, 2.78, 0.1,num_steps=51,num_runs=10)
         # do_resonance_state(nv_sig , States.LOW)
                 
-        # do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 250],num_runs=15)
+        # do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 150],num_runs=15)
         # do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 250],num_runs=30)
         
-        # detunings=[0.25]
+        # detunings=[-3]
         # for d in detunings:
-        #     do_ramsey(nv_sig, set_detuning=d,num_runs=20, precession_time_range = [0, 1.75 * 10 ** 3],num_steps = 101)  
+        #     do_ramsey(nv_sig, set_detuning=d,num_runs=50, precession_time_range = [0, 1.75 * 10 ** 3],num_steps = 71)  
        
         # do_spin_echo(nv_sig,echo_time_range = [0, 110 * 10 ** 3], num_steps=71, num_runs=50) 
 
