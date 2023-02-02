@@ -59,17 +59,20 @@ class SigGenBerkBnc835(LabradServer):
         # resource_manager = visa.ResourceManager()
         self.visa_address = visa_address
         self.sig_gen = None
-        logging.info("init complete")
+        # resource_manager = visa.ResourceManager()
+        # self.sig_gen = resource_manager.open_resource(visa_address)
+        # logging.info("init complete")
         
     @setting(30)
-    def open_connection(self, c):
+    def open_connection(self,c):
         
         if self.sig_gen != None:
             self.close_connection()
             
         self.resource_manager = visa.ResourceManager()
+        logging.info(self.visa_address)
         self.sig_gen = self.resource_manager.open_resource(self.visa_address)
-        logging.info('sig gen opened')
+        # logging.info('sig gen opened')
         self.sig_gen.write("*RST")
         # Set to the external frequency source
         self.sig_gen.write("ROSC:EXT:FREQ 10MHZ")
@@ -78,12 +81,12 @@ class SigGenBerkBnc835(LabradServer):
         self.sig_gen.write("FM:STAT OFF")
      
     @setting(31)
-    def close_connection(self, c):
+    def close_connection(self):
         
         self.sig_gen.close()
         self.resource_manager.close()
         self.sig_gen = None
-        logging.info('sig gen closed')
+        # logging.info('sig gen closed')
         
 
     @setting(0)
@@ -91,7 +94,8 @@ class SigGenBerkBnc835(LabradServer):
         """Turn on the signal. This is like opening an internal gate on
         the signal generator.
         """
-        self.open_connection()
+        if self.sig_gen == None:
+            self.open_connection(c)
 
         self.sig_gen.write("OUTP 1")
         # logging.info("turned on")
@@ -101,7 +105,6 @@ class SigGenBerkBnc835(LabradServer):
         """Turn off the signal. This is like closing an internal gate on
         the signal generator.
         """
-
         self.sig_gen.write("OUTP 0")
         # logging.info("turned off")
 
@@ -113,6 +116,8 @@ class SigGenBerkBnc835(LabradServer):
             freq: float
                 The frequency of the signal in GHz
         """
+        if self.sig_gen == None:
+            self.open_connection(c)
 
         self.sig_gen.write("FREQ:MODE FIX")
         # Determine how many decimal places we need
@@ -127,6 +132,9 @@ class SigGenBerkBnc835(LabradServer):
             amp: float
                 The amplitude of the signal in dBm
         """
+        
+        if self.sig_gen == None:
+            self.open_connection(c)
 
         self.sig_gen.write("POW:MODE FIX")
         # Determine how many decimal places we need
@@ -135,6 +143,9 @@ class SigGenBerkBnc835(LabradServer):
 
     @setting(4, freqs="*v[]")
     def load_freq_list(self, c, freqs):
+        
+        if self.sig_gen == None:
+            self.open_connection(c)
         # Configure the list itself
         freqs_hz_str = ", ".join([str(int(freq * 10**9)) for freq in freqs])
         self.sig_gen.write("LIST:FREQ {}".format(freqs_hz_str))
@@ -150,6 +161,9 @@ class SigGenBerkBnc835(LabradServer):
 
     @setting(5, start_freq="v[]", end_freq="v[]", num_steps="i")
     def load_freq_sweep(self, c, start_freq, end_freq, num_steps):
+        
+        if self.sig_gen == None:
+            self.open_connection(c)
 
         # Configure the sweep itself
         precision = len(str(start_freq).split(".")[1])
@@ -177,6 +191,9 @@ class SigGenBerkBnc835(LabradServer):
         '''
         Set up frequency modulation using an external analog source
         '''
+        if self.sig_gen == None:
+            self.open_connection(c)
+            
         deviation_Hz = deviation * 1e6
         precision = len(str(deviation).split(".")[1])
         # set the deviation
@@ -199,6 +216,9 @@ class SigGenBerkBnc835(LabradServer):
         '''
         Trun off frequency modulation
         '''
+        if self.sig_gen == None:
+            self.open_connection(c)
+            
         self.sig_gen.write("FM:STAT OFF")
         
     # @setting(11, freq_list='*v[]')

@@ -94,7 +94,7 @@ def do_image_sample(nv_sig, scan_size='medium',close_plot=False):
         num_steps = 50
     elif scan_size == 'test':
         scan_range = .3
-        num_steps = 20
+        num_steps = 10
         
     # For now we only support square scans so pass scan_range twice
     fname = image_sample.main(nv_sig, scan_range, scan_range, num_steps,close_plot=close_plot)
@@ -296,8 +296,8 @@ if __name__ == "__main__":
         "imaging_readout_dur": 1e7,
         "collection_filter": "630_lp",
         
-        "expected_count_rate":19,
-        # "expected_count_rate":None,
+        # "expected_count_rate":19,
+        "expected_count_rate":None,
         "magnet_angle": 62, 
         "resonance_LOW":2.7833 ,"rabi_LOW": 80.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
         "resonance_HIGH": 2.937 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, 
@@ -321,11 +321,11 @@ if __name__ == "__main__":
         
         # do_image_sample(nv_sig, scan_size='test')
         # do_image_sample(nv_sig,  scan_size='auto-tracker')
-        # do_image_sample(nv_sig,  scan_size='big')
+        do_image_sample(nv_sig,  scan_size='big')
         # do_image_sample(nv_sig,  scan_size='small-ish')
         # do_image_sample(nv_sig,  scan_size='bigger-highres')
         
-        do_image_sample(nv_sig,  scan_size='medium')
+        # do_image_sample(nv_sig,  scan_size='test')
         
         # do_image_sample(nv_sig,  scan_size='auto-tracker')
         # do_image_sample(nv_sig, scan_size='big')
@@ -343,10 +343,11 @@ if __name__ == "__main__":
         # for m in mangles:
         #     nv_sig['magnet_angle'] = m
         #     do_resonance(nv_sig, 2.87, 0.25, num_runs = 15)
-        # do_resonance(nv_sig, 2.78, 0.1,num_steps=51,num_runs=10)
+        # nv_sig['disable_opt']=True
+        # do_resonance(nv_sig, 2.78, 0.1,num_steps=51,num_runs=20)
         # do_resonance_state(nv_sig , States.LOW)
                 
-        # do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 150],num_runs=15)
+        # do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 150],num_runs=30)
         # do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 250],num_runs=30)
         
         # detunings=[-3]
