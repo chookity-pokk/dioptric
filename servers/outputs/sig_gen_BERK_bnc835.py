@@ -58,10 +58,15 @@ class SigGenBerkBnc835(LabradServer):
         # termination assumptions
         # resource_manager = visa.ResourceManager()
         self.visa_address = visa_address
+        self.sig_gen = None
         logging.info("init complete")
         
     @setting(30)
     def open_connection(self, c):
+        
+        if self.sig_gen != None:
+            self.close_connection()
+            
         self.resource_manager = visa.ResourceManager()
         self.sig_gen = self.resource_manager.open_resource(self.visa_address)
         logging.info('sig gen opened')
@@ -74,8 +79,10 @@ class SigGenBerkBnc835(LabradServer):
      
     @setting(31)
     def close_connection(self, c):
+        
         self.sig_gen.close()
         self.resource_manager.close()
+        self.sig_gen = None
         logging.info('sig gen closed')
         
 
@@ -216,10 +223,13 @@ class SigGenBerkBnc835(LabradServer):
         
     @setting(6)
     def reset(self, c):
-        self.uwave_off(c)
-        # turn off FM modulation
-        self.sig_gen.write("FM:STAT OFF")
-        self.close_connection()
+        if self.sig_gen != None:
+            self.uwave_off(c)
+            # turn off FM modulation
+            self.sig_gen.write("FM:STAT OFF")
+            self.close_connection()
+        else:
+            pass
         
         # Default to a continuous wave at 2.87 GHz and 0.0 dBm
         # self.set_freq(c, 2.87)
