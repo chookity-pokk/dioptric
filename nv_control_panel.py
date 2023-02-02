@@ -109,12 +109,12 @@ def do_image_sample_xz(nv_sig, scan_size='medium'):
         return 
     if scan_size == 'huge':
         scan_range = 1#0.6 # large scan
-        num_steps = 40
+        num_steps = 60
     elif scan_size == 'big':
-        scan_range = .3 # large scan
+        scan_range = .6 # large scan
         num_steps = 30
     elif scan_size == 'medium':
-        scan_range = 0.15 # large scan
+        scan_range = 0.25 # large scan
         num_steps = 30
     elif scan_size == 'small':
         scan_range = 0.1 # large scan
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     
         
     nv_sig = {
-        "coords":[6.141, 4.063, 4.13],
+        "coords":[6.078, 4.469, 3.81 ],
         "name": "{}-nv1".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": False,
@@ -296,10 +296,10 @@ if __name__ == "__main__":
         "imaging_readout_dur": 1e7,
         "collection_filter": "630_lp",
         
-        "expected_count_rate":21,
+        "expected_count_rate":19,
         # "expected_count_rate":None,
-        "magnet_angle": 175, 
-        "resonance_LOW":2.7833 ,"rabi_LOW": 68.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
+        "magnet_angle": 62, 
+        "resonance_LOW":2.7833 ,"rabi_LOW": 80.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
         "resonance_HIGH": 2.937 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, 
         'norm_style':NormStyle.SINGLE_VALUED}  # 14.5 max. units is dBm
     
@@ -325,11 +325,15 @@ if __name__ == "__main__":
         # do_image_sample(nv_sig,  scan_size='small-ish')
         # do_image_sample(nv_sig,  scan_size='bigger-highres')
         
-        # do_image_sample(nv_sig,  scan_size='medium')
+        do_image_sample(nv_sig,  scan_size='medium')
         
         # do_image_sample(nv_sig,  scan_size='auto-tracker')
         # do_image_sample(nv_sig, scan_size='big')
-        # do_image_sample_xz(nv_sig, zrange=5,steps=30)
+        # do_image_sample_xz(nv_sig,scan_size='huge')
+        # z_list = np.arange(3.47,4.87,0.15)
+        # for z in z_list:
+        #     nv_sig['coords'][2]=z
+        #     do_image_sample(nv_sig, scan_size='big-ish')
         # do_optimize(nv_sig)
         # nv_sig['disable_opt']=True
         # do_stationary_count(nv_sig, )
@@ -339,7 +343,7 @@ if __name__ == "__main__":
         # for m in mangles:
         #     nv_sig['magnet_angle'] = m
         #     do_resonance(nv_sig, 2.87, 0.25, num_runs = 15)
-        do_resonance(nv_sig, 2.78, 0.1,num_steps=51,num_runs=10)
+        # do_resonance(nv_sig, 2.78, 0.1,num_steps=51,num_runs=10)
         # do_resonance_state(nv_sig , States.LOW)
                 
         # do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 150],num_runs=15)

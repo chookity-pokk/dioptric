@@ -398,10 +398,11 @@ def replot(file):
     fit_fig, _, fit_func, popt, _ = pulsed_resonance.create_fit_figure(
         freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste
     )
+    print(popt)
 # %%
 
 if __name__ == '__main__':
 
-    file = '2023_01_14-12_59_48-E6test-nv1'
+    file = '2023_01_24-11_42_49-E6-nv1'
     
     replot(file)

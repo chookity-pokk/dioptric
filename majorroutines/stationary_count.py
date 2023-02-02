@@ -105,7 +105,10 @@ def main_with_cxn(
 
     ### Collect the data
 
-    counter_server.start_tag_stream()
+    if 'daq' in counter_server.name:
+        counter_server.load_stream_reader(0, period,  total_num_samples)
+    else:
+        counter_server.start_tag_stream()
     pulsegen_server.stream_start(-1)
     tool_belt.init_safe_stop()
     # b = 0  # If this just for the OPX, please find a way to implement that does not interfere with other expts
