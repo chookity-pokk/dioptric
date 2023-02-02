@@ -56,21 +56,35 @@ class SigGenBerkBnc835(LabradServer):
     def on_get_config(self, visa_address):
         # Note that this instrument works with pyvisa's default
         # termination assumptions
-        resource_manager = visa.ResourceManager()
-        self.sig_gen = resource_manager.open_resource(visa_address)
-        logging.info(self.sig_gen)
+        # resource_manager = visa.ResourceManager()
+        self.visa_address = visa_address
+        logging.info("init complete")
+        
+    @setting(30)
+    def open_connection(self, c):
+        self.resource_manager = visa.ResourceManager()
+        self.sig_gen = self.resource_manager.open_resource(self.visa_address)
+        logging.info('sig gen opened')
         self.sig_gen.write("*RST")
         # Set to the external frequency source
         self.sig_gen.write("ROSC:EXT:FREQ 10MHZ")
         self.sig_gen.write("ROSC:SOUR EXT")
-        self.reset(None)
-        logging.info("init complete")
+        self.uwave_off(c)
+        self.sig_gen.write("FM:STAT OFF")
+     
+    @setting(31)
+    def close_connection(self, c):
+        self.sig_gen.close()
+        self.resource_manager.close()
+        logging.info('sig gen closed')
+        
 
     @setting(0)
     def uwave_on(self, c):
         """Turn on the signal. This is like opening an internal gate on
         the signal generator.
         """
+        self.open_connection()
 
         self.sig_gen.write("OUTP 1")
         # logging.info("turned on")
@@ -205,6 +219,7 @@ class SigGenBerkBnc835(LabradServer):
         self.uwave_off(c)
         # turn off FM modulation
         self.sig_gen.write("FM:STAT OFF")
+        self.close_connection()
         
         # Default to a continuous wave at 2.87 GHz and 0.0 dBm
         # self.set_freq(c, 2.87)
