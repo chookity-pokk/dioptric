@@ -331,7 +331,7 @@ class DaqCounterNiPxie6363(LabradServer):
         new_samples_diff = [[int(el) for el in new_samples_diff]]
         
 #        logging.info(new_samples_cum)
-        logging.info(new_samples_diff)
+        # logging.info(new_samples_diff)
         return new_samples_diff
 
     @setting(3)

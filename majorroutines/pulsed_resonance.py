@@ -37,6 +37,7 @@ def create_fit_figure(
     fit_func=None,
     popt=None,
     guess_params=None,
+    start_kpl=False,
 ):
     """Create a figure showing the normalized average signal and the fit. If you pass
     fit_func and popt, then no actual fit will be performed - we'll just plot the passed
@@ -75,6 +76,9 @@ def create_fit_figure(
     2D array
         Covariance matrix of the fit
     """
+    
+    if start_kpl:
+        kpl.init_kplotlib()
 
     # Fitting
     if (fit_func is None) or (popt is None):
@@ -89,6 +93,7 @@ def create_fit_figure(
         )
     else:
         pcov = None
+        
 
     # Plot setup
     fig, ax = plt.subplots()

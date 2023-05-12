@@ -297,7 +297,7 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
     
     # Fits
     fit_fig, _, fit_func, popt, _ = pulsed_resonance.create_fit_figure(
-        freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste
+        freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste, start_kpl=True
     )
 
 

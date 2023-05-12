@@ -72,8 +72,8 @@ def do_image_sample(nv_sig, scan_size='medium',close_plot=False):
         scan_range = 1.4#0.6 # large scan
         num_steps = 80
     elif scan_size == 'big':
-        scan_range = 1.0 # large scan
-        num_steps = 60
+        scan_range = .8 # large scan
+        num_steps = 50
     elif scan_size == 'bigger-highres':
         scan_range = 1.4# large scan
         num_steps = 140
@@ -91,7 +91,7 @@ def do_image_sample(nv_sig, scan_size='medium',close_plot=False):
         num_steps = 30
     elif scan_size == 'big-ish':
         scan_range = 0.8
-        num_steps = 50
+        num_steps = 60
     elif scan_size == 'test':
         scan_range = .3
         num_steps = 10
@@ -114,7 +114,7 @@ def do_image_sample_xz(nv_sig, scan_size='medium'):
         scan_range = .6 # large scan
         num_steps = 30
     elif scan_size == 'medium':
-        scan_range = 0.25 # large scan
+        scan_range = 0.35 # large scan
         num_steps = 30
     elif scan_size == 'small':
         scan_range = 0.1 # large scan
@@ -137,7 +137,7 @@ def do_optimize(nv_sig,set_to_opti_coords=False,save_data=True,close_plot=False)
 
 def do_stationary_count(nv_sig):
 
-    run_time = 1 * 60 * 10 ** 9  # ns
+    run_time = 3 * 60 * 10 ** 9  # ns
 
     stationary_count.main(nv_sig, run_time)
 
@@ -321,7 +321,7 @@ if __name__ == "__main__":
         
         # do_image_sample(nv_sig, scan_size='test')
         # do_image_sample(nv_sig,  scan_size='auto-tracker')
-        do_image_sample(nv_sig,  scan_size='big')
+        # do_image_sample(nv_sig,  scan_size='big')
         # do_image_sample(nv_sig,  scan_size='small-ish')
         # do_image_sample(nv_sig,  scan_size='bigger-highres')
         
@@ -335,8 +335,8 @@ if __name__ == "__main__":
         #     nv_sig['coords'][2]=z
         #     do_image_sample(nv_sig, scan_size='big-ish')
         # do_optimize(nv_sig)
-        # nv_sig['disable_opt']=True
-        # do_stationary_count(nv_sig, )
+        nv_sig['disable_opt']=True
+        do_stationary_count(nv_sig, )
         
         # do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.25,num_runs=5)
         # mangles = [0,30,60,90,120,150]
@@ -344,10 +344,10 @@ if __name__ == "__main__":
         #     nv_sig['magnet_angle'] = m
         #     do_resonance(nv_sig, 2.87, 0.25, num_runs = 15)
         # nv_sig['disable_opt']=True
-        # do_resonance(nv_sig, 2.78, 0.1,num_steps=51,num_runs=20)
+        # do_resonance(nv_sig, 2.78, 0.1,num_steps=51,num_runs=2)
         # do_resonance_state(nv_sig , States.LOW)
                 
-        # do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 150],num_runs=30)
+        do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 150],num_runs=30)
         # do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 250],num_runs=30)
         
         # detunings=[-3]

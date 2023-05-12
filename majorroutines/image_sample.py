@@ -434,8 +434,8 @@ def main_with_cxn(
 
     fname = nv_sig['name']+'_'+scan_type
     filePath = tool_belt.get_file_path(__file__, timestamp, fname)
-    filename = f"{timestamp}-{fname}"
-    
+    filename = filePath.parts[len(filePath.parts)-1]
+
     tool_belt.save_figure(fig, filePath)
     tool_belt.save_raw_data(rawData, filePath)
     

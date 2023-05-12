@@ -70,7 +70,7 @@ class SigGenBerkBnc835(LabradServer):
             self.close_connection()
             
         self.resource_manager = visa.ResourceManager()
-        logging.info(self.visa_address)
+        # logging.info(self.visa_address)
         self.sig_gen = self.resource_manager.open_resource(self.visa_address)
         # logging.info('sig gen opened')
         self.sig_gen.write("*RST")

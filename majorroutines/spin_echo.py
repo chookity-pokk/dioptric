@@ -985,14 +985,14 @@ def main_with_cxn(
 
 if __name__ == "__main__":
 
-    file_name = "2023_01_17-21_08_51-E6test-nv1"
+    file_name = "2023_02_28-15_07_30-E6-nv1"
     
     data = tool_belt.get_raw_data(file_name)
     nv_name = data['nv_sig']["name"]
     timestamp = data['timestamp']
 
-    revival_time_guess = 30 * 1000
-    num_peaks = 4
+    revival_time_guess = 33 * 1000
+    num_peaks = 7
     
     ret_vals = fit_data(data, revival_time_guess=revival_time_guess, num_revivals_guess=num_peaks)
     

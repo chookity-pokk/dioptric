@@ -22,21 +22,21 @@ if __name__ == "__main__":
     
     # %%%%%%%%%%%%%%% NV Parameters %%%%%%%%%%%%%%%
     
-    nv_coords = [6.078, 4.469, 3.61 ] # V
-    expected_count_rate = 17 #19  # kcps
-    magnet_angle =  62       # deg
+    nv_coords = [6.16, 2.436, 3.75] # V
+    expected_count_rate = 10 # kcps
+    magnet_angle =  0  # deg
     
-    resonance_LOW = 2.806      # GHz
-    rabi_LOW = 77.73             # ns   
-    uwave_power_LOW = 15.5      # dBm  15.5 max
+    resonance_LOW =  2.783      # GHz
+    rabi_LOW = 55.46             # ns   
+    uwave_power_LOW = 15    # dBm  15.5 max
     
-    resonance_HIGH = 2.933     # GHz
-    rabi_HIGH = 71.89             # ns 
+    resonance_HIGH = 2.959     # GHz
+    rabi_HIGH = 100.9            # ns 
     uwave_power_HIGH = 14.5     # dBm  14.5 max 
     
     #%%  Prepare nv_sig with nv parameters  (do not alter nv_sig)
     
-    green_power =8
+    green_power = 9
     sample_name = "E6"
     green_laser = "cobolt_515"
     
@@ -72,56 +72,52 @@ if __name__ == "__main__":
 
         ####### Useful global functions #######
         ### Get/Set drift
-        # nv.get_drift()
+        # nv.set_drift([0,0,0])
         # nv.reset_xy_drift()
         # nv.reset_xyz_drift()
+        # print(nv.get_drift())
+        # nv_sig['disable_opt']=True
+        # nv.do_stationary_count(nv_sig)
         
         ### Turn laser on or off 
         # tool_belt.laser_on_no_cxn('cobolt_515') # turn the laser on
         # tool_belt.laser_off_no_cxn('cobolt_515') # turn the laser on
-
     
         ####### EXPERIMENT 0: Finding an nv #######
         ### Take confocal image
         ### xy scans can be ['small', 'medium', 'big-ish', 'big', 'huge']
-        
         # nv.do_image_sample(nv_sig,  scan_size='small')
-        # nv.do_image_sample(nv_sig, scan_size='medium')
-        # for z in [3.5,3.6,3.7]:
-        #     nv_sig['coords'][2] = z
-        #     nv.do_image_sample(nv_sig,  scan_size='big-ish')
-        # nv.do_image_sample(nv_sig,  scan_size='big')
-        # nv.do_image_sample(nv_sig,  scan_size='huge')
-        # nv.do_image_sample_xz(nv_sig, scan_size='medium')
+        # nv.do_image_sample(nv_sig, scan_size='medium') 
+        # nv.do_image_sample(nv_sig, scan_size='big')
+        # nv.do_image_sample(nv_sig,  scan_size='big-ish')
+        # nv.do_image_sample(nv_sig, scan_size='huge')
         
-        
-        ## Optimize on NV
+        # Optimize on NV
         # nv.do_optimize(nv_sig)
             
         
         ####### EXPERIMENT 1: CW electron spin resonance #######
         ### Measure CW resonance
         # mangles = [0,30,60,90,120,150]
-        # nv.do_resonance(nv_sig, freq_center=2.80, freq_range=0.15, uwave_power=-5.0, num_runs=30, num_steps=51)
+            # nv.do_resonance(nv_sig, freq_center=2.87, freq_range=0.2, uwave_power=-15.0, num_runs=15 , num_steps=101)
     
     
         ####### EXPERIMENT 2: Rabi oscillations #######
-        # nv.do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 200], num_runs=5, num_steps=51, num_reps=2e4)
-        # nv.do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 200], num_runs=15, num_steps=51, num_reps=2e4)
+        # mpowers = [-10,-8,-6,-4,-2,0,2,4,6,8,10,12,14,15]
+        # for i in mpowers:
+        #     nv_sig["uwave_power_LOW"]=i
+        # nv.do_rabi(nv_sig,  States.LOW , uwave_time_range=[0, 200], num_runs=15, num_steps=51, num_reps=1e4)
+        # nv.do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 200], num_runs=20, num_steps=51, num_reps=2e4)
         
         
         ####### EXPERIMENT 3: Ramsey experiment #######
-        for d in [0,2,-2,0.3]:
-            nv.do_ramsey(nv_sig, state=States.LOW, precession_time_range = [0, 1.75 * 10 ** 3],
-                        set_detuning=d, num_runs=60, num_steps =51,num_reps=2e4)  
         
-        # nv.do_ramsey(nv_sig, state=States.HIGH, precession_time_range = [0, 1.75 * 10 ** 3],
-                      # set_detuning=4, num_runs=20, num_steps = 101,num_reps=2e4)  
+        nv.do_ramsey(nv_sig, state=States.LOW, precession_time_range = [0, 2000], set_detuning=4, num_runs=50, num_steps = 101, num_reps=2e4)  
         
         
-        ####### EXPERIMENT 4: Spim echo #######
-        nv.do_spin_echo(nv_sig, state=States.LOW, echo_time_range = [0, 80 * 10 ** 3], 
-                      num_runs=50, num_steps=81, num_reps=2e4) 
+        # ####### EXPERIMENT 4: Spim echo #######
+        # nv.do_spin_echo(nv_sig, state=States.LOW, echo_time_range = [0, 100000], 
+        #                num_runs=150, num_steps=41, num_reps=2e4) 
     
     finally:
 
