@@ -22,9 +22,9 @@ if __name__ == "__main__":
     
     # %%%%%%%%%%%%%%% NV Parameters %%%%%%%%%%%%%%%
     
-    nv_coords = [6.16, 2.436, 3.75] # V
-    expected_count_rate = 10 # kcps
-    magnet_angle =  0  # deg
+    nv_coords = [5.804, 2.292, 3.76] # V
+    expected_count_rate = None # kcps
+    magnet_angle =  60  # deg
     
     resonance_LOW =  2.783      # GHz
     rabi_LOW = 55.46             # ns   
@@ -87,10 +87,12 @@ if __name__ == "__main__":
         ### Take confocal image
         ### xy scans can be ['small', 'medium', 'big-ish', 'big', 'huge']
         # nv.do_image_sample(nv_sig,  scan_size='small')
+        # nv.do_image_sample(nv_sig, scan_size='bigger-highres') 
         # nv.do_image_sample(nv_sig, scan_size='medium') 
         # nv.do_image_sample(nv_sig, scan_size='big')
         # nv.do_image_sample(nv_sig,  scan_size='big-ish')
         # nv.do_image_sample(nv_sig, scan_size='huge')
+        
         
         # Optimize on NV
         # nv.do_optimize(nv_sig)
@@ -112,7 +114,7 @@ if __name__ == "__main__":
         
         ####### EXPERIMENT 3: Ramsey experiment #######
         
-        nv.do_ramsey(nv_sig, state=States.LOW, precession_time_range = [0, 2000], set_detuning=4, num_runs=50, num_steps = 101, num_reps=2e4)  
+        # nv.do_ramsey(nv_sig, state=States.LOW, precession_time_range = [0, 2000], set_detuning=4, num_runs=50, num_steps = 101, num_reps=2e4)  
         
         
         # ####### EXPERIMENT 4: Spim echo #######

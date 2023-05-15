@@ -37,8 +37,8 @@ import numpy as np
 
 def do_auto_check_location(nv_sig,close_plot=False):
     
-    haystack_fname='2023_01_23-16_40_21-E6test-nv1_XY'
-    nv1 = [6.137, 4.066]
+    haystack_fname='2023_05_15-15_35_29-E6-nv1_XY'
+    nv1 = [5.804, 2.292]
     
     with labrad.connect() as cxn:
         drift = positioning.get_drift(cxn)
@@ -52,13 +52,17 @@ def do_auto_check_location(nv_sig,close_plot=False):
     with labrad.connect() as cxn:
         positioning.set_drift(cxn, np.array([x_shift, y_shift, drift[2]]))
         
-    # nv_sig['coords'][0] = nv_in_og_coords[0] + x_shift
-    # nv_sig['coords'][1] = nv_in_og_coords[1] + y_shift
+    # nv_sig['coords'][0] = nv1[0] + x_shift
+    # nv_sig['coords'][1] = nv1[1] + y_shift
     # do_image_sample(nv_sig,scan_size='small-ish')
-    # for i in range(2):
-    #     nv_sig['expected_count_rate'] = None
-    #     opti_coords, opti_count_rate = do_optimize(nv_sig,close_plot=close_plot)
-    # # nv_sig['expected_count_rate'] = opti_count_rate
+    opti_coords, opti_count_rate = do_optimize(nv_sig,close_plot=close_plot)
+    if opti_count_rate > 8:
+        return
+    else:
+        raise RuntimeError('counts too low at opti coords')
+
+        
+    # nv_sig['expected_count_rate'] = opti_count_rate
     
     
 
@@ -75,8 +79,8 @@ def do_image_sample(nv_sig, scan_size='medium',close_plot=False):
         scan_range = .8 # large scan
         num_steps = 50
     elif scan_size == 'bigger-highres':
-        scan_range = 1.4# large scan
-        num_steps = 140
+        scan_range = 1.# large scan
+        num_steps = 100
     elif scan_size == 'medium':
         scan_range = 0.4 # large scan
         num_steps = 40
@@ -280,7 +284,7 @@ if __name__ == "__main__":
     
         
     nv_sig = {
-        "coords":[6.078, 4.469, 3.81 ],
+        "coords":[5.804, 2.292, 3.76],
         "name": "{}-nv1".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": False,
@@ -298,7 +302,7 @@ if __name__ == "__main__":
         
         # "expected_count_rate":19,
         "expected_count_rate":None,
-        "magnet_angle": 62, 
+        "magnet_angle": 60, 
         "resonance_LOW":2.7833 ,"rabi_LOW": 80.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
         "resonance_HIGH": 2.937 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, 
         'norm_style':NormStyle.SINGLE_VALUED}  # 14.5 max. units is dBm
@@ -316,7 +320,7 @@ if __name__ == "__main__":
         # tool_belt.laser_on_no_cxn('cobolt_515') # turn the laser on
         # tool_belt.laser_off_no_cxn('cobolt_515') # turn the laser on
         
-        # do_auto_check_location(nv_sig,close_plot=False)
+        do_auto_check_location(nv_sig,close_plot=False)
 
         
         # do_image_sample(nv_sig, scan_size='test')
@@ -335,8 +339,8 @@ if __name__ == "__main__":
         #     nv_sig['coords'][2]=z
         #     do_image_sample(nv_sig, scan_size='big-ish')
         # do_optimize(nv_sig)
-        nv_sig['disable_opt']=True
-        do_stationary_count(nv_sig, )
+        # nv_sig['disable_opt']=True
+        # do_stationary_count(nv_sig, )
         
         # do_pulsed_resonance(nv_sig, freq_center=2.87, freq_range=0.25,num_runs=5)
         # mangles = [0,30,60,90,120,150]
@@ -347,7 +351,7 @@ if __name__ == "__main__":
         # do_resonance(nv_sig, 2.78, 0.1,num_steps=51,num_runs=2)
         # do_resonance_state(nv_sig , States.LOW)
                 
-        do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 150],num_runs=30)
+        # do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 150],num_runs=30)
         # do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 250],num_runs=30)
         
         # detunings=[-3]
