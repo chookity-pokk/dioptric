@@ -32,6 +32,7 @@ from utils.tool_belt import States, NormStyle
 import utils.auto_tracker as auto_tracker
 import time
 import numpy as np
+import copy
 
 # %% Major Routines
 
@@ -55,7 +56,9 @@ def do_auto_check_location(nv_sig,close_plot=False):
     # nv_sig['coords'][0] = nv1[0] + x_shift
     # nv_sig['coords'][1] = nv1[1] + y_shift
     # do_image_sample(nv_sig,scan_size='small-ish')
-    opti_coords, opti_count_rate = do_optimize(nv_sig,close_plot=close_plot)
+    nv_sig_copy = copy.deepcopy(nv_sig)
+    nv_sig_copy['expected_count_rate']=None
+    opti_coords, opti_count_rate = do_optimize(nv_sig_copy,close_plot=close_plot)
     if opti_count_rate > 8:
         return
     else:
