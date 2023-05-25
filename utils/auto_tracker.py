@@ -175,8 +175,8 @@ def get_shift(nv_sig, haystack_file, needle_file, close_plot=False):
 if __name__ == '__main__':
     
     ####################### Files #######################
-    needle_file = '2023_01_22-19_14_47-test'
-    haystack_file = '2023_01_22-19_24_22-E6test-nv1_XY'
+    needle_file = '2023_05_25-11_58_34-E6test-nv1_XY'
+    haystack_file = '2023_05_25-12_01_18-E6test-nv1_XY'
     data_needle = tool_belt.get_raw_data(needle_file)
     nv_sig= data_needle['nv_sig']
     

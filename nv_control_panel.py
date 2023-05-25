@@ -38,8 +38,8 @@ import copy
 
 def do_auto_check_location(nv_sig,close_plot=False):
     
-    haystack_fname='2023_05_15-15_35_29-E6-nv1_XY'
-    nv1 = [5.804, 2.292]
+    haystack_fname='2023_05_23-11_41_43-E6-nv1_XY'
+    nv1 = [5.512, 2.466]
     
     with labrad.connect() as cxn:
         drift = positioning.get_drift(cxn)
@@ -70,7 +70,7 @@ def do_auto_check_location(nv_sig,close_plot=False):
     
 
 def do_image_sample(nv_sig, scan_size='medium',close_plot=False):
-    scan_options=['huge','medium','big-ish','small','small-ish','auto-tracker','big','test','bigger-highres']
+    scan_options=['huge','medium','big-ish','small','small-ish','needle','haystack','big','test','bigger-highres']
     if scan_size not in scan_options:
     #     raise Exception():
         print('scan_size must be in: ', scan_options)
@@ -90,9 +90,6 @@ def do_image_sample(nv_sig, scan_size='medium',close_plot=False):
     elif scan_size == 'small-ish':
         scan_range = 0.3 # large scan
         num_steps = 30
-    elif scan_size == 'auto-tracker':
-        scan_range = 0.4 # large scan
-        num_steps = 40
     elif scan_size == 'small':
         scan_range = 0.15 # large scan
         num_steps = 30
@@ -102,6 +99,12 @@ def do_image_sample(nv_sig, scan_size='medium',close_plot=False):
     elif scan_size == 'test':
         scan_range = .3
         num_steps = 10
+    elif scan_size == 'needle':
+        scan_range = 0.4 
+        num_steps = 40
+    elif scan_size == 'haystack':
+        scan_range = 1.2 # large scan
+        num_steps = 120
         
     # For now we only support square scans so pass scan_range twice
     fname = image_sample.main(nv_sig, scan_range, scan_range, num_steps,close_plot=close_plot)
@@ -287,7 +290,7 @@ if __name__ == "__main__":
     
         
     nv_sig = {
-        "coords":[5.804, 2.292, 3.76],
+        "coords":[6.201, 2.022, 3.56],
         "name": "{}-nv1".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": False,
@@ -323,11 +326,13 @@ if __name__ == "__main__":
         # tool_belt.laser_on_no_cxn('cobolt_515') # turn the laser on
         # tool_belt.laser_off_no_cxn('cobolt_515') # turn the laser on
         
-        do_auto_check_location(nv_sig,close_plot=False)
+        # do_auto_check_location(nv_sig,close_plot=False)
 
         
         # do_image_sample(nv_sig, scan_size='test')
-        # do_image_sample(nv_sig,  scan_size='auto-tracker')
+        # do_image_sample(nv_sig,  scan_size='needle')
+        do_optimize(nv_sig)
+        do_image_sample(nv_sig,  scan_size='haystack')
         # do_image_sample(nv_sig,  scan_size='big')
         # do_image_sample(nv_sig,  scan_size='small-ish')
         # do_image_sample(nv_sig,  scan_size='bigger-highres')

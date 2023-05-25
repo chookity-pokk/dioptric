@@ -22,7 +22,7 @@ if __name__ == "__main__":
     
     # %%%%%%%%%%%%%%% NV Parameters %%%%%%%%%%%%%%%
     
-    nv_coords = [5.804, 2.292, 3.76] # V
+    nv_coords = [6.201, 2.022, 3.56] # V
     expected_count_rate = None # kcps
     magnet_angle =  60  # deg
     
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     
     #%%  Prepare nv_sig with nv parameters  (do not alter nv_sig)
     
-    green_power = 9
+    green_power = 10
     sample_name = "E6"
     green_laser = "cobolt_515"
     
