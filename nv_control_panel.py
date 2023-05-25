@@ -38,15 +38,15 @@ import copy
 
 def do_auto_check_location(nv_sig,close_plot=False):
     
-    haystack_fname='2023_05_23-11_41_43-E6-nv1_XY'
-    nv1 = [5.512, 2.466]
+    haystack_fname='2023_05_25-13_26_12-E6test-nv1_XY'
+    nv1 = [6.203, 2.018]
     
     with labrad.connect() as cxn:
         drift = positioning.get_drift(cxn)
         new_drift = np.array([0, 0, drift[2]])
         positioning.set_drift(cxn, new_drift)
     
-    needle_fname = do_image_sample(nv_sig,scan_size='auto-tracker',close_plot=close_plot)
+    needle_fname = do_image_sample(nv_sig,scan_size='needle',close_plot=close_plot)
     
     x_shift, y_shift = auto_tracker.get_shift(nv_sig, haystack_fname, needle_fname,close_plot=close_plot)
     
@@ -326,13 +326,13 @@ if __name__ == "__main__":
         # tool_belt.laser_on_no_cxn('cobolt_515') # turn the laser on
         # tool_belt.laser_off_no_cxn('cobolt_515') # turn the laser on
         
-        # do_auto_check_location(nv_sig,close_plot=False)
+        do_auto_check_location(nv_sig,close_plot=False)
 
         
         # do_image_sample(nv_sig, scan_size='test')
         # do_image_sample(nv_sig,  scan_size='needle')
-        do_optimize(nv_sig)
-        do_image_sample(nv_sig,  scan_size='haystack')
+        # do_optimize(nv_sig)
+        # do_image_sample(nv_sig,  scan_size='haystack')
         # do_image_sample(nv_sig,  scan_size='big')
         # do_image_sample(nv_sig,  scan_size='small-ish')
         # do_image_sample(nv_sig,  scan_size='bigger-highres')
