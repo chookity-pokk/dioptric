@@ -321,17 +321,17 @@ if __name__ == "__main__":
         # with labrad.connect() as cxn:
             # positioning.set_drift(cxn,np.array([0, 0, 0]))
             # print(positioning.get_drift(cxn))
-        # tool_belt.set_xyz(labrad.connect(), [5,5,5])
+        # positioning.set_xyz (labrad.connect(), [5,5,5])
         
         # tool_belt.laser_on_no_cxn('cobolt_515') # turn the laser on
         # tool_belt.laser_off_no_cxn('cobolt_515') # turn the laser on
         
-        do_auto_check_location(nv_sig,close_plot=False)
+        # do_auto_check_location(nv_sig,close_plot=False)
 
         
-        # do_image_sample(nv_sig, scan_size='test')
+        # do_image_sample(nv_sig, scan_size='small')
         # do_image_sample(nv_sig,  scan_size='needle')
-        # do_optimize(nv_sig)
+        do_optimize(nv_sig)
         # do_image_sample(nv_sig,  scan_size='haystack')
         # do_image_sample(nv_sig,  scan_size='big')
         # do_image_sample(nv_sig,  scan_size='small-ish')

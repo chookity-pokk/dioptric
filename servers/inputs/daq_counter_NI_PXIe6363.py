@@ -165,7 +165,6 @@ class DaqCounterNiPxie6363(LabradServer):
 
         # Start the task. It will start counting immediately so we'll have to
         # discard the first sample.
-        
         task.start()
 
     @setting(0, apd_index='i', period='i', total_num_to_read='i')
