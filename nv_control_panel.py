@@ -285,12 +285,12 @@ if __name__ == "__main__":
     
 
     green_power =10
-    sample_name = "E6test"
+    sample_name = "WiQD"
     green_laser = "cobolt_515"
     
         
     nv_sig = {
-        "coords":[6.201, 2.022, 3.56],
+        "coords":[6.183, 1.977, 3.56],
         "name": "{}-nv1".format(sample_name,),
         "disable_opt":False,
         "ramp_voltages": False,
@@ -332,7 +332,7 @@ if __name__ == "__main__":
         # do_image_sample(nv_sig, scan_size='small')
         # do_image_sample(nv_sig,  scan_size='needle')
         do_optimize(nv_sig)
-        # do_image_sample(nv_sig,  scan_size='haystack')
+        do_image_sample(nv_sig,  scan_size='haystack')
         # do_image_sample(nv_sig,  scan_size='big')
         # do_image_sample(nv_sig,  scan_size='small-ish')
         # do_image_sample(nv_sig,  scan_size='bigger-highres')

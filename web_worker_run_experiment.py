@@ -84,7 +84,7 @@ if __name__ == "__main__":
     sample_name = safeFileName(sample_name)
 
     nv_coords = [args.x,args.y,args.z] # V
-    expected_count_rate = 15     # kcps
+    expected_count_rate = 19   # kcps
     magnet_angle =  60  # deg
     
     resonance_LOW = 2.7641 # 2.7911           # GHz
