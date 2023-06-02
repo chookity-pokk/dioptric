@@ -123,7 +123,7 @@ def get_seq(pulse_streamer, config, args):
 if __name__ == '__main__':
     config = tool_belt.get_config_dict()
     tool_belt.set_delays_to_zero(config)
-    args = [1202, 10000.0, 300, 1202, 3, 'integrated_520', None]
+    args = [1202, 10000.0, 300, 1202, 3, 'cobolt_515', None]
     # args = [1000, 10000.0, 300, 2000, 3, 'integrated_520', None] 
     seq = get_seq(None, config, args)[0]
     seq.plot()
