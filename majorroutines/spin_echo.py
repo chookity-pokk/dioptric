@@ -42,11 +42,24 @@ gmuB = 2.8e-3  # gyromagnetic ratio in GHz / G
 
 
 def create_raw_data_figure(
-    taus,
+    precession_dur_range,
+    num_steps,
     avg_sig_counts=None,
     avg_ref_counts=None,
     norm_avg_sig=None,
 ):
+    
+    min_precession_dur = precession_dur_range[0]
+    max_precession_dur = precession_dur_range[1]
+    taus = numpy.linspace(
+        min_precession_dur,
+        max_precession_dur,
+        num=num_steps,
+        dtype=numpy.int32,
+    )
+
+    T = 2*taus
+    
     num_steps = len(taus)
     # Plot setup
     fig, axes_pack = plt.subplots(1, 2, figsize=kpl.figsize_extralarge)
@@ -62,20 +75,20 @@ def create_raw_data_figure(
         avg_sig_counts = numpy.empty(num_steps)
         avg_sig_counts[:] = numpy.nan
     kpl.plot_line(
-        ax_sig_ref, taus, avg_sig_counts, label="Signal", color=KplColors.GREEN
+        ax_sig_ref, T/1000, avg_sig_counts, label="Signal", color=KplColors.GREEN
     )
     if avg_ref_counts is None:
         avg_ref_counts = numpy.empty(num_steps)
         avg_ref_counts[:] = numpy.nan
     kpl.plot_line(
-        ax_sig_ref, taus, avg_ref_counts, label="Reference", color=KplColors.RED
+        ax_sig_ref, T/1000, avg_ref_counts, label="Reference", color=KplColors.RED
     )
     ax_sig_ref.legend(loc=kpl.Loc.LOWER_RIGHT)
     if norm_avg_sig is None:
         norm_avg_sig = numpy.empty(num_steps)
         norm_avg_sig[:] = numpy.nan
-    kpl.plot_line(ax_norm, taus, norm_avg_sig, color=KplColors.BLUE)
-    ax_norm.set_title('Spin Echo experiment')
+    kpl.plot_line(ax_norm, T/1000, norm_avg_sig, color=KplColors.BLUE)
+    fig.suptitle('Spin Echo experiment')
     
     return fig, ax_sig_ref, ax_norm
 
@@ -270,7 +283,7 @@ def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
     # Get the pi pulse duration
     state = data["state"]
     nv_sig = data["nv_sig"]
-    rabi_period = nv_sig["rabi_{}".format(state)]
+    # rabi_period = nv_sig["rabi_{}".format(state)]
 
     # %% Set up
 
@@ -284,9 +297,7 @@ def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
         retstep=True,
     )
 
-    # Account for the pi/2 pulse on each side of a tau
-    pi_pulse_dur = tool_belt.get_pi_pulse_dur(rabi_period)
-    tau_pis = taus + pi_pulse_dur
+    T = 2*taus
 
     fit_func = quartic
 
@@ -338,7 +349,7 @@ def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
     # The fit doesn't like dealing with vary large numbers. We'll convert to
     # us here and then convert back to ns after the fit for consistency.
 
-    tau_pis_us = tau_pis / 1000
+    T_us = T / 1000
     decay_time_us = decay_time / 1000
     max_precession_dur_us = max_precession_dur / 1000
 
@@ -360,7 +371,7 @@ def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
             
 
         if num_revivals_guess == None:
-            num_revivals = round(max_precession_dur / revival_time)
+            num_revivals = round(2*max_precession_dur / revival_time)
         else:
             num_revivals = num_revivals_guess -1
             
@@ -392,7 +403,7 @@ def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
         try:
             popt, pcov = curve_fit(
                 fit_func,
-                tau_pis_us,
+                T_us,
                 norm_avg_sig,
                 sigma=norm_avg_sig_ste,
                 absolute_sigma=True,
@@ -402,7 +413,7 @@ def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
             # print(popt)
 
             fit_func_lambda = lambda tau: fit_func(tau, *popt)
-            residuals = fit_func_lambda(tau_pis_us) - norm_avg_sig
+            residuals = fit_func_lambda(T_us) - norm_avg_sig
             chi_sq = numpy.sum((residuals ** 2) / (norm_avg_sig_ste ** 2))
             scaled_chi_sq = chi_sq * len(popt)
             # print(scaled_chi_sq)
@@ -432,7 +443,6 @@ def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
     if (fit_func is not None) and (popt is not None):
         fit_fig = create_fit_figure(
             precession_dur_range,
-            rabi_period,
             num_steps,
             norm_avg_sig,
             norm_avg_sig_ste,
@@ -445,7 +455,6 @@ def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
 
 def create_fit_figure(
     precession_dur_range,
-    rabi_period,
     num_steps,
     norm_avg_sig,
     norm_avg_sig_ste,
@@ -463,27 +472,25 @@ def create_fit_figure(
     )
 
     # Account for the pi/2 pulse on each side of a tau
-    pi_pulse_dur = tool_belt.get_pi_pulse_dur(rabi_period)
-    tau_pis = taus + pi_pulse_dur
+    T = 2*taus
 
-    linspace_taus = numpy.linspace(
-        min_precession_dur, max_precession_dur, num=1000)
-    
-    linspace_tau_pis = linspace_taus + pi_pulse_dur
+    linspace_T = numpy.linspace(
+        min(T), max(T), num=1000)
+
 
     fit_fig, ax = plt.subplots(1,1,figsize=kpl.figsize_large)
 
-    kpl.plot_points(ax, tau_pis / 1000, norm_avg_sig, color=KplColors.BLUE, label="data")
+    kpl.plot_points(ax, T / 1000, norm_avg_sig, color=KplColors.BLUE, label="data")
 
     kpl.plot_line(ax,
-        linspace_tau_pis / 1000,
-        fit_func(linspace_tau_pis, *popt),
+        linspace_T / 1000,
+        fit_func(linspace_T, *popt),
         color=KplColors.RED,
         label="fit",
     )
-    ax.set_xlabel(r"$\tau + \pi$ ($\mathrm{\mu s}$)")
+    ax.set_xlabel(r"$T = 2\tau$ ($\mathrm{\mu s}$)")
     ax.set_ylabel("Normalized fluorescence")
-    fit_fig.suptitle("Spin Echo")
+    fit_fig.suptitle('Spin Echo experiment')
     ax.legend()
 
     revival_time = popt[1]
@@ -580,7 +587,7 @@ def main_with_cxn(
     # print(taus)
     # Account for the pi/2 pulse on each side of a tau
     # plot_taus = (taus + uwave_pi_pulse) / 1000
-    plot_taus = (2*taus) / 1000
+    # plot_taus = (2*taus) / 1000
 
     # %% Fix the length of the sequence to account for odd amount of elements
 
@@ -863,7 +870,6 @@ def main_with_cxn(
         "timeElapsed": timeElapsed,
         "nv_sig": nv_sig,
         "nv_sig-units": tool_belt.get_nv_sig_units(cxn),
-        "do_dq": do_dq,
         "spin_readout_dur": spin_readout_dur,
         "spin_readout_dur-units": "ns",
         "uwave_freq": uwave_freq,
@@ -899,6 +905,7 @@ def main_with_cxn(
     file_path = tool_belt.get_file_path(__file__, timestamp, nv_name)
     tool_belt.save_figure(raw_fig, file_path)
     tool_belt.save_raw_data(raw_data, file_path)
+    tool_belt.save_data_csv(file_path, taus/1000, norm_avg_sig, 'Free precession times (us)', 'Normalized fluorescence' )
 
     # %% Fit and save figs
     try:

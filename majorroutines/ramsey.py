@@ -49,7 +49,7 @@ def create_theory_figure(taus_us,offset,decay,amp_1,freq_1, amp_2, freq_2, amp_3
     
     fig_fit, ax = plt.subplots(1, 1, figsize=kpl.figsize_large)
     kpl.plot_line(ax,taus_us, theory_vals,color=KplColors.BLUE,label='theory')
-    ax.set_xlabel(r'Free precesion time ($\mu$s)')
+    ax.set_xlabel(r'Free precession time ($\mu$s)')
     ax.set_ylabel('Contrast (arb. units)')
     ax.legend()
     text1 = "\n".join((#r'$C + e^{-t/d} [a_1 \mathrm{cos}(2 \pi \nu_1 t) + a_2 \mathrm{cos}(2 \pi \nu_2 t) + a_3 \mathrm{cos}(2 \pi \nu_3 t)]$',
@@ -77,9 +77,9 @@ def create_raw_data_figure(
     fig, axes_pack = plt.subplots(1, 2, figsize=kpl.double_figsize)
     ax_sig_ref, ax_norm = axes_pack
     ax_sig_ref.set_xlabel(r'Microwave duration, $\tau$ (ns)')
-    ax_sig_ref.set_xlabel(r"Free precesion time, $\tau$ ($\mathrm{\mu s}$)")
+    ax_sig_ref.set_xlabel(r"Free precession time, $\tau$ ($\mathrm{\mu s}$)")
     ax_sig_ref.set_ylabel(r"Fluorescence rate (counts / s $\times 10^3$)")
-    ax_norm.set_xlabel(r"Free precesion time, $\tau$ ($\mathrm{\mu s}$)")
+    ax_norm.set_xlabel(r"Free precession time, $\tau$ ($\mathrm{\mu s}$)")
     ax_norm.set_ylabel("Normalized fluorescence")
     fig.suptitle('Ramsey experiment')
 
@@ -185,7 +185,7 @@ def fit_ramsey(norm_avg_sig,taus,  precession_time_range, FreqParams):
     fig_fit, ax = plt.subplots(1, 1, figsize=kpl.figsize)
     kpl.plot_line(ax,taus_us, norm_avg_sig,color=KplColors.BLUE,label='data' )
     kpl.plot_line(ax,taus_us_linspace, fit_func(taus_us_linspace,*popt),color=KplColors.RED,label='fit')
-    ax.set_xlabel(r'Free precesion time, $\tau$ ($\mu$s)')
+    ax.set_xlabel(r'Free precession time, $\tau$ ($\mu$s)')
     ax.set_ylabel("Normalized fluorescence")
     fig_fit.suptitle('Ramsey experiment')
     # ax.legend()
@@ -643,6 +643,7 @@ def main_with_cxn(
     file_path = tool_belt.get_file_path(__file__, timestamp, nv_sig["name"])
     tool_belt.save_figure(raw_fig, file_path)
     tool_belt.save_raw_data(raw_data, file_path)
+    tool_belt.save_data_csv(file_path, taus/1000, norm_avg_sig, 'Free precession times (us)', 'Normalized fluorescence' )
 
     # %% Fit and save figs
 
