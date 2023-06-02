@@ -86,12 +86,11 @@ def create_fit_figure(uwave_time_range, num_steps, uwave_freq, norm_avg_sig,
             norm_avg_sig,
             norm_avg_sig_ste,
         )
-
     # Plot setup
     fig, ax = plt.subplots(1,1,figsize=kpl.figsize)
-    ax.set_xlabel('Microwave duration (ns)')
+    ax.set_xlabel(r'Microwave duration, $\tau$  (ns)')
     ax.set_ylabel("Normalized fluorescence")
-    ax.set_title('Rabi Oscillation Of NV Electron Spin')
+    fig.suptitle('Rabi Measurement')
     
     # Plotting
     if norm_avg_sig_ste is not None:
@@ -105,10 +104,22 @@ def create_fit_figure(uwave_time_range, num_steps, uwave_freq, norm_avg_sig,
         color=KplColors.RED,
     )
     Amp = 1- popt[0]
-    base_text = "Offset = {:.3f} \nAmp = {:.3f} \n1/v = {:.1f} ns \nd = {:.1f} ns"
+    decay = abs(popt[2])
+    # two_pi = 2 * np.pi
+    # amp = 1 - offset
+    # return offset + (np.exp(-t / abs(decay)) * abs(amp) * np.cos((two_pi * freq * t)))
+
+    uni_nu = "\u03BD"
+    eq_text = r"$(1 - A) + A \cos ( 2 \pi \nu \\tau ) e^{-\tau / d}$"
     size = kpl.Size.SMALL
-    text = base_text.format(popt[0], Amp, 1/popt[1], popt[2])
+    if decay > 2*max_uwave_time:
+        base_text = "A = {:.3f} \n1/{} = {:.1f} ns \nd >> {:.0f} ns"
+        text = base_text.format(Amp,uni_nu, 1/popt[1], max_uwave_time)
+    else:
+        base_text = "A = {:.3f} \n1/{} = {:.1f} ns \nd = {:.1f} us"
+        text = base_text.format(Amp,uni_nu, 1/popt[1], decay/1e3)
     kpl.anchored_text(ax, text, kpl.Loc.LOWER_LEFT, size=size)
+    kpl.anchored_text(ax, eq_text, kpl.Loc.UPPER_RIGHT, size=size)
     
     return fig, ax, fit_func, popt, pcov
 
@@ -122,10 +133,11 @@ def create_raw_data_figure(
     # Plot setup
     fig, axes_pack = plt.subplots(1, 2, figsize=kpl.double_figsize)
     ax_sig_ref, ax_norm = axes_pack
-    ax_sig_ref.set_xlabel('Microwave duration (ns)')
-    ax_sig_ref.set_ylabel("Count rate (kcps)")
-    ax_norm.set_xlabel('Microwave duration (ns)')
+    ax_sig_ref.set_xlabel(r'Microwave duration, $\tau$ (ns)')
+    ax_sig_ref.set_ylabel(r"Fluorescence rate (counts / s $\times 10^3$)")
+    ax_norm.set_xlabel(r'Microwave duration, $\tau$  (ns)')
     ax_norm.set_ylabel("Normalized fluorescence")
+    fig.suptitle('Rabi Measurement')
 
     # Plotting
     if avg_sig_counts is None:
@@ -311,9 +323,9 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
     run_indicator_obj = kpl.anchored_text(ax_norm, text, loc=kpl.Loc.UPPER_RIGHT)
     
     print('')
-    print(tool_belt.get_expected_run_time_string(cxn,'rabi',period,num_steps,num_reps,num_runs))
+    print(tool_belt.get_expected_run_time_string(cxn,'rabi',
+                                         period,num_steps,num_reps,num_runs))
     print('')
-
     # %% Collect the data
 
     # Start 'Press enter to stop...'
@@ -467,16 +479,22 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
 
 
     #  Plot the data itself and the fitted curve
-    fit_func = tool_belt.cosexp_1_at_0
-    fit_fig, ax, fit_func, popt, pcov = create_fit_figure(
-        uwave_time_range, num_steps, uwave_freq, norm_avg_sig, norm_avg_sig_ste,
-        fit_func 
-    )
-    rabi_period = 1/popt[1]
-    v_unc = numpy.sqrt(pcov[1][1])
-    # print(v_unc)
-    rabi_period_unc = rabi_period**2 * v_unc
-    print('Rabi period measured: {} +/- {} ns\n'.format('%.2f'%rabi_period, '%.2f'%rabi_period_unc))
+    fit_success = True
+    try:
+        fit_func = tool_belt.cosexp_1_at_0
+        fit_fig, ax, fit_func, popt, pcov = create_fit_figure(
+            uwave_time_range, num_steps, uwave_freq, norm_avg_sig, norm_avg_sig_ste,
+            fit_func 
+        )
+        rabi_period = 1/popt[1]
+        v_unc = numpy.sqrt(pcov[1][1])
+        # print(v_unc)
+        rabi_period_unc = rabi_period**2 * v_unc
+        print('Rabi period measured: {} +/- {} ns\n'.format('%.2f'%rabi_period, '%.2f'%rabi_period_unc))
+    except Exception:
+        fit_success = False
+        print('Unsuccessful fit to data')
+        
 
     # %% Clean up and save the data
 
@@ -516,18 +534,20 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
     nv_name = nv_sig["name"]
     file_path = tool_belt.get_file_path(__file__, timestamp, nv_name)
     tool_belt.save_figure(raw_fig, file_path)
-    if fit_fig is not None:
+    if fit_success:
         file_path_fit = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit")
         tool_belt.save_figure(fit_fig, file_path_fit)
     tool_belt.save_raw_data(raw_data, file_path)
     
+    tool_belt.save_data_csv(file_path, taus, norm_avg_sig, 'Microwave duration (ns)', 'Normalized fluorescence' )
+    
     if close_plot:
         plt.close()
 
-    if (fit_func is not None) and (popt is not None):
+    if fit_success:
         return rabi_period, sig_counts, ref_counts, popt
     else:
-        return None, sig_counts, ref_counts
+        return 0, sig_counts, ref_counts, []
 
 
 
@@ -570,6 +590,6 @@ def replot(file):
 if __name__ == '__main__':
     
 
-    file = '2023_01_13-08_13_07-E6test-nv1'
+    file = '2023_06_01-12_07_43-E6-nv1'
     
     replot(file)

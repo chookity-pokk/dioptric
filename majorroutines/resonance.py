@@ -24,49 +24,7 @@ import majorroutines.optimize as optimize
 import utils.kplotlib as kpl
 from utils.kplotlib import KplColors
 import time
-
-def process_counts(ref_counts, sig_counts, norm_style=NormStyle.SINGLE_VALUED):
-    """Extract the normalized average signal at each data point.
-    Since we sometimes don't do many runs (<10), we often will have an
-    insufficient sample size to run stats on for norm_avg_sig calculation.
-    We assume Poisson statistics instead.
-    """
-
-    ref_counts = np.array(ref_counts)
-    sig_counts = np.array(sig_counts)
-
-    num_runs, num_points = ref_counts.shape
-
-    # Find the averages across runs
-    sig_counts_avg = np.average(sig_counts, axis=0)
-    single_ref_avg = np.average(ref_counts)
-    ref_counts_avg = np.average(ref_counts, axis=0)
-
-    sig_counts_ste = np.sqrt(sig_counts_avg) / np.sqrt(num_runs)
-    single_ref_ste = np.sqrt(single_ref_avg) / np.sqrt(num_runs * num_points)
-    ref_counts_ste = np.sqrt(ref_counts_avg) / np.sqrt(num_runs)
-
-    if norm_style == NormStyle.SINGLE_VALUED:
-        norm_avg_sig = sig_counts_avg / single_ref_avg
-        norm_avg_sig_ste = norm_avg_sig * np.sqrt(
-            (sig_counts_ste / sig_counts_avg) ** 2
-            + (single_ref_ste / single_ref_avg) ** 2
-        )
-    elif norm_style == NormStyle.POINT_TO_POINT:
-        norm_avg_sig = sig_counts_avg / ref_counts_avg
-        norm_avg_sig_ste = norm_avg_sig * np.sqrt(
-            (sig_counts_ste / sig_counts_avg) ** 2
-            + (ref_counts_ste / ref_counts_avg) ** 2
-        )
-
-    return (
-        ref_counts_avg,
-        sig_counts_avg,
-        norm_avg_sig,
-        ref_counts_ste,
-        sig_counts_ste,
-        norm_avg_sig_ste,
-    )
+import csv
 
 # %% Main
 
@@ -296,21 +254,26 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
     run_indicator_obj.remove()
     
     # Fits
-    fit_fig, _, fit_func, popt, _ = pulsed_resonance.create_fit_figure(
-        freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste, start_kpl=True
-    )
-
-
-    if len(popt) == 3:
-        low_freq = round(popt[2],4)
-        high_freq = None
-        print('Single resonance: ',low_freq,'GHz') 
-    elif len(popt) == 6:
-        low_freq = round(popt[2],4)
-        high_freq = round(popt[5],4)
-        print('Low resonance: ',low_freq,'GHz') 
-        print('High resonance: ',high_freq,'GHz')
-        print('Slitting = ',(high_freq-low_freq)*1000,'MHz')
+    fit_success = True
+    try:
+        fit_fig, _, fit_func, popt, _ = pulsed_resonance.create_fit_figure(
+            freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste, start_kpl=True
+        )
+    except Exception:
+        popt = []
+        fit_success = False
+        
+    if fit_success:
+        if len(popt) == 3:
+            low_freq = round(popt[2],4)
+            high_freq = None
+            print('Single resonance: ',low_freq,'GHz') 
+        elif len(popt) == 6:
+            low_freq = round(popt[2],4)
+            high_freq = round(popt[5],4)
+            print('Low resonance: ',low_freq,'GHz') 
+            print('High resonance: ',high_freq,'GHz')
+            print('Slitting = ',(high_freq-low_freq)*1000,'MHz')
 
     # %% Clean up and save the data
 
@@ -346,14 +309,30 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
 
     nv_name = nv_sig['name']
     
+    # save figure, raw text file with all measuremnet info, and csv with raw data
     file_path = tool_belt.get_file_path(__file__, timestamp, nv_name)
     data_file_name = file_path.stem
     tool_belt.save_figure(raw_fig, file_path)
 
     tool_belt.save_raw_data(data, file_path)
 
-    file_path = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit")
-    tool_belt.save_figure(fit_fig, file_path)
+    if fit_success:
+        file_path = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit")
+        tool_belt.save_figure(fit_fig, file_path)
+    
+    tool_belt.save_data_csv(file_path, freqs, norm_avg_sig, 'Frequency (GHz)', 'Normalized fluorescence' )
+    
+    # # open the file in the write mode
+    # with open(file_path, 'w') as f:
+    #     # create the csv writer
+    #     writer = csv.writer(f)
+        
+    #     header = ['Freq (GHz)', 'Normalized averaged counts']
+    #     writer.writerow(header)
+    #     # write a row to the csv file
+    #     for i in range(len(norm_avg_sig)):
+    #         row = [freqs[i], norm_avg_sig[i]]
+    #         writer.writerow(row)
     
     if close_plot:
         plt.close()
@@ -363,6 +342,7 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
 
 def replot(file):
 
+    # kpl.init_kplotlib()
     data = tool_belt.get_raw_data(file)
 
     freq_center = data['freq_center']
@@ -384,8 +364,6 @@ def replot(file):
         norm_avg_sig_ste,
     ) = ret_vals
 
-    # Raw data
-    kpl.init_kplotlib()
     
     raw_fig, ax_sig_ref, ax_norm = pulsed_resonance.create_raw_data_figure(
         freq_center, freq_range, num_steps
@@ -394,15 +372,41 @@ def replot(file):
     kpl.plot_line_update(ax_sig_ref, line_ind=1, y=ref_counts_avg_kcps)
     kpl.plot_line_update(ax_norm, y=norm_avg_sig)
     
-    # Fits
+    # # # Fits
     fit_fig, _, fit_func, popt, _ = pulsed_resonance.create_fit_figure(
         freq_center, freq_range, num_steps, norm_avg_sig, norm_avg_sig_ste
     )
     print(popt)
+    
+def resave_csv(file):
+
+    data = tool_belt.get_raw_data(file)
+
+    freq_center = data['freq_center']
+    freq_range = data['freq_range']
+    num_steps = data['num_steps']
+    norm_avg_sig = data['norm_avg_sig']
+    nv_sig = data['nv_sig']
+    timestamp = data['timestamp']
+    nv_name = nv_sig['name']
+    
+    half_freq_range = freq_range / 2
+    freq_low = freq_center - half_freq_range
+    freq_high = freq_center + half_freq_range
+    freqs = np.linspace(freq_low, freq_high, num_steps)
+    
+    
+    file_path = tool_belt.get_file_path(__file__, timestamp, nv_name + "-test")
+    
+    tool_belt.save_data_csv(file_path, freqs, norm_avg_sig, 'Frequency (GHz)', 'Normalized averaged signal' )
+    # print(popt)
 # %%
 
 if __name__ == '__main__':
 
-    file = '2023_01_24-11_42_49-E6-nv1'
+    file = '2023_05_31-14_36_39-E6-nv1'
     
     replot(file)
+    # resave_csv(file)
+    
+    

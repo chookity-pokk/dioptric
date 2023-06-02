@@ -52,8 +52,9 @@ def create_raw_data_figure(
     ax_sig_ref, ax_norm = axes_pack
     ax_sig_ref.set_xlabel(r"$T = 2\tau$ ($\mathrm{\mu s}$)")
     ax_norm.set_xlabel(r"$T = 2\tau$ ($\mathrm{\mu s}$)")
-    ax_sig_ref.set_ylabel("Count rate (kcps)")
+    ax_sig_ref.set_ylabel(r"Fluorescence rate (counts / s $\times 10^3$)")
     ax_norm.set_ylabel("Normalized fluorescence")
+    fig.suptitle("Spin Echo")
 
     # Plotting
     if avg_sig_counts is None:
@@ -469,8 +470,8 @@ def create_fit_figure(
         label="fit",
     )
     ax.set_xlabel(r"$\tau + \pi$ ($\mathrm{\mu s}$)")
-    ax.set_ylabel("Contrast (arb. units)")
-    ax.set_title("Spin Echo")
+    ax.set_ylabel("Normalized fluorescence")
+    fit_fig.suptitle("Spin Echo")
     ax.legend()
 
     revival_time = popt[1]

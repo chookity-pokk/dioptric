@@ -76,11 +76,11 @@ def create_fit_figure(
     2D array
         Covariance matrix of the fit
     """
-    
+    # if the plotting util is not startet, start it
     if start_kpl:
         kpl.init_kplotlib()
 
-    # Fitting
+    # If data has not been fit to, fit to it and return the fit func used
     if (fit_func is None) or (popt is None):
         fit_func, popt, pcov = fit_resonance(
             freq_center,
@@ -97,8 +97,9 @@ def create_fit_figure(
 
     # Plot setup
     fig, ax = plt.subplots()
-    ax.set_xlabel("Frequency (GHz)")
+    ax.set_xlabel(r"Frequency, $\nu$ (GHz)")
     ax.set_ylabel("Normalized fluorescence")
+    ax.set_title('Rabi Measurement')
     freqs = calculate_freqs(freq_center, freq_range, num_steps)
     smooth_freqs = calculate_freqs(freq_center, freq_range, 1000)
 
@@ -117,17 +118,27 @@ def create_fit_figure(
     # Text boxes to describe the fits
     low_text = None
     high_text = None
-    base_text = "A = {:.3f} \nwidth = {:.1f} MHz \nf = {:.4f} GHz"
+    uni_sigma = "\u03C3"
+    uni_nu = "\u03BD"
+    uni_sub_0 = "\u2080"
+    uni_sub_1 = "\u2081"
+    uni_sub_2 = "\u2082"
+    size = kpl.Size.SMALL
     if len(popt) == 3:
+        eq_text = r"$1 - A e^{-(\nu - \nu_0) ^2 / (2 \sigma ^2)}$"
         contrast, hwhm, freq = popt[0:3]
-        low_text = base_text.format(contrast, hwhm, freq)
+        low_text =  "{}{} = {:.4f} GHz\n{}{} = {:.1f} MHz\nA{} = {:.3f}".format(
+            uni_nu, uni_sub_0, freq, uni_sigma, '', hwhm, '',contrast  )
         high_text = None
     elif len(popt) == 6:
+        eq_text = r"$1 - A_1 e^{-(\nu - \nu_1) ^2 / (2\sigma_1 ^2)} - A_2 e^{-(\nu - \nu_2) ^2 / (2\sigma_2 ^2)}$"
         contrast, hwhm, freq = popt[0:3]
-        low_text = base_text.format(contrast, hwhm, freq)
+        low_text =  "{}{} = {:.4f} GHz\n{}{} = {:.1f} MHz\nA{} = {:.3f}".format(
+            uni_nu, uni_sub_1, freq, uni_sigma, uni_sub_1, hwhm, uni_sub_1,contrast  )
         contrast, hwhm, freq = popt[3:6]
-        high_text = base_text.format(contrast, hwhm, freq)
-    size = kpl.Size.SMALL
+        high_text =  "{}{} = {:.4f} GHz\n{}{} = {:.1f} MHz\nA{} = {:.3f}".format(
+            uni_nu, uni_sub_2, freq, uni_sigma, uni_sub_2, hwhm, uni_sub_2,contrast  )
+    kpl.anchored_text(ax, eq_text, kpl.Loc.UPPER_RIGHT, size=size)
     if low_text is not None:
         kpl.anchored_text(ax, low_text, kpl.Loc.LOWER_LEFT, size=size)
     if high_text is not None:
@@ -174,10 +185,6 @@ def create_raw_data_figure(
     # Plot setup
     fig, axes_pack = plt.subplots(1, 2, figsize=kpl.double_figsize)
     ax_sig_ref, ax_norm = axes_pack
-    ax_sig_ref.set_xlabel("Frequency (GHz)")
-    ax_sig_ref.set_ylabel("Count rate (kcps)")
-    ax_norm.set_xlabel("Frequency (GHz)")
-    ax_norm.set_ylabel("Normalized fluorescence")
     freqs = calculate_freqs(freq_center, freq_range, num_steps)
 
     # Plotting
@@ -199,6 +206,12 @@ def create_raw_data_figure(
         norm_avg_sig[:] = np.nan
     kpl.plot_line(ax_norm, freqs, norm_avg_sig, color=KplColors.BLUE)
 
+    ax_sig_ref.set_xlabel(r"Frequency, $\nu$ (GHz)")
+    ax_sig_ref.set_ylabel(r"Fluorescence rate (counts / s $\times 10^3$)")
+    ax_norm.set_xlabel(r"Frequency, $\nu$ (GHz)")
+    ax_norm.set_ylabel("Normalized fluorescence")
+    ax_norm.set_title('Rabi Measurement')
+    
     return fig, ax_sig_ref, ax_norm
 
 
@@ -248,14 +261,14 @@ def double_dip(
     high_contrast,
     high_width,
     high_center,
-    dip_func=rabi_line,
+    dip_func=gaussian,
 ):
     low_dip = dip_func(freq, low_contrast, low_width, low_center)
     high_dip = dip_func(freq, high_contrast, high_width, high_center)
     return 1.0 - (low_dip + high_dip)
 
 
-def single_dip(freq, contrast, width, center, dip_func=rabi_line):
+def single_dip(freq, contrast, width, center, dip_func=gaussian):
     return 1.0 - dip_func(freq, contrast, width, center)
 
 
@@ -327,7 +340,7 @@ def get_guess_params(
     freqs = calculate_freqs(freq_center, freq_range, num_steps)
     inverted_norm_avg_sig = 1 - norm_avg_sig
 
-    hwhm = 0.004  # GHz
+    hwhm = 0.01  # GHz
     hwhm_mhz = hwhm * 1000
     fwhm = 2 * hwhm
 
@@ -924,6 +937,8 @@ def main_with_cxn(
 
     file_path = tool_belt.get_file_path(__file__, timestamp, nv_name + "-fit")
     tool_belt.save_figure(fit_fig, file_path)
+    
+    tool_belt.save_data_csv(file_path, freqs, norm_avg_sig, 'Frequency (GHz)', 'Normalized fluorescence' )
 
     single_res = return_res_with_error(data)
     
@@ -978,7 +993,7 @@ def replot(file):
 
 if __name__ == "__main__":
 
-    file = '2023_01_14-09_03_23-E6test-nv1'
+    file = '2023_01_17-11_12_51-E6test-nv1'
     
     replot(file)
     

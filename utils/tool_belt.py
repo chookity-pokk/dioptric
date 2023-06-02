@@ -62,21 +62,14 @@ Boltzmann = 8.617e-2  # meV / K
 
 def get_expected_run_time_string(cxn,exp_name,seq_period,num_steps,num_reps,num_runs):
     
-    if exp_name in ['pulsed_resonance','rabi']:
-        norm = num_reps/(2e4)
+    # convert the length of the sequence (in ns) to sec
+    seq_period_s = seq_period / (10 ** 9)  # to seconds
+    
+    expected_run_time_s = (
+        num_steps * num_reps * num_runs * seq_period_s*\
+            common.get_registry_entry(cxn,exp_name , ["", "Config", "RunTimeScaling"])
+    )  # s
         
-    elif exp_name == 'ramsey':
-        norm = 1.3
-    elif exp_name == 'spin_echo':
-        norm = 1.3
-    else:
-        norm = 1
-    try:
-        expected_run_time_s = common.get_registry_entry(cxn,exp_name , ["", "Config", "RunTimeEstimates"]) * num_runs * num_steps * norm
-        # expected_run_time_s * 
-    except:
-        seq_time_s = seq_period / (10 ** 9)  # to seconds
-        expected_run_time_s = (seq_time_s * num_steps * num_reps) * num_runs
     expected_run_time_m = expected_run_time_s / 60  # to minutes
 
     return " \nExpected experiment time: {:.2f} minutes. ".format(expected_run_time_m)
@@ -510,6 +503,21 @@ def t2_func(t, amplitude, offset, t2):
     n = 3
     return amplitude * np.exp(-((t / t2) ** n)) + offset
 
+
+def mW_to_dBm(P_mW):
+    '''
+    Convert a power in mW to a power in dBm
+    
+    The settings for our signal generators expect power in dBm, but it is useful
+    for users to think in terms of mW.
+    '''
+    return np.log10(P_mW)*10
+
+def dBm_to_mW(P_dBm):
+    '''
+    Convert a power in dBm to a power in mW
+    '''
+    return 10**(P_dBm/10)
 
 def calc_snr(sig_count, ref_count):
     """Take a list of signal and reference counts, and take their average,
@@ -962,10 +970,65 @@ def save_raw_data(rawData, filePath):
     if file_path_ext.match(search_index.search_index_glob):
         search_index.add_to_search_index(file_path_ext)
 
+def save_data_csv(filePath, x_data, y_data, x_data_header = None, y_data_header = None, ):
+    '''
+    This function specifically saves data with two equal-length lists of x and
+    y data. The filePath should not include the csv file type. 
+    Headers for the two columns can be provided.
+    '''
+       
+    # add the csv file type to the file path
+    filePath_csv = filePath.with_suffix(".csv")
+    
+    # open the file in the write mode
+    with open(filePath_csv, 'w', newline='') as f:
+        # create the csv writer
+        writer = csv.writer(f)
+        
+        #if headers are provided, add them as the 0th line
+        if x_data_header and y_data_header:
+            header = [x_data_header, y_data_header]
+            writer.writerow(header)
+        elif x_data_header and not y_data_header:
+            header = [x_data_header, '']
+            writer.writerow(header)
+        elif y_data_header and not x_data_header:
+            header = ['', y_data_header]
+            writer.writerow(header)
+            
+        # write each row to the csv file with x and y data
+        for i in range(len(x_data)):
+            row = [x_data[i], y_data[i]]
+            writer.writerow(row)
+    
+    if filePath_csv.match(search_index.search_index_glob):
+        search_index.add_to_search_index(filePath_csv)
+
+
+def save_data_csv_scan(filePath, array_2d):
+    '''
+    This function specifically saves data for 2D scans, like for image sample.
+    It takes the 2d_array and saves each row.
+    '''
+       
+    # add the csv file type to the file path
+    filePath_csv = filePath.with_suffix(".csv")
+    
+    # open the file in the write mode
+    with open(filePath_csv, 'w', newline='') as f:
+        # create the csv writer
+        writer = csv.writer(f)
+        
+        # write each row to the csv file with x and y data
+        for row in array_2d:
+            writer.writerow(row)
+    
+    if filePath_csv.match(search_index.search_index_glob):
+        search_index.add_to_search_index(filePath_csv)
+
 
 # endregion
 # region Email utils
-
 
 def send_exception_email(
     email_from=common.shared_email,

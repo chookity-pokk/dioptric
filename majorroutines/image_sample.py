@@ -439,6 +439,8 @@ def main_with_cxn(
     tool_belt.save_figure(fig, filePath)
     tool_belt.save_raw_data(rawData, filePath)
     
+    tool_belt.save_data_csv_scan(filePath, img_array)
+    
     if close_plot:
         plt.close()
     

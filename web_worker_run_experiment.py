@@ -22,12 +22,16 @@ import time
 import sys
 import argparse
 from pathlib import Path
+import copy
 # from utils.tool_belt import reset_xy_drift as reset_xy_drift
 # import utils.tool_belt.reset_drift as reset_xyz_drift
 # import utils.tool_belt.laser_on_no_cxn as laser_on
 # import utils.tool_belt.laser_off_no_cxn as laser_off
 
 # %%
+# Routines that require mw args
+routines_mw = ["ESR", "rabi", "ramsey", "spin-echo"]
+
 def cwd_get_file_path(file,timestamp,fname,subfolder=None):
     """write output files into the current working directory
        rather than the default location
@@ -70,6 +74,10 @@ if __name__ == "__main__":
     parser.add_argument('--x',action='store',type=float,required=True)
     parser.add_argument('--y',action='store',type=float,required=True)
     parser.add_argument('--z',action='store',type=float,required=True)
+    # parser.add_argument('--magnet_angle', action='store',type=float) # 
+    # parser.add_argument('--uwave_power', action='store',type=float) # in mW
+    # parser.add_argument('--resonance', action='store',type=float) # in GHz
+    # parser.add_argument('--rabi_period', action='store',type=float) # in ns
     args = parser.parse_args()
 
     tool_belt.get_file_path = cwd_get_file_path
@@ -87,8 +95,8 @@ if __name__ == "__main__":
     expected_count_rate = 19   # kcps
     magnet_angle =  60  # deg
     
-    resonance_LOW = 2.7641 # 2.7911           # GHz
-    rabi_LOW = 75.2 # 80.7 #88.2 # 84.3, today:88.9ns                  # ns   
+    resonance_LOW = 2.8467 # 2.7911           # GHz
+    rabi_LOW = 60 # 80.7 #88.2 # 84.3, today:88.9ns                  # ns   
     
     resonance_HIGH = 2.9098 # 2.9483          # GHz
     rabi_HIGH = 76.9 # 80.8 # 89.6 # 89.7  , today 88.3ns               # ns 
@@ -134,15 +142,27 @@ if __name__ == "__main__":
         
         elif args.experiment_type == "image":
             fname = nv.do_image_sample(nv_sig, scan_size=args.image_size, close_plot=True)
-            print("Image fname: ",fname)
+            # print("Image fname: ",fname)
         elif args.experiment_type == "optimize":
             nv.do_optimize(nv_sig, close_plot=True)
-
+ 
+        # elif args.experiment_type in routines_mw:
+            
+        #     magnet_angle =  arg.magnet_angle  # deg
+        #     uwave_power_dbm = tool_belt.mW_to_dBm(args.uwave_power)
+        #     resonance = args.resonance
+        #     nv_sig_run = copy.deepcopy(nv_sig)
+        #     nv_sig_run['resonance_LOW'] = args.resonance
+        #     nv_sig_run['rabi_LOW'] = args.rabi_period
+        #     nv_sig_run['uwave_power_LOW'] = uwave_power_dbm
+        #     state_input = States.LOW
+            
         elif args.experiment_type == "ESR":
             nv.do_resonance(nv_sig, freq_center=args.center_freq, freq_range=args.sweep_freq_range, 
                             num_steps=args.sweep_points, num_runs=args.num_sweeps, close_plot=True)
         
         elif args.experiment_type == "rabi":
+                
             if args.state == 'low':
                 state_input = States.LOW
             elif args.state == 'high':

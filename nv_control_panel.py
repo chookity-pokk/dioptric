@@ -38,8 +38,8 @@ import copy
 
 def do_auto_check_location(nv_sig,close_plot=False):
     
-    haystack_fname='2023_05_25-13_26_12-E6test-nv1_XY'
-    nv1 = [6.203, 2.018]
+    haystack_fname='2023_05_31-11_21_50-WiQD-nv1_XY'
+    # nv1 = [6.185, 1.967]
     
     with labrad.connect() as cxn:
         drift = positioning.get_drift(cxn)
@@ -51,14 +51,15 @@ def do_auto_check_location(nv_sig,close_plot=False):
     x_shift, y_shift = auto_tracker.get_shift(nv_sig, haystack_fname, needle_fname,close_plot=close_plot)
     
     with labrad.connect() as cxn:
+        drift = positioning.get_drift(cxn)
         positioning.set_drift(cxn, np.array([x_shift, y_shift, drift[2]]))
         
     # nv_sig['coords'][0] = nv1[0] + x_shift
     # nv_sig['coords'][1] = nv1[1] + y_shift
     # do_image_sample(nv_sig,scan_size='small-ish')
     nv_sig_copy = copy.deepcopy(nv_sig)
-    nv_sig_copy['expected_count_rate']=None
-    opti_coords, opti_count_rate = do_optimize(nv_sig_copy,close_plot=close_plot)
+    nv_sig_copy['expected_count_rate'] = None
+    opti_coords, opti_count_rate = do_optimize(nv_sig_copy,plot_data=False,close_plot=close_plot)
     if opti_count_rate > 8:
         return
     else:
@@ -132,12 +133,13 @@ def do_image_sample_xz(nv_sig, scan_size='medium'):
     
     image_sample.main(nv_sig, scan_range, scan_range, num_steps,scan_type='XZ')
 
-def do_optimize(nv_sig,set_to_opti_coords=False,save_data=True,close_plot=False):
+def do_optimize(nv_sig,set_to_opti_coords=False,save_data=True,plot_data=True,close_plot=False):
 
     opti_coords, opti_count_rate = optimize.main(
         nv_sig,
         set_to_opti_coords,
         save_data,
+        plot_data, 
         close_plot=close_plot,
     )
     
@@ -278,7 +280,7 @@ def reset_xyz_drift():
 # %% Run the file
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 
 
     # %% Shared parameters
@@ -292,6 +294,7 @@ if __name__ == "__main__":
     nv_sig = {
         "coords":[6.183, 1.977, 3.56],
         "name": "{}-nv1".format(sample_name,),
+        "expected_count_rate":18,
         "disable_opt":False,
         "ramp_voltages": False,
         
@@ -306,10 +309,8 @@ if __name__ == "__main__":
         "imaging_readout_dur": 1e7,
         "collection_filter": "630_lp",
         
-        # "expected_count_rate":19,
-        "expected_count_rate":None,
         "magnet_angle": 60, 
-        "resonance_LOW":2.7833 ,"rabi_LOW": 80.2, "uwave_power_LOW": 15.5,  # 15.5 max. units is dBm
+        "resonance_LOW":2.8467 ,"rabi_LOW": 80.2, "uwave_power_LOW": 15,  # 15.5 max. units is dBm
         "resonance_HIGH": 2.937 , "rabi_HIGH": 100.0, "uwave_power_HIGH": 14.5, 
         'norm_style':NormStyle.SINGLE_VALUED}  # 14.5 max. units is dBm
     
@@ -319,7 +320,7 @@ if __name__ == "__main__":
     try:
 
         # with labrad.connect() as cxn:
-            # positioning.set_drift(cxn,np.array([0, 0, 0]))
+        #     positioning.set_drift(cxn,np.array([0, 0, 0]))
             # print(positioning.get_drift(cxn))
         # positioning.set_xyz (labrad.connect(), [5,5,5])
         
@@ -331,8 +332,8 @@ if __name__ == "__main__":
         
         # do_image_sample(nv_sig, scan_size='small')
         # do_image_sample(nv_sig,  scan_size='needle')
-        do_optimize(nv_sig)
-        do_image_sample(nv_sig,  scan_size='haystack')
+        # do_optimize(nv_sig)
+        # do_image_sample(nv_sig,  scan_size='haystack')
         # do_image_sample(nv_sig,  scan_size='big')
         # do_image_sample(nv_sig,  scan_size='small-ish')
         # do_image_sample(nv_sig,  scan_size='bigger-highres')
@@ -346,7 +347,7 @@ if __name__ == "__main__":
         # for z in z_list:
         #     nv_sig['coords'][2]=z
         #     do_image_sample(nv_sig, scan_size='big-ish')
-        # do_optimize(nv_sig)
+        do_optimize(nv_sig)
         # nv_sig['disable_opt']=True
         # do_stationary_count(nv_sig, )
         
@@ -359,7 +360,11 @@ if __name__ == "__main__":
         # do_resonance(nv_sig, 2.78, 0.1,num_steps=51,num_runs=2)
         # do_resonance_state(nv_sig , States.LOW)
                 
-        # do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 150],num_runs=30)
+        # start_time = time.time()
+        # do_rabi(nv_sig,  States.LOW, uwave_time_range=[0, 150],num_runs=2)
+        # end_time = time.time()
+        # elapsed_time = end_time - start_time
+        # print(elapsed_time)
         # do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 250],num_runs=30)
         
         # detunings=[-3]
@@ -367,7 +372,7 @@ if __name__ == "__main__":
         #     do_ramsey(nv_sig, set_detuning=d,num_runs=50, precession_time_range = [0, 1.75 * 10 ** 3],num_steps = 71)  
        
         # do_spin_echo(nv_sig,echo_time_range = [0, 110 * 10 ** 3], num_steps=71, num_runs=50) 
-
+        pass
     finally:
 
         # Make sure everything is reset

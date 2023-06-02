@@ -5,7 +5,7 @@ Created on Tue Jun  7 15:18:03 2022
 @author: Carter Fox
 
 This will be the interface where students can run all the microscope commands/experiments. 
-It will run nv_control_panel with the inputted parameters
+It will run nv_control_panel.py with the inputted parameters
 
 """
 import labrad
@@ -22,12 +22,12 @@ if __name__ == "__main__":
     
     # %%%%%%%%%%%%%%% NV Parameters %%%%%%%%%%%%%%%
     
-    nv_coords = [6.201, 2.022, 3.56] # V
-    expected_count_rate = None # kcps
+    nv_coords = [6.183, 1.977, 3.56] # V
+    expected_count_rate = 15 # kcps
     magnet_angle =  60  # deg
     
-    resonance_LOW =  2.783      # GHz
-    rabi_LOW = 55.46             # ns   
+    resonance_LOW =  2.8467     # GHz
+    rabi_LOW = 63             # ns   
     uwave_power_LOW = 15    # dBm  15.5 max
     
     resonance_HIGH = 2.959     # GHz
@@ -95,27 +95,30 @@ if __name__ == "__main__":
         
         
         # Optimize on NV
-        # nv.do_optimize(nv_sig)
+        nv.do_optimize(nv_sig)
             
         
         ####### EXPERIMENT 1: CW electron spin resonance #######
         ### Measure CW resonance
         # mangles = [0,30,60,90,120,150]
-            # nv.do_resonance(nv_sig, freq_center=2.87, freq_range=0.2, uwave_power=-15.0, num_runs=15 , num_steps=101)
+        # nv.do_resonance(nv_sig, freq_center=2.87, freq_range=0.2, uwave_power=-15.0, num_runs=5 , num_steps=76)
     
     
         ####### EXPERIMENT 2: Rabi oscillations #######
         # mpowers = [-10,-8,-6,-4,-2,0,2,4,6,8,10,12,14,15]
         # for i in mpowers:
         #     nv_sig["uwave_power_LOW"]=i
-        # nv.do_rabi(nv_sig,  States.LOW , uwave_time_range=[0, 200], num_runs=15, num_steps=51, num_reps=1e4)
+        # nv.do_rabi(nv_sig,  States.LOW , uwave_time_range=[0, 200], num_runs=12, num_steps=51, num_reps=1e4)
         # nv.do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 200], num_runs=20, num_steps=51, num_reps=2e4)
         
         
         ####### EXPERIMENT 3: Ramsey experiment #######
         
-        # nv.do_ramsey(nv_sig, state=States.LOW, precession_time_range = [0, 2000], set_detuning=4, num_runs=50, num_steps = 101, num_reps=2e4)  
-        
+        start_time = time.time()
+        # nv.do_ramsey(nv_sig, state=States.LOW, precession_time_range = [0, 2000], set_detuning=4, num_runs=5, num_steps = 101, num_reps=2e4)  
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(elapsed_time)
         
         # ####### EXPERIMENT 4: Spim echo #######
         # nv.do_spin_echo(nv_sig, state=States.LOW, echo_time_range = [0, 100000], 

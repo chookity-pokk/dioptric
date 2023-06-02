@@ -586,7 +586,8 @@ def main_with_cxn(
 
         # Create 3 plots in the figure, one for each axis
         fig = None
-        fig = create_figure()
+        if plot_data:
+            fig = create_figure()
 
         # Optimize on each axis
         opti_coords = []

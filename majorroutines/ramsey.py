@@ -76,10 +76,12 @@ def create_raw_data_figure(
     # Plot setup
     fig, axes_pack = plt.subplots(1, 2, figsize=kpl.double_figsize)
     ax_sig_ref, ax_norm = axes_pack
+    ax_sig_ref.set_xlabel(r'Microwave duration, $\tau$ (ns)')
     ax_sig_ref.set_xlabel(r"Free precesion time,$ \tau$ ($\mathrm{\mu s}$)")
-    ax_sig_ref.set_ylabel("Count rate (kcps)")
+    ax_sig_ref.set_ylabel(r"Fluorescence rate (counts / s $\times 10^3$)")
     ax_norm.set_xlabel(r"Free precesion time, $\tau$ ($\mathrm{\mu s}$)")
     ax_norm.set_ylabel("Normalized fluorescence")
+    fig.suptitle('Ramsey experiment')
 
     # Plotting
     if avg_sig_counts is None:
@@ -99,7 +101,6 @@ def create_raw_data_figure(
         norm_avg_sig = numpy.empty(num_steps)
         norm_avg_sig[:] = numpy.nan
     kpl.plot_line(ax_norm, taus, norm_avg_sig, color=KplColors.BLUE)
-    ax_norm.set_title('Ramsey experiment')
 
     return fig, ax_sig_ref, ax_norm
 
@@ -120,7 +121,7 @@ def extract_oscillations(norm_avg_sig, precession_time_range, num_steps, detunin
 
     # Plot the fft
     fig_fft, ax= plt.subplots(1, 1, figsize=kpl.figsize_large)
-    ax.plot(freqs[1:], transform_mag[1:])  # [1:] excludes frequency 0 (DC component)
+    ax.plot(freqs[1:], transform_mag[1:])  # excludes frequency 0 (DC component)
     ax.set_xlabel('Frequency (MHz)')
     ax.set_ylabel('FFT magnitude')
     ax.set_title('Ramsey FFT')
@@ -185,21 +186,36 @@ def fit_ramsey(norm_avg_sig,taus,  precession_time_range, FreqParams):
     kpl.plot_line(ax,taus_us, norm_avg_sig,color=KplColors.BLUE,label='data' )
     kpl.plot_line(ax,taus_us_linspace, fit_func(taus_us_linspace,*popt),color=KplColors.RED,label='fit')
     ax.set_xlabel(r'Free precesion time ($\mu$s)')
-    ax.set_ylabel('Contrast (arb. units)')
-    ax.legend()
+    ax.set_ylabel("Normalized fluorescence")
+    fig_fit.suptitle('Ramsey experiment')
+    # ax.legend()
     freqs_sorted = numpy.sort([popt[3],popt[5],popt[7]])
-    text1 = "\n".join((#r'$C + e^{-t/d} [a_1 \mathrm{cos}(2 \pi \nu_1 t) + a_2 \mathrm{cos}(2 \pi \nu_2 t) + a_3 \mathrm{cos}(2 \pi \nu_3 t)]$',
-                       r'$C + e^{-t/d\sum_{i=1}^3} a_i\mathrm{cos}(2 \pi \nu_i t)$',
+    
+    eq_text = r'$C + e^{-\tau/d\sum_{i=1}^3} a_i\mathrm{cos}(2 \pi \nu_i \tau)$'
+    
+
+    guess_params = (offset, decay, amp_1, FreqParams[0],
+                        amp_2, FreqParams[1],
+                        amp_3, FreqParams[2])
+    
+    text1 = "\n".join((
                        r'$C = $' + '%.2f'%(popt[0]),
-                        r'$d = $' + '%.2f'%(abs(popt[1])) + ' us',
+                        r'$a_1 = $' + '%.2f'%(popt[2]),
+                         r'$a_2 = $' + '%.2f'%(popt[4]),
+                          r'$a_3 = $' + '%.2f'%(popt[6]),
+                        ))
+    
+    text2 = "\n".join((
+                        r'$d = $' + '%.2f'%(abs(popt[1])) + ' $\mu$s',
                         r'$\nu_1 = $' + '%.2f'%(freqs_sorted[0]) + ' MHz',
                         r'$\nu_2 = $' + '%.2f'%(freqs_sorted[1]) + ' MHz',
                         r'$\nu_3 = $' + '%.2f'%(freqs_sorted[2]) + ' MHz'
                         ))
-    
     size = kpl.Size.SMALL
 
-    kpl.anchored_text(ax, text1, kpl.Loc.LOWER_RIGHT, size=size)
+    kpl.anchored_text(ax, text1, kpl.Loc.LOWER_LEFT, size=size)
+    kpl.anchored_text(ax, text2, kpl.Loc.LOWER_RIGHT, size=size)
+    kpl.anchored_text(ax, eq_text, kpl.Loc.UPPER_RIGHT, size=size)
 
 
 
@@ -224,8 +240,6 @@ def main(
     state=States.LOW,
     opti_nv_sig = None,
     one_precession_time = False,
-    do_fm = False,
-    do_dq = False,
     close_plot=False
 ):
 
@@ -241,8 +255,6 @@ def main(
             state,
             opti_nv_sig,
             one_precession_time,
-            do_fm,
-            do_dq,
             close_plot
         )
         return angle
@@ -259,8 +271,6 @@ def main_with_cxn(
     state=States.LOW,
     opti_nv_sig = None,
     one_precession_time = False,
-    do_fm = False,
-    do_dq = False,
     close_plot=False
 ):
 
@@ -294,35 +304,6 @@ def main_with_cxn(
 
     seq_file_name = "spin_echo.py"
 
-    if do_fm == False:
-        seq_file_name = "spin_echo.py"
-        deviation = 0
-    else:
-        seq_file_name = "spin_echo_fm_test.py"
-        deviation = 6
-
-    # set up to drive transition through zero
-    if do_dq is not False:
-        do_ramsey = True
-        seq_file_name = "spin_echo_dq.py"
-        rabi_period_low = nv_sig["rabi_{}".format(States.LOW.name)]
-        uwave_freq_low = nv_sig["resonance_{}".format(States.LOW.name)]
-        uwave_power_low = nv_sig["uwave_power_{}".format(States.LOW.name)]
-        uwave_pi_pulse_low = tool_belt.get_pi_pulse_dur(rabi_period_low)
-        uwave_pi_on_2_pulse_low = tool_belt.get_pi_on_2_pulse_dur(rabi_period_low)
-        rabi_period_high = nv_sig["rabi_{}".format(States.HIGH.name)]
-        uwave_freq_high = nv_sig["resonance_{}".format(States.HIGH.name)]
-        uwave_power_high = nv_sig["uwave_power_{}".format(States.HIGH.name)]
-        uwave_pi_pulse_high = tool_belt.get_pi_pulse_dur(rabi_period_high)
-        uwave_pi_on_2_pulse_high = tool_belt.get_pi_on_2_pulse_dur(rabi_period_high)
-        if state.value == States.LOW.value:
-            state_init = States.LOW
-            state_seco = States.HIGH
-            uwave_freq_low = uwave_freq_low + detuning / 10**3
-        elif state.value == States.HIGH.value:
-            state_init = States.HIGH
-            state_seco = States.LOW
-            uwave_freq_high = uwave_freq_high + detuning / 10**3
 
 
     # %% Create the array of relaxation times
@@ -380,34 +361,17 @@ def main_with_cxn(
     # %% Analyze the sequence
 
     # set up to drive transition through zero
-    if do_dq is not False:
-        seq_args = [
-            min_precession_time/2,
-            polarization_time,
-            gate_time,
-            uwave_pi_pulse_low,
-            uwave_pi_on_2_pulse_low,
-            uwave_pi_pulse_high,
-            uwave_pi_on_2_pulse_high,
-            max_precession_time/2,
-            state_init.value,
-            state_seco.value,
-            laser_name,
-            laser_power,
-            do_ramsey
-        ]
-    else:
-        seq_args = [
-            min_precession_time/2,
-            polarization_time,
-            gate_time,
-            uwave_pi_pulse,
-            uwave_pi_on_2_pulse,
-            max_precession_time/2,
-            state.value,
-            laser_name,
-            laser_power,
-        ]
+    seq_args = [
+        min_precession_time/2,
+        polarization_time,
+        gate_time,
+        uwave_pi_pulse,
+        uwave_pi_on_2_pulse,
+        max_precession_time/2,
+        state.value,
+        laser_name,
+        laser_power,
+    ]
     # print(seq_args)
     seq_args_string = tool_belt.encode_seq_args(seq_args)
     ret_vals = pulsegen_server.stream_load(seq_file_name, seq_args_string)
@@ -425,6 +389,7 @@ def main_with_cxn(
     print('')
     print(tool_belt.get_expected_run_time_string(cxn,'ramsey',seq_time,num_steps/2,num_reps,num_runs))
     print('')
+    # return
 
     # %% Get the starting time of the function, to be used to calculate run time
 
@@ -458,19 +423,7 @@ def main_with_cxn(
         sig_gen_cxn = tool_belt.get_server_sig_gen(cxn, state)
         sig_gen_cxn.set_freq(uwave_freq_detuned)
         sig_gen_cxn.set_amp(uwave_power)
-        if do_fm:
-            sig_gen_cxn.load_fm(deviation)
         sig_gen_cxn.uwave_on()
-
-        if do_dq is not False:
-            sig_gen_low_cxn = tool_belt.get_server_sig_gen(cxn, States.LOW)
-            sig_gen_low_cxn.set_freq(uwave_freq_low)
-            sig_gen_low_cxn.set_amp(uwave_power_low)
-            sig_gen_low_cxn.uwave_on()
-            sig_gen_high_cxn = tool_belt.get_server_sig_gen(cxn, States.HIGH)
-            sig_gen_high_cxn.set_freq(uwave_freq_high)
-            sig_gen_high_cxn.set_amp(uwave_power_high)
-            sig_gen_high_cxn.uwave_on()
 
         # Set up the laser
         tool_belt.set_filter(cxn, nv_sig, laser_key)
@@ -506,37 +459,20 @@ def main_with_cxn(
             if tool_belt.safe_stop():
                 break
 
-            print(" \nFirst relaxation time: {}".format(taus[tau_ind_first]))
-            print("Second relaxation time: {}".format(taus[tau_ind_second]))
+            # print(" \nFirst relaxation time: {}".format(taus[tau_ind_first]))
+            # print("Second relaxation time: {}".format(taus[tau_ind_second]))
 
-            if do_dq is not False:
-                seq_args = [
-                    taus[tau_ind_first]/2,
-                    polarization_time,
-                    gate_time,
-                    uwave_pi_pulse_low,
-                    uwave_pi_on_2_pulse_low,
-                    uwave_pi_pulse_high,
-                    uwave_pi_on_2_pulse_high,
-                    taus[tau_ind_second]/2,
-                    state_init.value,
-                    state_seco.value,
-                    laser_name,
-                    laser_power,
-                    do_ramsey
-                ]
-            else:
-                seq_args = [
-                    taus[tau_ind_first]/2,
-                    polarization_time,
-                    gate_time,
-                    uwave_pi_pulse,
-                    uwave_pi_on_2_pulse,
-                    taus[tau_ind_second]/2,
-                    state.value,
-                    laser_name,
-                    laser_power,
-                ]
+            seq_args = [
+                taus[tau_ind_first]/2,
+                polarization_time,
+                gate_time,
+                uwave_pi_pulse,
+                uwave_pi_on_2_pulse,
+                taus[tau_ind_second]/2,
+                state.value,
+                laser_name,
+                laser_power,
+            ]
             seq_args_string = tool_belt.encode_seq_args(seq_args)
             # Clear the counter/tagger buffer of any excess counts
             counter_server.clear_buffer()
@@ -604,8 +540,6 @@ def main_with_cxn(
             "nv_sig-units": tool_belt.get_nv_sig_units(cxn),
             'detuning': detuning,
             'detuning-units': 'MHz',
-            "do_fm": do_fm,
-            "do_dq": do_dq,
             "gate_time": gate_time,
             "gate_time-units": "ns",
             "uwave_freq": uwave_freq_detuned,
@@ -677,8 +611,6 @@ def main_with_cxn(
         "nv_sig-units": tool_belt.get_nv_sig_units(cxn),
         'detuning': detuning,
         'detuning-units': 'MHz',
-        "do_fm": do_fm,
-        "do_dq": do_dq,
         "gate_time": gate_time,
         "gate_time-units": "ns",
         "uwave_freq": uwave_freq_detuned,
@@ -717,7 +649,7 @@ def main_with_cxn(
     # Fourier transform
     fig_fft, FreqParams = extract_oscillations(norm_avg_sig,
                                precession_time_range, num_steps, detuning)
-
+    
     # Save the fft figure
     file_path_fft = tool_belt.get_file_path(__file__, timestamp, nv_sig["name"] + '_fft')
     tool_belt.save_figure(fig_fft, file_path_fft)
