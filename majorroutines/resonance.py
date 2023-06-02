@@ -55,12 +55,12 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
 
     # Since this is CW we need the imaging readout rather than the spin 
     # readout typically used for state detection
-    readout = nv_sig['imaging_readout_dur']  
-    readout_sec = readout / (10**9)
+    spin_readout_dur = nv_sig['imaging_readout_dur']  
+    readout_sec = spin_readout_dur / (10**9)
     norm_style = nv_sig["norm_style"]
     
     file_name = 'resonance.py'
-    seq_args = [readout, state.value, laser_name, laser_power, ]
+    seq_args = [spin_readout_dur, state.value, laser_name, laser_power, ]
     seq_args_string = tool_belt.encode_seq_args(seq_args)
     # print(seq_args)
     # return
@@ -190,7 +190,7 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
         inc_sig_counts = sig_counts[: run_ind + 1]
         inc_ref_counts = ref_counts[: run_ind + 1]
         ret_vals = tool_belt.process_counts(
-            inc_sig_counts, inc_ref_counts, 1, readout, norm_style
+            inc_sig_counts, inc_ref_counts, 1, spin_readout_dur, norm_style
         )
         (
             sig_counts_avg_kcps,
@@ -220,8 +220,8 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
                    'freq_ind_master_list': freq_ind_master_list,
                    'uwave_power': uwave_power,
                    'uwave_power-units': 'dBm',
-                   'readout': readout,
-                   'readout-units': 'ns',
+                   'spin_readout_dur': spin_readout_dur,
+                   'spin_readout_dur-units': 'ns',
                    'sig_counts': sig_counts.astype(int).tolist(),
                    'sig_counts-units': 'counts',
                    'ref_counts': ref_counts.astype(int).tolist(),
@@ -238,7 +238,7 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
     # %% Process and plot the data
     
     ret_vals = tool_belt.process_counts(
-        sig_counts, ref_counts, 1, readout, norm_style
+        sig_counts, ref_counts, 1, spin_readout_dur, norm_style
     )
     (
         sig_counts_avg_kcps,
@@ -295,8 +295,8 @@ def main_with_cxn(cxn, nv_sig,  freq_center, freq_range,
                'freq_ind_master_list': freq_ind_master_list,
                'uwave_power': uwave_power,
                'uwave_power-units': 'dBm',
-               'readout': readout,
-               'readout-units': 'ns',
+               'spin_readout_dur': spin_readout_dur,
+               'spin_readout_dur-units': 'ns',
                'sig_counts': sig_counts.astype(int).tolist(),
                'sig_counts-units': 'counts',
                'ref_counts': ref_counts.astype(int).tolist(),
@@ -351,11 +351,11 @@ def replot(file):
     num_runs = data['num_runs']
     ref_counts = data['ref_counts']
     sig_counts = data['sig_counts']
-    readout = data['readout']
+    spin_readout_dur = data['readout']
     norm_style = NormStyle.SINGLE_VALUED #data['nv_sig']['norm_style']
 
     ret_vals = tool_belt.process_counts(
-        sig_counts, ref_counts, 1, readout, norm_style
+        sig_counts, ref_counts, 1, spin_readout_dur, norm_style
     )
     (
         sig_counts_avg_kcps,

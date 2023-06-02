@@ -110,7 +110,7 @@ def create_fit_figure(uwave_time_range, num_steps, uwave_freq, norm_avg_sig,
     # return offset + (np.exp(-t / abs(decay)) * abs(amp) * np.cos((two_pi * freq * t)))
 
     uni_nu = "\u03BD"
-    eq_text = r"$(1 - A) + A \cos ( 2 \pi \nu \\tau ) e^{-\tau / d}$"
+    eq_text = r"$(1 - A) + A \cos ( 2 \pi \nu \tau ) e^{-\tau / d}$"
     size = kpl.Size.SMALL
     if decay > 2*max_uwave_time:
         base_text = "A = {:.3f} \n1/{} = {:.1f} ns \nd >> {:.0f} ns"
@@ -266,8 +266,8 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
 
     norm_style = nv_sig["norm_style"]
     polarization_time = nv_sig['spin_pol_dur']
-    readout = nv_sig['spin_readout_dur']
-    readout_sec = readout / (10**9)
+    spin_readout_dur = nv_sig['spin_readout_dur']
+    readout_sec = spin_readout_dur / (10**9)
 
     # Array of times to sweep through
     # Must be ints since the pulse streamer only works with int64s
@@ -285,7 +285,7 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
     num_reps = int(num_reps)
     # file_name = os.path.basename(__file__)
     seq_args = [taus[0], polarization_time,
-                readout, max_uwave_time,
+                spin_readout_dur, max_uwave_time,
                 state.value, laser_name, laser_power]
 #    for arg in seq_args:
 #        print(type(arg))
@@ -379,7 +379,7 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
             tau_index_master_list[run_ind].append(tau_ind)
             # Stream the sequence
             seq_args = [taus[tau_ind], polarization_time,
-                        readout, max_uwave_time,
+                        spin_readout_dur, max_uwave_time,
                         state.value, laser_name, laser_power]
             seq_args_string = tool_belt.encode_seq_args(seq_args)
             # print(seq_args)
@@ -416,7 +416,7 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
         inc_sig_counts = sig_counts[: run_ind + 1]
         inc_ref_counts = ref_counts[: run_ind + 1]
         ret_vals = tool_belt.process_counts(
-            inc_sig_counts, inc_ref_counts, num_reps, readout, norm_style
+            inc_sig_counts, inc_ref_counts, num_reps, spin_readout_dur, norm_style
         )
         (
             sig_counts_avg_kcps,
@@ -463,7 +463,7 @@ def main_with_cxn(cxn, nv_sig,  uwave_time_range, state,
    
     ### Process and plot the data
 
-    ret_vals = tool_belt.process_counts(sig_counts, ref_counts, num_reps, readout, norm_style)
+    ret_vals = tool_belt.process_counts(sig_counts, ref_counts, num_reps, spin_readout_dur, norm_style)
     (
         sig_counts_avg_kcps,
         ref_counts_avg_kcps,
@@ -568,10 +568,10 @@ def replot(file):
     num_runs = data['num_runs']
     num_reps = data['num_reps']
     nv_sig = data['nv_sig']
-    readout = nv_sig['spin_readout_dur']
+    spin_readout_dur = nv_sig['spin_readout_dur']
     norm_style = NormStyle.SINGLE_VALUED
     
-    ret_vals = tool_belt.process_counts(sig_counts, ref_counts, num_reps, readout, norm_style)
+    ret_vals = tool_belt.process_counts(sig_counts, ref_counts, num_reps, spin_readout_dur, norm_style)
     (sig_counts_avg_kcps, ref_counts_avg_kcps,
         norm_avg_sig, norm_avg_sig_ste,    ) = ret_vals
     

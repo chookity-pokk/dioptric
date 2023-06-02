@@ -77,7 +77,7 @@ def create_raw_data_figure(
     fig, axes_pack = plt.subplots(1, 2, figsize=kpl.double_figsize)
     ax_sig_ref, ax_norm = axes_pack
     ax_sig_ref.set_xlabel(r'Microwave duration, $\tau$ (ns)')
-    ax_sig_ref.set_xlabel(r"Free precesion time,$ \tau$ ($\mathrm{\mu s}$)")
+    ax_sig_ref.set_xlabel(r"Free precesion time, $\tau$ ($\mathrm{\mu s}$)")
     ax_sig_ref.set_ylabel(r"Fluorescence rate (counts / s $\times 10^3$)")
     ax_norm.set_xlabel(r"Free precesion time, $\tau$ ($\mathrm{\mu s}$)")
     ax_norm.set_ylabel("Normalized fluorescence")
@@ -182,10 +182,10 @@ def fit_ramsey(norm_avg_sig,taus,  precession_time_range, FreqParams):
 
     taus_us_linspace = numpy.linspace(precession_time_range[0]/1e3, precession_time_range[1]/1e3, num=1000)
 
-    fig_fit, ax = plt.subplots(1, 1, figsize=kpl.figsize_large)
+    fig_fit, ax = plt.subplots(1, 1, figsize=kpl.figsize)
     kpl.plot_line(ax,taus_us, norm_avg_sig,color=KplColors.BLUE,label='data' )
     kpl.plot_line(ax,taus_us_linspace, fit_func(taus_us_linspace,*popt),color=KplColors.RED,label='fit')
-    ax.set_xlabel(r'Free precesion time ($\mu$s)')
+    ax.set_xlabel(r'Free precesion time, $\tau$ ($\mu$s)')
     ax.set_ylabel("Normalized fluorescence")
     fig_fit.suptitle('Ramsey experiment')
     # ax.legend()
@@ -289,7 +289,7 @@ def main_with_cxn(
     tool_belt.set_filter(cxn, nv_sig, laser_key)
     laser_power = tool_belt.set_laser_power(cxn, nv_sig, laser_key)
     polarization_time = nv_sig["spin_pol_dur"]
-    gate_time = nv_sig["spin_readout_dur"]
+    spin_readout_dur = nv_sig["spin_readout_dur"]
     norm_style = nv_sig["norm_style"]
 
     rabi_period = nv_sig["rabi_{}".format(state.name)]
@@ -364,7 +364,7 @@ def main_with_cxn(
     seq_args = [
         min_precession_time/2,
         polarization_time,
-        gate_time,
+        spin_readout_dur,
         uwave_pi_pulse,
         uwave_pi_on_2_pulse,
         max_precession_time/2,
@@ -465,7 +465,7 @@ def main_with_cxn(
             seq_args = [
                 taus[tau_ind_first]/2,
                 polarization_time,
-                gate_time,
+                spin_readout_dur,
                 uwave_pi_pulse,
                 uwave_pi_on_2_pulse,
                 taus[tau_ind_second]/2,
@@ -519,7 +519,7 @@ def main_with_cxn(
         inc_sig_counts = sig_counts[: run_ind + 1]
         inc_ref_counts = ref_counts[: run_ind + 1]
         ret_vals = tool_belt.process_counts(
-            inc_sig_counts, inc_ref_counts, num_reps, gate_time, norm_style
+            inc_sig_counts, inc_ref_counts, num_reps, spin_readout_dur, norm_style
         )
         (
             sig_counts_avg_kcps,
@@ -540,8 +540,8 @@ def main_with_cxn(
             "nv_sig-units": tool_belt.get_nv_sig_units(cxn),
             'detuning': detuning,
             'detuning-units': 'MHz',
-            "gate_time": gate_time,
-            "gate_time-units": "ns",
+            "spin_readout_dur": spin_readout_dur,
+            "spin_readout_dur-units": "ns",
             "uwave_freq": uwave_freq_detuned,
             "uwave_freq-units": "GHz",
             "uwave_power": uwave_power,
@@ -582,7 +582,7 @@ def main_with_cxn(
 
     ### Process and plot the data
 
-    ret_vals = tool_belt.process_counts(sig_counts, ref_counts, num_reps, gate_time, norm_style)
+    ret_vals = tool_belt.process_counts(sig_counts, ref_counts, num_reps, spin_readout_dur, norm_style)
     (
         sig_counts_avg_kcps,
         ref_counts_avg_kcps,
@@ -611,8 +611,8 @@ def main_with_cxn(
         "nv_sig-units": tool_belt.get_nv_sig_units(cxn),
         'detuning': detuning,
         'detuning-units': 'MHz',
-        "gate_time": gate_time,
-        "gate_time-units": "ns",
+        "spin_readout_dur": spin_readout_dur,
+        "spin_readout_dur-units": "ns",
         "uwave_freq": uwave_freq_detuned,
         "uwave_freq-units": "GHz",
         "uwave_power": uwave_power,

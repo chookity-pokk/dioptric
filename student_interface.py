@@ -22,7 +22,7 @@ if __name__ == "__main__":
     
     # %%%%%%%%%%%%%%% NV Parameters %%%%%%%%%%%%%%%
     
-    nv_coords = [6.183, 1.977, 3.56] # V
+    nv_coords = [6.20,1.97,3.53] # V
     expected_count_rate = 15 # kcps
     magnet_angle =  60  # deg
     
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         ####### Useful global functions #######
         ### Get/Set drift
         # nv.set_drift([0,0,0])
-        # nv.reset_xy_drift()
+        # nv.reset_xy_drift() #Check that this is noted in lab manual
         # nv.reset_xyz_drift()
         # print(nv.get_drift())
         # nv_sig['disable_opt']=True
@@ -108,22 +108,17 @@ if __name__ == "__main__":
         # mpowers = [-10,-8,-6,-4,-2,0,2,4,6,8,10,12,14,15]
         # for i in mpowers:
         #     nv_sig["uwave_power_LOW"]=i
-        # nv.do_rabi(nv_sig,  States.LOW , uwave_time_range=[0, 200], num_runs=12, num_steps=51, num_reps=1e4)
+        # nv.do_rabi(nv_sig,  States.LOW , uwave_time_range=[0, 200], num_runs=5, num_steps=51, num_reps=1e4)
         # nv.do_rabi(nv_sig,  States.HIGH, uwave_time_range=[0, 200], num_runs=20, num_steps=51, num_reps=2e4)
         
         
         ####### EXPERIMENT 3: Ramsey experiment #######
-        
-        start_time = time.time()
         # nv.do_ramsey(nv_sig, state=States.LOW, precession_time_range = [0, 2000], set_detuning=4, num_runs=5, num_steps = 101, num_reps=2e4)  
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        print(elapsed_time)
-        
+
         # ####### EXPERIMENT 4: Spim echo #######
-        # nv.do_spin_echo(nv_sig, state=States.LOW, echo_time_range = [0, 100000], 
-        #                num_runs=150, num_steps=41, num_reps=2e4) 
-    
+        # nv.do_spin_echo(nv_sig, state=States.LOW, echo_time_range = [0, 50000], 
+        #                 num_runs=15, num_steps=41, num_reps=2e4) 
+        
     finally:
 
         # Make sure everything is reset

@@ -64,6 +64,8 @@ def do_auto_check_location(nv_sig,close_plot=False):
         return
     else:
         raise RuntimeError('counts too low at opti coords')
+        
+    
 
         
     # nv_sig['expected_count_rate'] = opti_count_rate
@@ -292,9 +294,9 @@ if __name__ == '__main__':
     
         
     nv_sig = {
-        "coords":[6.183, 1.977, 3.56],
+        "coords":[6.20,1.97,3.53],
         "name": "{}-nv1".format(sample_name,),
-        "expected_count_rate":18,
+        "expected_count_rate":15,
         "disable_opt":False,
         "ramp_voltages": False,
         
@@ -327,7 +329,7 @@ if __name__ == '__main__':
         # tool_belt.laser_on_no_cxn('cobolt_515') # turn the laser on
         # tool_belt.laser_off_no_cxn('cobolt_515') # turn the laser on
         
-        # do_auto_check_location(nv_sig,close_plot=False)
+        do_auto_check_location(nv_sig,close_plot=False)
 
         
         # do_image_sample(nv_sig, scan_size='small')
@@ -347,7 +349,7 @@ if __name__ == '__main__':
         # for z in z_list:
         #     nv_sig['coords'][2]=z
         #     do_image_sample(nv_sig, scan_size='big-ish')
-        do_optimize(nv_sig)
+        # do_optimize(nv_sig)
         # nv_sig['disable_opt']=True
         # do_stationary_count(nv_sig, )
         

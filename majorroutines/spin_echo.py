@@ -27,6 +27,7 @@ from random import shuffle
 import labrad
 from utils.tool_belt import States
 from scipy.optimize import curve_fit
+from scipy.special import j0
 from numpy.linalg import eigvals
 import majorroutines.optimize as optimize
 from utils.tool_belt import NormStyle
@@ -78,158 +79,155 @@ def create_raw_data_figure(
     
     return fig, ax_sig_ref, ax_norm
 
-# %% Simplified Hamiltonian analysis
-# This assumes no E field, though it does allow for a variable center frequency
+
+# def calc_single_hamiltonian(theta_B, center_freq, mag_B):
+#     # Get parallel and perpendicular components of B field in
+#     # units of frequency
+#     par_B = gmuB * mag_B * numpy.cos(theta_B)
+#     perp_B = gmuB * mag_B * numpy.sin(theta_B)
+#     hamiltonian = numpy.array(
+#         [
+#             [center_freq + par_B, inv_sqrt_2 * perp_B, 0],
+#             [inv_sqrt_2 * perp_B, 0, inv_sqrt_2 * perp_B],
+#             [0, inv_sqrt_2 * perp_B, center_freq - par_B],
+#         ]
+#     )
+#     return hamiltonian
 
 
-def calc_single_hamiltonian(theta_B, center_freq, mag_B):
-    # Get parallel and perpendicular components of B field in
-    # units of frequency
-    par_B = gmuB * mag_B * numpy.cos(theta_B)
-    perp_B = gmuB * mag_B * numpy.sin(theta_B)
-    hamiltonian = numpy.array(
-        [
-            [center_freq + par_B, inv_sqrt_2 * perp_B, 0],
-            [inv_sqrt_2 * perp_B, 0, inv_sqrt_2 * perp_B],
-            [0, inv_sqrt_2 * perp_B, center_freq - par_B],
-        ]
-    )
-    return hamiltonian
+# def calc_hamiltonian(theta_B, center_freq, mag_B):
+#     fit_vec = [center_freq, mag_B]
+#     if (type(theta_B) is list) or (type(theta_B) is numpy.ndarray):
+#         hamiltonian_list = [
+#             calc_single_hamiltonian(val, *fit_vec) for val in theta_B
+#         ]
+#         return hamiltonian_list
+#     else:
+#         return calc_single_hamiltonian(theta_B, *fit_vec)
 
 
-def calc_hamiltonian(theta_B, center_freq, mag_B):
-    fit_vec = [center_freq, mag_B]
-    if (type(theta_B) is list) or (type(theta_B) is numpy.ndarray):
-        hamiltonian_list = [
-            calc_single_hamiltonian(val, *fit_vec) for val in theta_B
-        ]
-        return hamiltonian_list
-    else:
-        return calc_single_hamiltonian(theta_B, *fit_vec)
+# def calc_res_pair(theta_B, center_freq, mag_B):
+#     hamiltonian = calc_hamiltonian(theta_B, center_freq, mag_B)
+#     if (type(theta_B) is list) or (type(theta_B) is numpy.ndarray):
+#         vals = numpy.sort(eigvals(hamiltonian), axis=1)
+#         resonance_low = numpy.real(vals[:, 1] - vals[:, 0])
+#         resonance_high = numpy.real(vals[:, 2] - vals[:, 0])
+#     else:
+#         vals = numpy.sort(eigvals(hamiltonian))
+#         resonance_low = numpy.real(vals[1] - vals[0])
+#         resonance_high = numpy.real(vals[2] - vals[0])
+#     return resonance_low, resonance_high
 
 
-def calc_res_pair(theta_B, center_freq, mag_B):
-    hamiltonian = calc_hamiltonian(theta_B, center_freq, mag_B)
-    if (type(theta_B) is list) or (type(theta_B) is numpy.ndarray):
-        vals = numpy.sort(eigvals(hamiltonian), axis=1)
-        resonance_low = numpy.real(vals[:, 1] - vals[:, 0])
-        resonance_high = numpy.real(vals[:, 2] - vals[:, 0])
-    else:
-        vals = numpy.sort(eigvals(hamiltonian))
-        resonance_low = numpy.real(vals[1] - vals[0])
-        resonance_high = numpy.real(vals[2] - vals[0])
-    return resonance_low, resonance_high
+# def zfs_cost_func(center_freq, mag_B, theta_B, meas_res_low, meas_res_high):
+#     calc_res_low, calc_res_high = calc_res_pair(theta_B, center_freq, mag_B)
+#     diff_low = calc_res_low - meas_res_low
+#     diff_high = calc_res_high - meas_res_high
+#     return numpy.sqrt(diff_low ** 2 + diff_high ** 2)
 
 
-def zfs_cost_func(center_freq, mag_B, theta_B, meas_res_low, meas_res_high):
-    calc_res_low, calc_res_high = calc_res_pair(theta_B, center_freq, mag_B)
-    diff_low = calc_res_low - meas_res_low
-    diff_high = calc_res_high - meas_res_high
-    return numpy.sqrt(diff_low ** 2 + diff_high ** 2)
+# def theta_B_cost_func(
+#     theta_B, center_freq, mag_B, meas_res_low, meas_res_high
+# ):
+#     calc_res_low, calc_res_high = calc_res_pair(theta_B, center_freq, mag_B)
+#     diff_low = calc_res_low - meas_res_low
+#     diff_high = calc_res_high - meas_res_high
+#     return numpy.sqrt(diff_low ** 2 + diff_high ** 2)
 
 
-def theta_B_cost_func(
-    theta_B, center_freq, mag_B, meas_res_low, meas_res_high
-):
-    calc_res_low, calc_res_high = calc_res_pair(theta_B, center_freq, mag_B)
-    diff_low = calc_res_low - meas_res_low
-    diff_high = calc_res_high - meas_res_high
-    return numpy.sqrt(diff_low ** 2 + diff_high ** 2)
+# def plot_resonances_vs_theta_B(data, center_freq=None,revival_time_guess=None,num_revivals_guess=None):
 
+#     # %% Setup
 
-def plot_resonances_vs_theta_B(data, center_freq=None,revival_time_guess=None,num_revivals_guess=None):
+#     fit_func, popt, stes, fit_fig = fit_data(data,revival_time_guess,num_revivals_guess)
+#     # print(popt)
+#     if (fit_func is None) or (popt is None):
+#         print("Fit failed!")
+#         return
 
-    # %% Setup
+#     nv_sig = data["nv_sig"]
+#     resonance_LOW = nv_sig["resonance_LOW"]
+#     resonance_HIGH = nv_sig["resonance_HIGH"]
+#     # resonance_LOW = 2.7979
+#     # resonance_HIGH = 2.9456
+#     # print('test',popt)
 
-    fit_func, popt, stes, fit_fig = fit_data(data,revival_time_guess,num_revivals_guess)
-    # print(popt)
-    if (fit_func is None) or (popt is None):
-        print("Fit failed!")
-        return
+#     revival_time = popt[1]
+#     revival_time_ste = stes[1]
+#     mag_B, mag_B_ste = mag_B_from_revival_time(revival_time, revival_time_ste)
 
-    nv_sig = data["nv_sig"]
-    resonance_LOW = nv_sig["resonance_LOW"]
-    resonance_HIGH = nv_sig["resonance_HIGH"]
-    # resonance_LOW = 2.7979
-    # resonance_HIGH = 2.9456
-    # print('test',popt)
+#     # %% Angle matching
 
-    revival_time = popt[1]
-    revival_time_ste = stes[1]
-    mag_B, mag_B_ste = mag_B_from_revival_time(revival_time, revival_time_ste)
+#     # Find the angle that minimizes the distances of the predicted resonances
+#     # from the measured resonances
+#     theta_B = None
+#     if center_freq is None:
+#         center_freq = (resonance_LOW + resonance_HIGH) / 2
+#         # print(center_freq)
+#         # center_freq = 2.8718356422016003
+#         # print(center_freq)
+#     args = (center_freq, mag_B, resonance_LOW, resonance_HIGH)
+#     result = minimize_scalar(
+#         theta_B_cost_func, bounds=(0, pi / 2), args=args, method="bounded"
+#     )
+#     if result.success:
+#         theta_B = result.x
+#         theta_B_deg = theta_B * 180 / pi
+#         print(
+#             "theta_B = {:.4f} radians, {:.3f} degrees".format(
+#                 theta_B, theta_B_deg
+#             )
+#         )
+#         print("cost = {:.3e}".format(result.fun))
+#     else:
+#         print("minimize_scalar failed to find theta_B")
 
-    # %% Angle matching
+#     # %% Plotting
 
-    # Find the angle that minimizes the distances of the predicted resonances
-    # from the measured resonances
-    theta_B = None
-    if center_freq is None:
-        center_freq = (resonance_LOW + resonance_HIGH) / 2
-        # print(center_freq)
-        # center_freq = 2.8718356422016003
-        # print(center_freq)
-    args = (center_freq, mag_B, resonance_LOW, resonance_HIGH)
-    result = minimize_scalar(
-        theta_B_cost_func, bounds=(0, pi / 2), args=args, method="bounded"
-    )
-    if result.success:
-        theta_B = result.x
-        theta_B_deg = theta_B * 180 / pi
-        print(
-            "theta_B = {:.4f} radians, {:.3f} degrees".format(
-                theta_B, theta_B_deg
-            )
-        )
-        print("cost = {:.3e}".format(result.fun))
-    else:
-        print("minimize_scalar failed to find theta_B")
+#     num_steps = 1000
+#     linspace_theta_B = numpy.linspace(0, pi / 2, num_steps)
 
-    # %% Plotting
+#     fig, ax = plt.subplots(figsize=(8.5, 8.5))
+#     fig.set_tight_layout(True)
+#     res_pairs = calc_res_pair(linspace_theta_B, center_freq, mag_B)
+#     # res_pairs_high = calc_res_pair(linspace_theta_B, center_freq, mag_B+mag_B_ste)
+#     # res_pairs_low = calc_res_pair(linspace_theta_B, center_freq, mag_B-mag_B_ste)
+#     linspace_theta_B_deg = linspace_theta_B * (180 / pi)
+#     ax.plot(linspace_theta_B_deg, res_pairs[0], label="Calculated low")
+#     # ax.fill_between(linspace_theta_B_deg, res_pairs_high[0], res_pairs_low[0],
+#     #                 alpha=0.5)
+#     ax.plot(linspace_theta_B_deg, res_pairs[1], label="Calculated high")
+#     # ax.fill_between(linspace_theta_B_deg, res_pairs_high[1], res_pairs_low[1],
+#     #                 alpha=0.5)
 
-    num_steps = 1000
-    linspace_theta_B = numpy.linspace(0, pi / 2, num_steps)
-
-    fig, ax = plt.subplots(figsize=(8.5, 8.5))
-    fig.set_tight_layout(True)
-    res_pairs = calc_res_pair(linspace_theta_B, center_freq, mag_B)
-    # res_pairs_high = calc_res_pair(linspace_theta_B, center_freq, mag_B+mag_B_ste)
-    # res_pairs_low = calc_res_pair(linspace_theta_B, center_freq, mag_B-mag_B_ste)
-    linspace_theta_B_deg = linspace_theta_B * (180 / pi)
-    ax.plot(linspace_theta_B_deg, res_pairs[0], label="Calculated low")
-    # ax.fill_between(linspace_theta_B_deg, res_pairs_high[0], res_pairs_low[0],
-    #                 alpha=0.5)
-    ax.plot(linspace_theta_B_deg, res_pairs[1], label="Calculated high")
-    # ax.fill_between(linspace_theta_B_deg, res_pairs_high[1], res_pairs_low[1],
-    #                 alpha=0.5)
-
-    const = [resonance_LOW for el in range(0, num_steps)]
-    ax.plot(linspace_theta_B_deg, const, label="Measured low")
-    const = [resonance_HIGH for el in range(0, num_steps)]
-    ax.plot(linspace_theta_B_deg, const, label="Measured high")
+#     const = [resonance_LOW for el in range(0, num_steps)]
+#     ax.plot(linspace_theta_B_deg, const, label="Measured low")
+#     const = [resonance_HIGH for el in range(0, num_steps)]
+#     ax.plot(linspace_theta_B_deg, const, label="Measured high")
     
 
-    if theta_B is not None:
-        text = r"$\theta_{B} = $%.3f" % (theta_B_deg)
-        props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
-        ax.text(
-            0.05,
-            0.65,
-            text,
-            fontsize=14,
-            transform=ax.transAxes,
-            verticalalignment="top",
-            bbox=props,
-        )
+#     if theta_B is not None:
+#         text = r"$\theta_{B} = $%.3f" % (theta_B_deg)
+#         props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
+#         ax.text(
+#             0.05,
+#             0.65,
+#             text,
+#             fontsize=14,
+#             transform=ax.transAxes,
+#             verticalalignment="top",
+#             bbox=props,
+#         )
 
-    ax.set_xlabel(r"$\theta_{B}$ (deg)")
-    ax.set_ylabel("Resonances (GHz)")
-    ax.legend()
+#     ax.set_xlabel(r"$\theta_{B}$ (deg)")
+#     ax.set_ylabel("Resonances (GHz)")
+#     ax.legend()
 
-    fig.canvas.draw()
-    fig.set_tight_layout(True)
-    fig.canvas.flush_events()
+#     fig.canvas.draw()
+#     fig.set_tight_layout(True)
+#     fig.canvas.flush_events()
 
-    return fit_func, popt, stes, fit_fig, theta_B_deg, fig
+#     return fit_func, popt, stes, fit_fig, theta_B_deg, fig
 
 
 # %% Functions
@@ -255,11 +253,17 @@ def quartic(tau, offset, revival_time, decay_time, *amplitudes):
     return tally
 
 
+def bessel_like(tau, offset, revival_time, decay_time, amplitude):
+    '''
+    Based on spin echo signal from J. Maze et al, Nature 455 p. 644 (2008)
+    '''
+    two_pi = 2 * numpy.pi
+    bessel_arg = amplitude*numpy.sin(two_pi*tau/(revival_time * 4))**2
+    return 0.5 * (1 + j0(bessel_arg))
+
 def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
 
     precession_dur_range = data["precession_time_range"]
-    sig_counts = data["sig_counts"]
-    ref_counts = data["ref_counts"]
     num_steps = data["num_steps"]
     num_runs = data["num_runs"]
 
@@ -287,18 +291,26 @@ def fit_data(data,revival_time_guess=None,num_revivals_guess=None):
     fit_func = quartic
 
     # %% Normalization and uncertainty
+    
+    try:
+        norm_avg_sig = data['norm_avg_sig']
+        norm_avg_sig_ste = data['norm_avg_sig_ste']
+    except Exception:
+        sig_counts = data["sig_counts"]
+        ref_counts = data["ref_counts"]
+        num_reps = data['num_reps']
+        nv_sig = data['nv_sig']
+        spin_readout_dur = nv_sig['spin_readout_dur']
+        norm_style = nv_sig['norm_style']
+        
+        ret_vals = tool_belt.process_counts(sig_counts, ref_counts, num_reps, spin_readout_dur, norm_style)
+        (
+            sig_counts_avg_kcps,
+            ref_counts_avg_kcps,
+            norm_avg_sig,
+            norm_avg_sig_ste,
+        ) = ret_vals
 
-    avg_sig_counts = numpy.average(sig_counts[::], axis=0)
-    ste_sig_counts = numpy.std(sig_counts[::], axis=0, ddof=1) / numpy.sqrt(
-        num_runs
-    )
-
-    # Assume reference is constant and can be approximated to one value
-    avg_ref = numpy.average(ref_counts[::])
-
-    # Divide signal by reference to get normalized counts and st error
-    norm_avg_sig = avg_sig_counts / avg_ref
-    norm_avg_sig_ste = ste_sig_counts / avg_ref
 
     # %% Estimated fit parameters
 
@@ -497,7 +509,6 @@ def main(
     num_reps,
     num_runs,
     state=States.LOW,
-    do_dq = False,
     close_plot=False
 ):
 
@@ -510,7 +521,6 @@ def main(
             num_reps,
             num_runs,
             state,
-            do_dq,
             close_plot
         )
         return angle
@@ -524,7 +534,6 @@ def main_with_cxn(
     num_reps,
     num_runs,
     state=States.LOW,
-    do_dq = False,
     close_plot=False,
 ):
     
@@ -542,7 +551,7 @@ def main_with_cxn(
     tool_belt.set_filter(cxn, nv_sig, laser_key)
     laser_power = tool_belt.set_laser_power(cxn, nv_sig, laser_key)
     polarization_time = nv_sig["spin_pol_dur"]
-    gate_time = nv_sig["spin_readout_dur"]
+    spin_readout_dur = nv_sig["spin_readout_dur"]
     norm_style = nv_sig['norm_style']
 
     rabi_period = nv_sig["rabi_{}".format(state.name)]
@@ -554,29 +563,6 @@ def main_with_cxn(
     uwave_pi_on_2_pulse = tool_belt.get_pi_on_2_pulse_dur(rabi_period)
 
     seq_file_name = "spin_echo.py"
-    # set up to drive transition through zero
-    if do_dq:
-        do_ramsey = False
-        seq_file_name = "spin_echo_dq.py"
-        
-        rabi_period_low = nv_sig["rabi_{}".format(States.LOW.name)]
-        uwave_freq_low = nv_sig["resonance_{}".format(States.LOW.name)]
-        uwave_power_low = nv_sig["uwave_power_{}".format(States.LOW.name)]
-        uwave_pi_pulse_low = tool_belt.get_pi_pulse_dur(rabi_period_low)
-        uwave_pi_on_2_pulse_low = tool_belt.get_pi_on_2_pulse_dur(rabi_period_low)
-        rabi_period_high = nv_sig["rabi_{}".format(States.HIGH.name)]
-        uwave_freq_high = nv_sig["resonance_{}".format(States.HIGH.name)]
-        uwave_power_high = nv_sig["uwave_power_{}".format(States.HIGH.name)]
-        uwave_pi_pulse_high = tool_belt.get_pi_pulse_dur(rabi_period_high)
-        uwave_pi_on_2_pulse_high = tool_belt.get_pi_on_2_pulse_dur(rabi_period_high)
-        
-        
-        if state.value == States.LOW.value:
-            state_activ = States.LOW
-            state_proxy = States.HIGH
-        elif state.value == States.HIGH.value:
-            state_activ = States.HIGH
-            state_proxy = States.LOW
 
     # %% Create the array of relaxation times
 
@@ -636,34 +622,17 @@ def main_with_cxn(
     # %% Analyze the sequence
     
     num_reps = int(num_reps)
-    if do_dq:
-        seq_args = [
-            min_precession_time,
-            polarization_time,
-            gate_time,
-            uwave_pi_pulse_low,
-            uwave_pi_on_2_pulse_low,
-            uwave_pi_pulse_high,
-            uwave_pi_on_2_pulse_high,
-            max_precession_time,
-            state_activ.value,
-            state_proxy.value,
-            laser_name, 
-            laser_power, 
-            do_ramsey
-        ]
-    else:
-        seq_args = [
-            min_precession_time,
-            polarization_time,
-            gate_time,
-            uwave_pi_pulse,
-            uwave_pi_on_2_pulse,
-            max_precession_time,
-            state.value,
-            laser_name,
-            laser_power,
-        ]
+    seq_args = [
+        min_precession_time,
+        polarization_time,
+        spin_readout_dur,
+        uwave_pi_pulse,
+        uwave_pi_on_2_pulse,
+        max_precession_time,
+        state.value,
+        laser_name,
+        laser_power,
+    ]
     seq_args_string = tool_belt.encode_seq_args(seq_args)
     # print(seq_args)
     ret_vals = pulsegen_server.stream_load(seq_file_name, seq_args_string)
@@ -680,7 +649,7 @@ def main_with_cxn(
     print('')
     print(tool_belt.get_expected_run_time_string(cxn,'spin_echo',seq_time,num_steps/2,num_reps,num_runs))
     print('')
-
+    # return
     
     # %% Get the starting time of the function, to be used to calculate run time
 
@@ -709,16 +678,6 @@ def main_with_cxn(
         sig_gen_cxn.set_freq(uwave_freq)
         sig_gen_cxn.set_amp(uwave_power)
         sig_gen_cxn.uwave_on()
-
-        if do_dq:
-            sig_gen_low_cxn = tool_belt.get_server_sig_gen(cxn, States.LOW)
-            sig_gen_low_cxn.set_freq(uwave_freq_low)
-            sig_gen_low_cxn.set_amp(uwave_power_low)
-            sig_gen_low_cxn.uwave_on()
-            sig_gen_high_cxn = tool_belt.get_server_sig_gen(cxn, States.HIGH)
-            sig_gen_high_cxn.set_freq(uwave_freq_high)
-            sig_gen_high_cxn.set_amp(uwave_power_high)
-            sig_gen_high_cxn.uwave_on()
             
         # Set up the laser
         tool_belt.set_filter(cxn, nv_sig, laser_key)
@@ -750,37 +709,20 @@ def main_with_cxn(
             if tool_belt.safe_stop():
                 break
 
-            print(" \nFirst relaxation time: {}".format(taus[tau_ind_first]))
-            print("Second relaxation time: {}".format(taus[tau_ind_second]))
+            # print(" \nFirst relaxation time: {}".format(taus[tau_ind_first]))
+            # print("Second relaxation time: {}".format(taus[tau_ind_second]))
 
-            if do_dq:
-                seq_args = [
-                    taus[tau_ind_first],
-                    polarization_time,
-                    gate_time,
-                    uwave_pi_pulse_low,
-                    uwave_pi_on_2_pulse_low,
-                    uwave_pi_pulse_high,
-                    uwave_pi_on_2_pulse_high,
-                    taus[tau_ind_second],
-                    state_activ.value,
-                    state_proxy.value,
-                    laser_name,
-                    laser_power, 
-                    do_ramsey
-                ]
-            else:
-                seq_args = [
-                    taus[tau_ind_first],
-                    polarization_time,
-                    gate_time,
-                    uwave_pi_pulse,
-                    uwave_pi_on_2_pulse,
-                    taus[tau_ind_second],
-                    state.value,
-                    laser_name,
-                    laser_power,
-                ]
+            seq_args = [
+                taus[tau_ind_first],
+                polarization_time,
+                spin_readout_dur,
+                uwave_pi_pulse,
+                uwave_pi_on_2_pulse,
+                taus[tau_ind_second],
+                state.value,
+                laser_name,
+                laser_power,
+            ]
             seq_args_string = tool_belt.encode_seq_args(seq_args)
             # Clear the tagger buffer of any excess counts
             counter_server.clear_buffer()
@@ -832,7 +774,7 @@ def main_with_cxn(
         inc_sig_counts = sig_counts[: run_ind + 1]
         inc_ref_counts = ref_counts[: run_ind + 1]
         ret_vals = tool_belt.process_counts(
-            inc_sig_counts, inc_ref_counts, num_reps, gate_time, norm_style
+            inc_sig_counts, inc_ref_counts, num_reps, spin_readout_dur, norm_style
         )
         (
             sig_counts_avg_kcps,
@@ -852,9 +794,8 @@ def main_with_cxn(
             "start_timestamp": start_timestamp,
             "nv_sig": nv_sig,
             "nv_sig-units": tool_belt.get_nv_sig_units(cxn),
-            "do_dq": do_dq,
-            "gate_time": gate_time,
-            "gate_time-units": "ns",
+            "spin_readout_dur": spin_readout_dur,
+            "spin_readout_dur-units": "ns",
             "uwave_freq": uwave_freq,
             "uwave_freq-units": "GHz",
             "uwave_power": uwave_power,
@@ -895,7 +836,7 @@ def main_with_cxn(
 
     # %% Plot the data
 
-    ret_vals = tool_belt.process_counts(sig_counts, ref_counts, num_reps, gate_time, norm_style)
+    ret_vals = tool_belt.process_counts(sig_counts, ref_counts, num_reps, spin_readout_dur, norm_style)
     (
         sig_counts_avg_kcps,
         ref_counts_avg_kcps,
@@ -923,8 +864,8 @@ def main_with_cxn(
         "nv_sig": nv_sig,
         "nv_sig-units": tool_belt.get_nv_sig_units(cxn),
         "do_dq": do_dq,
-        "gate_time": gate_time,
-        "gate_time-units": "ns",
+        "spin_readout_dur": spin_readout_dur,
+        "spin_readout_dur-units": "ns",
         "uwave_freq": uwave_freq,
         "uwave_freq-units": "GHz",
         "uwave_power": uwave_power,

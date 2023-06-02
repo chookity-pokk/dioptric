@@ -290,7 +290,7 @@ def return_res_with_error(data, fit_func=None, guess_params=None):
     sig_counts = data["sig_counts"]
     num_reps = data["num_reps"]
     nv_sig = data["nv_sig"]
-    readout = nv_sig["spin_readout_dur"]
+    spin_readout_dur = nv_sig["spin_readout_dur"]
     try:
         norm_style = NormStyle[str.upper(nv_sig["norm_style"])]
     except Exception as exc:
@@ -298,7 +298,7 @@ def return_res_with_error(data, fit_func=None, guess_params=None):
         norm_style = NormStyle.SINGLE_VALUED
 
     _, _, norm_avg_sig, norm_avg_sig_ste = tool_belt.process_counts(
-        sig_counts, ref_counts, num_reps, readout, norm_style
+        sig_counts, ref_counts, num_reps, spin_readout_dur, norm_style
     )
 
     fit_func, popt, pcov = fit_resonance(
@@ -636,7 +636,7 @@ def main_with_cxn(
     # useful for us here.
     norm_style = nv_sig["norm_style"]
     polarization_time = nv_sig["spin_pol_dur"]
-    readout = nv_sig["spin_readout_dur"]
+    spin_readout_dur = nv_sig["spin_readout_dur"]
 
     laser_key = "spin_laser"
     laser_name = nv_sig[laser_key]
@@ -659,7 +659,7 @@ def main_with_cxn(
         pi_on_2_pulse = tool_belt.get_pi_on_2_pulse_dur(rabi_period)
         seq_args = [
             polarization_time,
-            readout,
+            spin_readout_dur,
             pi_pulse,
             pi_on_2_pulse,
             1,
@@ -674,7 +674,7 @@ def main_with_cxn(
         seq_args = [
             uwave_pulse_dur,
             polarization_time,
-            readout,
+            spin_readout_dur,
             uwave_pulse_dur,
             state.value,
             laser_name,
@@ -796,7 +796,7 @@ def main_with_cxn(
         inc_sig_counts = sig_counts[: run_ind + 1]
         inc_ref_counts = ref_counts[: run_ind + 1]
         ret_vals = tool_belt.process_counts(
-            inc_sig_counts, inc_ref_counts, num_reps, readout, norm_style
+            inc_sig_counts, inc_ref_counts, num_reps, spin_readout_dur, norm_style
         )
         (
             sig_counts_avg_kcps,
@@ -830,8 +830,8 @@ def main_with_cxn(
             "run_ind": run_ind,
             "uwave_power": uwave_power,
             "uwave_power-units": "dBm",
-            "readout": readout,
-            "readout-units": "ns",
+            "spin_readout_dur": spin_readout_dur,
+            "spin_readout_dur-units": "ns",
             "freq_index_master_list": freq_index_master_list,
             "opti_coords_list": opti_coords_list,
             "opti_coords_list-units": "V",
@@ -856,7 +856,7 @@ def main_with_cxn(
     ### Process and plot the data
 
     ret_vals = tool_belt.process_counts(
-        sig_counts, ref_counts, num_reps, readout, norm_style
+        sig_counts, ref_counts, num_reps, spin_readout_dur, norm_style
     )
     (
         sig_counts_avg_kcps,
@@ -912,8 +912,8 @@ def main_with_cxn(
         "num_runs": num_runs,
         "uwave_power": uwave_power,
         "uwave_power-units": "dBm",
-        "readout": readout,
-        "readout-units": "ns",
+        "spin_readout_dur": spin_readout_dur,
+        "spin_readout_dur-units": "ns",
         "freq_index_master_list": freq_index_master_list,
         "opti_coords_list": opti_coords_list,
         "opti_coords_list-units": "V",
@@ -961,11 +961,11 @@ def replot(file):
     num_reps = data['num_reps']
     ref_counts = data['ref_counts']
     sig_counts = data['sig_counts']
-    readout = data['readout']
+    spin_readout_dur = data['readout']
     norm_style = NormStyle.SINGLE_VALUED #data['nv_sig']['norm_style']
 
     ret_vals = tool_belt.process_counts(
-        sig_counts, ref_counts, num_reps, readout, norm_style
+        sig_counts, ref_counts, num_reps, spin_readout_dur, norm_style
     )
     (
         sig_counts_avg_kcps,
