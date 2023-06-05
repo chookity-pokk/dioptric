@@ -33,41 +33,52 @@ import utils.auto_tracker as auto_tracker
 import time
 import numpy as np
 import copy
+import csv
 
 # %% Major Routines
 
 def do_auto_check_location(nv_sig,close_plot=False):
     
     haystack_fname='2023_05_31-11_21_50-WiQD-nv1_XY'
-    # nv1 = [6.185, 1.967]
     
-    with labrad.connect() as cxn:
-        drift = positioning.get_drift(cxn)
-        new_drift = np.array([0, 0, drift[2]])
-        positioning.set_drift(cxn, new_drift)
-    
+    # collect an image that is smaller than haystack image and has same resolution
     needle_fname = do_image_sample(nv_sig,scan_size='needle',close_plot=close_plot)
     
+    #run the auto tracker image processing to locate needle image in haystack image
     x_shift, y_shift = auto_tracker.get_shift(nv_sig, haystack_fname, needle_fname,close_plot=close_plot)
     
+    # add the shift of the two images to the current drift
     with labrad.connect() as cxn:
         drift = positioning.get_drift(cxn)
-        positioning.set_drift(cxn, np.array([x_shift, y_shift, drift[2]]))
+        new_drift = [drift[0] + x_shift, drift[1]+ y_shift, drift[2]]
+        positioning.set_drift(cxn, new_drift)
         
-    # nv_sig['coords'][0] = nv1[0] + x_shift
-    # nv_sig['coords'][1] = nv1[1] + y_shift
-    # do_image_sample(nv_sig,scan_size='small-ish')
+    # With updated drift, optimize on NV to accurately find drift in all three dimensions
     nv_sig_copy = copy.deepcopy(nv_sig)
     nv_sig_copy['expected_count_rate'] = None
     opti_coords, opti_count_rate = do_optimize(nv_sig_copy,plot_data=False,close_plot=close_plot)
-    if opti_count_rate > 8:
-        return
-    else:
-        raise RuntimeError('counts too low at opti coords')
-        
     
-
+    # saving drift as it accumulates
+    folder_dir = 'C:/Users/student/Documents/LAB_DATA/pc_nvcenter-pc/branch_instructional-lab-v2'
+    file =  '2023_06-drift_tracking.csv'
+    with open(folder_dir + '/' + file, 'a', newline='') as f:
+        # create the csv writer
+        writer = csv.writer(f)
         
+        timestamp = tool_belt.get_time_stamp()
+        current_time = time.time()
+    
+        with labrad.connect() as cxn:
+            final_drift = positioning.get_drift(cxn)
+        header = [final_drift[0], final_drift[1], final_drift[2], opti_count_rate, timestamp, current_time]
+        writer.writerow(header)
+        
+        
+    # if opti_count_rate > 8:
+    #     return
+    # else:
+    #     raise RuntimeError('counts too low at opti coords')
+     
     # nv_sig['expected_count_rate'] = opti_count_rate
     
     
@@ -294,7 +305,7 @@ if __name__ == '__main__':
     
         
     nv_sig = {
-        "coords":[6.20,1.97,3.53],
+        "coords":[ 6.20,1.97,3.53], #  
         "name": "{}-nv1".format(sample_name,),
         "expected_count_rate":15,
         "disable_opt":False,
@@ -322,7 +333,7 @@ if __name__ == '__main__':
     try:
 
         # with labrad.connect() as cxn:
-        #     positioning.set_drift(cxn,np.array([0, 0, 0]))
+        #     positioning.set_drift(cxn,np.array([0, 0, 0.10]))
             # print(positioning.get_drift(cxn))
         # positioning.set_xyz (labrad.connect(), [5,5,5])
         
@@ -334,6 +345,7 @@ if __name__ == '__main__':
         
         # do_image_sample(nv_sig, scan_size='small')
         # do_image_sample(nv_sig,  scan_size='needle')
+        # do_image_sample(nv_sig,  scan_size='medium')
         # do_optimize(nv_sig)
         # do_image_sample(nv_sig,  scan_size='haystack')
         # do_image_sample(nv_sig,  scan_size='big')

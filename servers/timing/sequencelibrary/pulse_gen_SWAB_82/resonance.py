@@ -49,12 +49,20 @@ def get_seq(pulse_streamer, config, args):
              (transient, LOW), (readout, HIGH), (meas_buffer, LOW),
              (transient, LOW), (readout, HIGH), (meas_buffer, LOW)]
     seq.setDigital(pulser_do_apd_gate, train)
+    period = 0
+    for el in train:
+        period += el[0]
+    print(period)
 
     # Uwave should be on for the first measurement and off for the second
     train = [(front_buffer-uwave_delay, LOW), 
              (transient, LOW), (readout, LOW), (meas_buffer, LOW),
              (transient, LOW), (readout, HIGH), (meas_buffer+uwave_delay, LOW)]
     seq.setDigital(pulser_do_sig_gen_gate, train)
+    period = 0
+    for el in train:
+        period += el[0]
+    print(period)
 
     train = [(period, HIGH)]
     tool_belt.process_laser_seq(pulse_streamer, seq, config, 

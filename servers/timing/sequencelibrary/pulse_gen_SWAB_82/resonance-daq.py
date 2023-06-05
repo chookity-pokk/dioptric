@@ -46,18 +46,30 @@ def get_seq(pulse_streamer, config, args):
              (transient, LOW), (readout, LOW), (100, HIGH), (meas_buffer, LOW),
              (transient, LOW), (readout, LOW), (100, HIGH), (meas_buffer, LOW)]
     seq.setDigital(pulser_do_daq_clock, train)
+    period = 0
+    for el in train:
+        period += el[0]
+    print(period)
 
     # Ungate the APD channel for the readouts
     train = [(front_buffer, LOW), 
              (transient, LOW), (readout, HIGH), (100, LOW), (meas_buffer, LOW),
              (transient, LOW), (readout, HIGH), (100, LOW), (meas_buffer, LOW)]
     seq.setDigital(pulser_do_apd_gate, train)
+    period = 0
+    for el in train:
+        period += el[0]
+    print(period)
 
     # Uwave should be on for the first measurement and off for the second
     train = [(front_buffer-uwave_delay, LOW), 
              (transient, LOW), (readout, LOW), (100, LOW), (meas_buffer, LOW),
              (transient, LOW), (readout, HIGH), (100, LOW), (meas_buffer+uwave_delay, LOW)]
     seq.setDigital(pulser_do_sig_gen_gate, train)
+    period = 0
+    for el in train:
+        period += el[0]
+    print(period)
 
     train = [(period, HIGH)]
     tool_belt.process_laser_seq(pulse_streamer, seq, config, 
@@ -69,6 +81,6 @@ def get_seq(pulse_streamer, config, args):
 
 if __name__ == '__main__':
     config = tool_belt.get_config_dict()
-    args = [10000000.0, 3, 'cobolt_515', None, 0]
+    args = [10000000.0, 3, 'cobolt_515', 0]
     seq, final, ret_vals = get_seq(None, config, args)
     seq.plot()
